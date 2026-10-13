@@ -1,0 +1,66 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background-color: var(--color-surface);
+  border-bottom: var(--border-width) solid var(--color-border);
+  padding: var(--space-md) var(--space-lg);
+}
+
+.brand {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.main {
+  flex: 1;
+  width: min(100%, 72rem);
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-lg);
+}
+
+.panel {
+  background-color: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xl);
+}
+
+.title {
+  margin-bottom: var(--space-sm);
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-lg);
+}
+
+.screenLabel {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  margin-bottom: var(--space-lg);
+}
+
+.resetButton {
+  appearance: none;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  padding: 0.75rem 1rem;
+  min-height: 2.75rem;
+}
+
+.resetButton:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.resetButton:active {
+  background-color: var(--color-background);
+}

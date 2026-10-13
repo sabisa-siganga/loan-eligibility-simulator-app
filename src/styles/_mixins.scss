@@ -1,0 +1,316 @@
+@use 'sass:color';
+@use './tokens' as *;
+
+@mixin emit-css-variables {
+  :root {
+    --color-primary: #{$color-primary};
+    --color-primary-hover: #{$color-primary-hover};
+    --color-primary-pressed: #{$color-primary-pressed};
+    --color-background: #{$color-page-bg};
+    --color-page-bg: #{$color-page-bg};
+    --color-surface: #{$color-surface};
+    --color-text: #{$color-text};
+    --color-text-secondary: #{$color-text-secondary};
+    --color-text-muted: #{$color-text-secondary};
+    --color-input-border: #{$color-input-border};
+    --color-input-hover-border: #{$color-input-hover-border};
+    --color-border: #{$color-input-border};
+    --color-error: #{$color-error};
+    --color-error-border: #{$color-error-border};
+    --color-success: #{$color-success};
+    --color-warning: #{$color-warning};
+    --color-success-surface: #{$color-success-surface};
+    --color-warning-surface: #{$color-warning-surface};
+    --color-error-surface: #{$color-error-surface};
+    --color-overlay: #{$color-overlay};
+    --color-slider-track: #{$color-slider-track};
+    --color-disabled-surface: #{$color-disabled-surface};
+    --color-disabled-text: #{$color-disabled-text};
+    --color-focus-ring: #{$focus-outline-color};
+
+    --space-1: #{$space-1};
+    --space-2: #{$space-2};
+    --space-3: #{$space-3};
+    --space-4: #{$space-4};
+    --space-5: #{$space-5};
+    --space-6: #{$space-6};
+    --space-7: #{$space-7};
+    --space-8: #{$space-8};
+
+    --font-family: #{$font-family};
+    --font-size-base: #{$font-size-base};
+    --font-size-input-touch: #{$font-size-input-touch};
+    --font-size-sm: #{$font-size-sm};
+    --font-size-lg: #{$font-size-lg};
+    --font-size-heading: #{$font-size-heading};
+    --font-size-figure: #{$font-size-figure};
+    --line-height-base: #{$line-height-base};
+    --font-weight-regular: #{$font-weight-regular};
+    --font-weight-semibold: #{$font-weight-semibold};
+    --font-weight-bold: #{$font-weight-bold};
+
+    --control-min-height: #{$control-min-height};
+    --touch-min: #{$touch-min};
+
+    --radius-checkbox: #{$radius-checkbox};
+    --radius-input: #{$radius-input};
+    --radius-control: #{$radius-control};
+    --radius-card: #{$radius-card};
+    --radius-dialog: #{$radius-dialog};
+
+    --content-max: #{$content-max};
+    --dialog-max: #{$dialog-max};
+
+    --focus-outline-width: #{$focus-outline-width};
+    --focus-outline-offset: #{$focus-outline-offset};
+    --focus-outline-color: #{$focus-outline-color};
+    --focus-ring-width: #{$focus-ring-width};
+    --focus-ring-color: #{$focus-ring-color};
+    --focus-ring-color-invalid: #{$focus-ring-color-invalid};
+
+    --duration-color: #{$duration-color};
+    --duration-reveal: #{$duration-reveal};
+    --duration-accordion: #{$duration-accordion};
+    --duration-screen: #{$duration-screen};
+    --duration-highlight: #{$duration-highlight};
+  }
+}
+
+@mixin focus-ring {
+  outline: $focus-outline-width solid $focus-outline-color;
+  outline-offset: $focus-outline-offset;
+}
+
+@mixin respond-below($breakpoint) {
+  @media (max-width: $breakpoint) {
+    @content;
+  }
+}
+
+@mixin respond-above($breakpoint) {
+  @media (min-width: $breakpoint) {
+    @content;
+  }
+}
+
+@mixin content-shell {
+  width: min(100%, $content-max);
+  margin-inline: auto;
+  padding-inline: $space-4;
+
+  @include respond-above($bp-fields) {
+    padding-inline: $space-6;
+  }
+
+  @include respond-above($bp-stack) {
+    padding-inline: $space-7;
+  }
+}
+
+@mixin card-surface {
+  background-color: $color-surface;
+  border: 1px solid $color-input-border;
+  border-radius: $radius-card;
+}
+
+@mixin button-base {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  min-height: $control-min-height;
+  min-width: $touch-min;
+  padding: $space-3 $space-5;
+  border-radius: $radius-control;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  line-height: $line-height-base;
+  cursor: pointer;
+  transition:
+    color $duration-color ease,
+    background-color $duration-color ease,
+    border-color $duration-color ease;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+@mixin button-primary {
+  @include button-base;
+  background-color: $color-primary;
+  color: $color-surface;
+
+  &:hover:not(:disabled) {
+    background-color: $color-primary-hover;
+  }
+
+  &:active:not(:disabled) {
+    background-color: $color-primary-pressed;
+  }
+}
+
+@mixin button-secondary {
+  @include button-base;
+  background-color: $color-surface;
+  border-color: $color-input-border;
+  color: $color-text;
+
+  &:hover:not(:disabled) {
+    border-color: $color-primary;
+    color: $color-primary;
+  }
+
+  &:active:not(:disabled) {
+    background-color: $color-page-bg;
+  }
+}
+
+@mixin button-soft {
+  @include button-base;
+  background-color: color.change($color-primary, $alpha: 0.1);
+  color: $color-primary-pressed;
+
+  &:hover:not(:disabled) {
+    background-color: color.change($color-primary, $alpha: 0.16);
+  }
+
+  &:active:not(:disabled) {
+    background-color: color.change($color-primary, $alpha: 0.22);
+  }
+}
+
+@mixin button-text {
+  @include button-base;
+  background-color: transparent;
+  color: $color-primary;
+  min-height: $touch-min;
+  padding-inline: $space-2;
+
+  &:hover:not(:disabled) {
+    color: $color-primary-hover;
+    text-decoration: underline;
+  }
+
+  &:active:not(:disabled) {
+    color: $color-primary-pressed;
+  }
+}
+
+@mixin field-control {
+  appearance: none;
+  width: 100%;
+  min-height: $control-min-height;
+  padding: $space-3 $space-4;
+  border: 1px solid $color-input-border;
+  border-radius: $radius-input;
+  background-color: $color-surface;
+  color: $color-text;
+  font-family: inherit;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
+  transition:
+    border-color $duration-color ease,
+    box-shadow $duration-color ease;
+
+  &:hover:not(:disabled):not(:read-only):not(:focus) {
+    border-color: $color-input-hover-border;
+  }
+
+  &:focus {
+    border-color: $color-primary;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: $color-primary;
+    box-shadow: 0 0 0 $focus-ring-width $focus-ring-color;
+  }
+
+  &:disabled {
+    background-color: $color-disabled-surface;
+    color: $color-disabled-text;
+    cursor: not-allowed;
+  }
+
+  &:read-only:not(:disabled) {
+    background-color: $color-surface;
+    color: $color-text;
+  }
+}
+
+@mixin field-control-invalid {
+  border-color: $color-error-border;
+
+  &:hover:not(:disabled):not(:read-only):not(:focus) {
+    border-color: $color-error-border;
+  }
+
+  &:focus {
+    border-color: $color-error-border;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: $color-error-border;
+    box-shadow: 0 0 0 $focus-ring-width $focus-ring-color-invalid;
+  }
+}
+
+@mixin field-label {
+  display: block;
+  margin-bottom: $space-2;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $color-text;
+}
+
+@mixin screen-intro {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  margin-bottom: $space-6;
+}
+
+@mixin screen-title {
+  margin: 0;
+  font-size: $font-size-heading;
+  font-weight: $font-weight-bold;
+  line-height: 1.25;
+  color: $color-text;
+}
+
+@mixin screen-description {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
+}
+
+@mixin section-heading {
+  margin: 0 0 $space-3;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text;
+}
+
+@mixin message-banner {
+  display: flex;
+  gap: $space-3;
+  align-items: flex-start;
+  padding: $space-3 $space-4;
+  border-radius: $radius-control;
+  border: 1px solid transparent;
+}
+
+@mixin tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

@@ -6,7 +6,11 @@ dist
 dist-ssr
 coverage
 
-# Logs
+# Logs / scratch (keep foundation docs tracked)
+tmp/*
+!tmp/foundation/
+!tmp/foundation/**
+
 logs
 *.log
 npm-debug.log*

@@ -1,0 +1,76 @@
+// Colours — source of truth; emit-css-variables mirrors these on :root
+$color-primary: #2f70ef;
+$color-primary-hover: #245fd1;
+$color-primary-pressed: #1d4fb5;
+$color-page-bg: #f3f7fb;
+$color-surface: #ffffff;
+$color-text: #121a33;
+$color-text-secondary: #52627a;
+$color-input-border: #8797ad;
+$color-input-hover-border: #63748d;
+$color-error: #b42318;
+$color-error-border: #d92d20;
+$color-success: #166534;
+$color-warning: #8a4b08;
+$color-success-surface: #ecfdf3;
+$color-warning-surface: #fffaeb;
+$color-error-surface: #fef3f2;
+$color-overlay: rgba(18, 26, 51, 0.45);
+$color-slider-track: #d0d9e6;
+$color-disabled-surface: #eef2f7;
+$color-disabled-text: #8a96a8;
+
+// Spacing scale (4px → 48px)
+$space-1: 0.25rem;
+$space-2: 0.5rem;
+$space-3: 0.75rem;
+$space-4: 1rem;
+$space-5: 1.25rem;
+$space-6: 1.5rem;
+$space-7: 2rem;
+$space-8: 3rem;
+
+// Typography
+$font-family: 'Nunito Sans', 'Roboto', Arial, sans-serif;
+$font-size-base: 0.875rem;
+$font-size-input-touch: 1rem;
+$font-size-sm: 0.8125rem;
+$font-size-lg: 1.125rem;
+$font-size-heading: 1.5rem;
+$font-size-figure: 1.25rem;
+$line-height-base: 1.5;
+$font-weight-regular: 400;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// Controls and touch
+$control-min-height: 48px;
+$touch-min: 44px;
+
+// Radii
+$radius-checkbox: 4px;
+$radius-input: 6px;
+$radius-control: 8px;
+$radius-card: 10px;
+$radius-dialog: 12px;
+
+// Breakpoints and layout
+$bp-fields: 640px;
+$bp-stack: 960px;
+$content-max: 1200px;
+$dialog-max: 560px;
+
+// Focus
+$focus-outline-width: 1px;
+$focus-outline-offset: 2px;
+$focus-outline-color: $color-primary-pressed;
+$focus-ring-width: 3px;
+$focus-ring-color: rgba($color-primary, 0.35);
+$focus-ring-color-invalid: rgba($color-error, 0.25);
+
+// Motion
+$duration-color: 150ms;
+$duration-reveal: 180ms;
+$duration-accordion: 200ms;
+$duration-screen: 200ms;
+$duration-highlight: 250ms;

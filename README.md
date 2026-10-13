@@ -2,6 +2,8 @@
 
 Frontend-only React app that helps a user explore whether a personal loan could fit their monthly budget. This repository currently contains the project foundation only — loan screens, calculations and eligibility rules are not implemented yet.
 
+Shared foundation details (design tokens, UI primitives, focus behaviour, component layout, CI, and e2e structure) are documented under [`tmp/foundation/`](tmp/foundation/README.md). Start with the [foundation reading order](tmp/foundation/README.md#reading-order).
+
 ## Requirements
 
 - Node.js 20 or newer
@@ -21,7 +23,9 @@ npm run dev
 
 Open the local URL printed by Vite (usually `http://localhost:5173`).
 
-## Checks
+## Quality
+
+These match the CI Quality job. Prefer `test:coverage` before opening a PR (plain `npm test` does not enforce thresholds).
 
 | Script                 | Purpose                             |
 | ---------------------- | ----------------------------------- |
@@ -29,7 +33,8 @@ Open the local URL printed by Vite (usually `http://localhost:5173`).
 | `npm run lint`         | ESLint                              |
 | `npm run format:check` | Prettier check                      |
 | `npm run format`       | Prettier write                      |
-| `npm test`             | Vitest once (CI-friendly)           |
+| `npm test`             | Vitest once (no coverage gate)      |
+| `npm run test:coverage`| Vitest + coverage thresholds (CI)   |
 | `npm run test:watch`   | Vitest watch mode                   |
 | `npm run build`        | Production typecheck + build        |
 | `npm run preview`      | Preview the production build        |
@@ -61,29 +66,31 @@ Cancel, Start again and reload will clear entered details, results, errors and g
 
 ```text
 src/
-  components/   Reusable interface pieces
+  components/   Reusable interface pieces (ui/ primitives + domain composites)
   screens/      Loan details, Your budget, Your result (later)
   hooks/        Shared form and journey behaviour (later)
   services/     Local mock services (later)
   store/        Redux configuration, slices, selectors, typed hooks
   utils/        Calculations, eligibility, validation, formatting (later)
   types/        Shared TypeScript types (later)
-  styles/       Global styles and theme values
+  styles/       Tokens, mixins, and global styles
   test/         Shared test setup
   App.tsx
   main.tsx
 ```
 
-SCSS Modules and tests stay beside the related components.
+SCSS Modules and tests stay beside the related components. See [`tmp/foundation/component-structure.md`](tmp/foundation/component-structure.md).
 
 ## Theme and typography
 
 - Primary blue: `#2F70EF`
-- White surfaces, light grey background, readable dark text
+- White surfaces, light grey page background (`#f3f7fb`), readable dark text
 - Result states: green, amber and red, always with text or icons
-- Font: locally served Nunito Sans (weights 400, 600, 700) with Roboto / Arial / sans-serif fallbacks
-- Default body size: 14px (`0.875rem`), line-height 1.5
-- On narrow touch devices, editable controls may use 16px to avoid browser focus zoom
+- Font: Nunito Sans via `@fontsource/nunito-sans` (weights 400, 600, 700, `font-display: swap`) with Roboto / Arial / sans-serif fallbacks — loaded from the package so the UI still renders when remote font CDNs are unavailable
+- Default body size: 14px (`html` at `87.5%` of a 16px browser default), line-height 1.5
+- On narrow viewports, editable controls may use 16px to avoid browser focus zoom
+
+Token and mixin details: [`tmp/foundation/design-tokens-and-styling.md`](tmp/foundation/design-tokens-and-styling.md).
 
 ## Scope boundaries
 

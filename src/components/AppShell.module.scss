@@ -1,66 +1,53 @@
+@use '../styles/mixins' as *;
+@use '../styles/tokens' as *;
+
 .shell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: $color-page-bg;
 }
 
 .header {
-  background-color: var(--color-surface);
-  border-bottom: var(--border-width) solid var(--color-border);
-  padding: var(--space-md) var(--space-lg);
+  background-color: $color-surface;
+  border-bottom: 1px solid $color-input-border;
+  padding: $space-4 $space-6;
 }
 
 .brand {
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text);
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text;
 }
 
 .main {
   flex: 1;
-  width: min(100%, 72rem);
-  margin: 0 auto;
-  padding: var(--space-xl) var(--space-lg);
+  @include content-shell;
+  padding-block: $space-7;
 }
 
 .panel {
-  background-color: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-xl);
+  @include card-surface;
+  padding: $space-7;
 }
 
 .title {
-  margin-bottom: var(--space-sm);
+  @include screen-title;
+  margin-bottom: $space-2;
 }
 
 .subtitle {
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-lg);
+  @include screen-description;
+  margin-bottom: $space-6;
 }
 
 .screenLabel {
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-primary);
-  margin-bottom: var(--space-lg);
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+  margin-bottom: $space-6;
 }
 
 .resetButton {
-  appearance: none;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-surface);
-  color: var(--color-text);
-  padding: 0.75rem 1rem;
-  min-height: 2.75rem;
-}
-
-.resetButton:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-.resetButton:active {
-  background-color: var(--color-background);
+  @include button-secondary;
 }

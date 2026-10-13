@@ -1,4 +1,4 @@
-import { resetJourney, selectCurrentScreen, useAppDispatch, useAppSelector } from '../store';
+import { resetJourney, selectCurrentScreen, useAppDispatch, useAppSelector } from '../../store';
 import styles from './AppShell.module.scss';
 
 const SCREEN_LABELS = {

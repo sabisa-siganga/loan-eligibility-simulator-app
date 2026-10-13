@@ -29,18 +29,14 @@ describe('Select', () => {
     expect(select.getAttribute('aria-describedby')).toContain(
       screen.getByText('Choose the closest match').id,
     );
-    expect(select.getAttribute('aria-describedby')).toContain(
-      screen.getByRole('alert').id,
-    );
+    expect(select.getAttribute('aria-describedby')).toContain(screen.getByRole('alert').id);
   });
 
   it('notifies callers when the value changes', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <Select label="Loan purpose" options={options} value="" onChange={onChange} />,
-    );
+    render(<Select label="Loan purpose" options={options} value="" onChange={onChange} />);
 
     await user.selectOptions(screen.getByLabelText('Loan purpose'), 'home');
 
@@ -48,13 +44,7 @@ describe('Select', () => {
   });
 
   it('drives invalid field styling from aria-invalid instead of an error class', () => {
-    render(
-      <Select
-        label="Loan purpose"
-        options={options}
-        errorText="Purpose is required"
-      />,
-    );
+    render(<Select label="Loan purpose" options={options} errorText="Purpose is required" />);
 
     const select = screen.getByLabelText('Loan purpose');
 
@@ -62,4 +52,3 @@ describe('Select', () => {
     expect(select.className).not.toMatch(/error/i);
   });
 });
-

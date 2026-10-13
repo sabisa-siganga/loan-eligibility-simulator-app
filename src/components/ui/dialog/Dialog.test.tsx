@@ -40,4 +40,58 @@ describe('Dialog', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
+
+  it('traps Tab focus from the last control back to the first', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <Dialog open title="Confirm reset" onClose={() => {}}>
+        <button type="button">Secondary action</button>
+      </Dialog>,
+    );
+
+    const closeButton = screen.getByRole('button', { name: 'Close dialog' });
+    const secondaryButton = screen.getByRole('button', { name: 'Secondary action' });
+
+    secondaryButton.focus();
+    await user.tab();
+
+    expect(closeButton).toHaveFocus();
+  });
+
+  it('traps Shift+Tab focus from the first control back to the last', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <Dialog open title="Confirm reset" onClose={() => {}}>
+        <button type="button">Secondary action</button>
+      </Dialog>,
+    );
+
+    const closeButton = screen.getByRole('button', { name: 'Close dialog' });
+    const secondaryButton = screen.getByRole('button', { name: 'Secondary action' });
+
+    expect(closeButton).toHaveFocus();
+    await user.tab({ shift: true });
+
+    expect(secondaryButton).toHaveFocus();
+  });
+
+  it('locks body scroll while open and restores it on close', () => {
+    const { rerender } = render(
+      <Dialog open title="Confirm reset" onClose={() => {}}>
+        <p>Open</p>
+      </Dialog>,
+    );
+
+    expect(document.body.style.overflow).toBe('hidden');
+
+    rerender(
+      <Dialog open={false} title="Confirm reset" onClose={() => {}}>
+        <p>Closed</p>
+      </Dialog>,
+    );
+
+    expect(document.body.style.overflow).not.toBe('hidden');
+  });
 });

@@ -20,9 +20,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       type={type}
-      className={[styles.button, variantClassName[variant], className]
-        .filter(Boolean)
-        .join(' ')}
+      className={[styles.button, variantClassName[variant], className].filter(Boolean).join(' ')}
       {...props}
     />
   ),

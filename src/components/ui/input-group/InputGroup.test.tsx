@@ -1,12 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from './InputGroup';
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from './InputGroup';
 
 describe('InputGroup', () => {
   it('exposes data-slot markers for group structure', () => {
@@ -44,4 +39,3 @@ describe('InputGroup', () => {
     expect(control.className).not.toMatch(/error/i);
   });
 });
-

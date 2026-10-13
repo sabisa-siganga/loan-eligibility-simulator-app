@@ -29,4 +29,3 @@ describe('Button', () => {
     expect(button.tagName).toBe('BUTTON');
   });
 });
-

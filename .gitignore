@@ -5,6 +5,9 @@ node_modules
 dist
 dist-ssr
 coverage
+playwright-report
+test-results
+
 
 # Logs / scratch (keep foundation docs tracked)
 tmp/*
@@ -22,7 +25,9 @@ lerna-debug.log*
 # Environment and local overrides
 .env
 .env.*
+!.env.e2e
 *.local
+
 
 # Editor
 .vscode/*

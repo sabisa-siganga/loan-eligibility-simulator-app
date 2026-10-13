@@ -6,12 +6,7 @@ export type LabelProps = ComponentPropsWithoutRef<'label'> & {
   readonly required?: boolean;
 };
 
-export const Label = ({
-  children,
-  className,
-  required = false,
-  ...props
-}: LabelProps) => (
+export const Label = ({ children, className, required = false, ...props }: LabelProps) => (
   <label className={[styles.label, className].filter(Boolean).join(' ')} {...props}>
     {children}
     {required ? (

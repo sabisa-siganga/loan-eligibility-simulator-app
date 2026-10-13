@@ -32,4 +32,3 @@ describe('Input', () => {
     expect(input.className).not.toMatch(/error/i);
   });
 });
-

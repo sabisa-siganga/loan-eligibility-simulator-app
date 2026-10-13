@@ -10,14 +10,7 @@ export type SliderProps = Omit<ComponentPropsWithoutRef<'input'>, 'type' | 'onCh
   readonly onChange?: ChangeEventHandler<HTMLInputElement>;
 };
 
-export const Slider = ({
-  id,
-  label,
-  helperText,
-  className,
-  onChange,
-  ...props
-}: SliderProps) => {
+export const Slider = ({ id, label, helperText, className, onChange, ...props }: SliderProps) => {
   const generatedId = useId();
   const sliderId = id ?? generatedId;
   const helperId = helperText ? `${sliderId}-helper` : undefined;

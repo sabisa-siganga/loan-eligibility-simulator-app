@@ -1,9 +1,4 @@
-export {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from './InputGroup';
+export { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from './InputGroup';
 export type {
   InputGroupAddonAlign,
   InputGroupAddonProps,

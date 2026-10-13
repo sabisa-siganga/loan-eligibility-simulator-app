@@ -2,7 +2,6 @@ import { resetJourney, selectCurrentScreen, useAppDispatch, useAppSelector } fro
 import { Button } from '../ui';
 import styles from './AppShell.module.scss';
 
-
 const SCREEN_LABELS = {
   loanDetails: 'Loan details',
   yourBudget: 'Your budget',

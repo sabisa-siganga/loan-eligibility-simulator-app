@@ -25,19 +25,24 @@ Open the local URL printed by Vite (usually `http://localhost:5173`).
 
 ## Quality
 
-These match the CI Quality job. Prefer `test:coverage` before opening a PR (plain `npm test` does not enforce thresholds).
+These match the CI **Quality** job (`.github/workflows/ci.yml`). Prefer `test:coverage` before opening a PR (plain `npm test` does not enforce thresholds). After the workflow has run once, configure a branch ruleset on `main` that requires a pull request and the **Quality** and **E2E** status checks (0 approving reviews).
 
-| Script                 | Purpose                             |
-| ---------------------- | ----------------------------------- |
-| `npm run typecheck`    | TypeScript project references check |
-| `npm run lint`         | ESLint                              |
-| `npm run format:check` | Prettier check                      |
-| `npm run format`       | Prettier write                      |
-| `npm test`             | Vitest once (no coverage gate)      |
-| `npm run test:coverage`| Vitest + coverage thresholds (CI)   |
-| `npm run test:watch`   | Vitest watch mode                   |
-| `npm run build`        | Production typecheck + build        |
-| `npm run preview`      | Preview the production build        |
+| Script                  | Purpose                               |
+| ----------------------- | ------------------------------------- |
+| `npm run typecheck`     | TypeScript project references check   |
+| `npm run lint`          | ESLint                                |
+| `npm run format:check`  | Prettier check                        |
+| `npm run format`        | Prettier write                        |
+| `npm test`              | Vitest once (no coverage gate)        |
+| `npm run test:coverage` | Vitest + 97% coverage thresholds (CI) |
+| `npm run test:watch`    | Vitest watch mode                     |
+| `npm run build`         | Production typecheck + build          |
+| `npm run preview`       | Preview the production build          |
+| `npm run build:e2e`     | Build with `.env.e2e` (mock API mode) |
+| `npm run test:e2e`      | Playwright (Chromium)                 |
+| `npm run test:e2e:ui`   | Playwright UI mode                    |
+
+Coverage and CI details: [`tmp/foundation/ci-and-quality-gates.md`](tmp/foundation/ci-and-quality-gates.md).
 
 ## Confirmed starting values
 

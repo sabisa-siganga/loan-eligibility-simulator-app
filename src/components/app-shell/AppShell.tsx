@@ -1,5 +1,7 @@
 import { resetJourney, selectCurrentScreen, useAppDispatch, useAppSelector } from '../../store';
+import { Button } from '../ui';
 import styles from './AppShell.module.scss';
+
 
 const SCREEN_LABELS = {
   loanDetails: 'Loan details',
@@ -27,15 +29,14 @@ export const AppShell = () => {
           <p className={styles.screenLabel} data-testid="current-screen">
             Current screen: {SCREEN_LABELS[currentScreen]}
           </p>
-          <button
-            type="button"
-            className={styles.resetButton}
+          <Button
+            variant="secondary"
             onClick={() => {
               dispatch(resetJourney());
             }}
           >
             Start again
-          </button>
+          </Button>
         </section>
       </main>
     </div>

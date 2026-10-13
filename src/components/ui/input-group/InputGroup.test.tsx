@@ -29,13 +29,19 @@ describe('InputGroup', () => {
     expect(screen.getByLabelText('Loan amount')).toBeInTheDocument();
   });
 
-  it('keeps aria-invalid on the control for group invalid styling', () => {
-    render(
+  it('keeps aria-invalid on the control for group invalid styling via :has', () => {
+    const { container } = render(
       <InputGroup>
         <InputGroupInput aria-label="Loan amount" aria-invalid="true" />
       </InputGroup>,
     );
 
-    expect(screen.getByLabelText('Loan amount')).toHaveAttribute('aria-invalid', 'true');
+    const group = container.querySelector('[data-slot="input-group"]');
+    const control = screen.getByLabelText('Loan amount');
+
+    expect(control).toHaveAttribute('aria-invalid', 'true');
+    expect(group?.querySelector('[aria-invalid="true"]')).toBe(control);
+    expect(control.className).not.toMatch(/error/i);
   });
 });
+

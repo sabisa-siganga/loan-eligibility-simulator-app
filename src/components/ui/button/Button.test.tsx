@@ -18,4 +18,15 @@ describe('Button', () => {
 
     expect(screen.getByRole('button', { name: 'Cancel' }).className).toMatch(/secondary/);
   });
+
+  it('keeps outline focus on the button element for keyboard users', () => {
+    render(<Button>Continue</Button>);
+
+    const button = screen.getByRole('button', { name: 'Continue' });
+
+    button.focus();
+    expect(button).toHaveFocus();
+    expect(button.tagName).toBe('BUTTON');
+  });
 });
+

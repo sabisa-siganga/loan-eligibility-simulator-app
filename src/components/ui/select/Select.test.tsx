@@ -46,4 +46,20 @@ describe('Select', () => {
 
     expect(onChange).toHaveBeenCalled();
   });
+
+  it('drives invalid field styling from aria-invalid instead of an error class', () => {
+    render(
+      <Select
+        label="Loan purpose"
+        options={options}
+        errorText="Purpose is required"
+      />,
+    );
+
+    const select = screen.getByLabelText('Loan purpose');
+
+    expect(select).toHaveAttribute('aria-invalid', 'true');
+    expect(select.className).not.toMatch(/error/i);
+  });
 });
+

@@ -221,6 +221,7 @@
     border-color $duration-color ease,
     box-shadow $duration-color ease;
 
+  // Exclude :focus so hover specificity cannot override the focus border.
   &:hover:not(:disabled):not(:read-only):not(:focus) {
     border-color: $color-input-hover-border;
   }

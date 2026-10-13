@@ -1,0 +1,21 @@
+@use '../../../styles/mixins' as *;
+
+.button {
+  /* Variant classes apply the full button mixins. */
+}
+
+.primary {
+  @include button-primary;
+}
+
+.secondary {
+  @include button-secondary;
+}
+
+.soft {
+  @include button-soft;
+}
+
+.link {
+  @include button-text;
+}

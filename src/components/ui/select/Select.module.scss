@@ -1,0 +1,14 @@
+@use '../../../styles/mixins' as *;
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.select {
+  @include field-control;
+
+  &[aria-invalid='true'] {
+    @include field-control-invalid;
+  }
+}

@@ -1,0 +1,9 @@
+@use '../../../styles/mixins' as *;
+
+.input {
+  @include field-control;
+
+  &[aria-invalid='true'] {
+    @include field-control-invalid;
+  }
+}

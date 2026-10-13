@@ -1,0 +1,45 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/tokens' as *;
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $space-4;
+  background-color: $color-overlay;
+}
+
+.dialog {
+  width: min(100%, $dialog-max);
+  max-height: min(90vh, 40rem);
+  overflow: auto;
+  background-color: $color-surface;
+  border-radius: $radius-dialog;
+  box-shadow: 0 16px 40px rgba(18, 26, 51, 0.18);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: $space-5 $space-5 0;
+}
+
+.title {
+  margin: 0;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text;
+}
+
+.close {
+  flex: 0 0 auto;
+}
+
+.body {
+  padding: $space-4 $space-5 $space-5;
+}

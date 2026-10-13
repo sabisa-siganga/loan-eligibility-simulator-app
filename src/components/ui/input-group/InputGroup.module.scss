@@ -1,0 +1,88 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/tokens' as *;
+
+.group {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: $control-min-height;
+  border: 1px solid $color-input-border;
+  border-radius: $radius-input;
+  background-color: $color-surface;
+  transition:
+    border-color $duration-color ease,
+    box-shadow $duration-color ease;
+
+  &:hover:not(:focus-within) {
+    border-color: $color-input-hover-border;
+  }
+
+  &:focus-within {
+    border-color: $color-primary;
+  }
+
+  &:focus-within:has(:focus-visible) {
+    outline: none;
+    border-color: $color-primary;
+    box-shadow: 0 0 0 $focus-ring-width $focus-ring-color;
+  }
+
+  &:has([aria-invalid='true']) {
+    border-color: $color-error-border;
+
+    &:hover:not(:focus-within) {
+      border-color: $color-error-border;
+    }
+
+    &:focus-within,
+    &:focus-within:has(:focus-visible) {
+      border-color: $color-error-border;
+      box-shadow: 0 0 0 $focus-ring-width $focus-ring-color-invalid;
+    }
+  }
+}
+
+.control {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: $control-min-height;
+  padding: $space-3 $space-4;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: $color-text;
+  font: inherit;
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  &:disabled {
+    color: $color-disabled-text;
+    cursor: not-allowed;
+  }
+}
+
+.addon {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding-inline: $space-3;
+  color: $color-text-secondary;
+
+  &[data-align='inline-start'] {
+    order: -1;
+  }
+
+  &[data-align='inline-end'] {
+    order: 1;
+  }
+}
+
+.text {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+}

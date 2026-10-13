@@ -2,8 +2,6 @@
 
 Frontend-only React app that helps a user explore whether a personal loan could fit their monthly budget. This repository currently contains the project foundation only — loan screens, calculations and eligibility rules are not implemented yet.
 
-Shared foundation details (design tokens, UI primitives, focus behaviour, component layout, CI, and e2e structure) are documented under [`tmp/foundation/`](tmp/foundation/README.md). Start with the [foundation reading order](tmp/foundation/README.md#reading-order).
-
 ## Requirements
 
 - Node.js 20 or newer
@@ -41,8 +39,6 @@ These match the CI **Quality** job (`.github/workflows/ci.yml`). Prefer `test:co
 | `npm run build:e2e`     | Build with `.env.e2e` (mock API mode) |
 | `npm run test:e2e`      | Playwright (Chromium)                 |
 | `npm run test:e2e:ui`   | Playwright UI mode                    |
-
-Coverage and CI details: [`tmp/foundation/ci-and-quality-gates.md`](tmp/foundation/ci-and-quality-gates.md).
 
 ## Confirmed starting values
 
@@ -84,7 +80,7 @@ src/
   main.tsx
 ```
 
-SCSS Modules and tests stay beside the related components. See [`tmp/foundation/component-structure.md`](tmp/foundation/component-structure.md).
+SCSS Modules and tests stay beside the related components.
 
 ## Theme and typography
 
@@ -95,8 +91,6 @@ SCSS Modules and tests stay beside the related components. See [`tmp/foundation/
 - Default body size: 14px (`html` at `87.5%` of a 16px browser default), line-height 1.5
 - On narrow viewports, editable controls may use 16px to avoid browser focus zoom
 
-Token and mixin details: [`tmp/foundation/design-tokens-and-styling.md`](tmp/foundation/design-tokens-and-styling.md).
-
 ## Scope boundaries
 
-This app does not include a backend, database, authentication, real banking APIs, real credit checks or financial-data persistence. Future mock services will run locally in the frontend.
+This app does not include a backend, database, authentication, real banking APIs, real credit checks or financial-data persistence.

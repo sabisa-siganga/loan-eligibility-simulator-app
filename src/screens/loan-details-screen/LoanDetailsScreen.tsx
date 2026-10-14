@@ -46,7 +46,7 @@ export const LoanDetailsScreen = () => {
     journey.loanTerm === null ? '' : String(journey.loanTerm),
   );
   const [expandedProductId, setExpandedProductId] = useState<string | null>(
-    () => journey.selectedProductId ?? null,
+    () => journey.selectedProductId ?? products[0]?.id ?? null,
   );
   const [touched, setTouched] = useState({
     purpose: false,
@@ -61,6 +61,16 @@ export const LoanDetailsScreen = () => {
     () => products.find((product) => product.id === journey.selectedProductId) ?? null,
     [products, journey.selectedProductId],
   );
+
+  useEffect(() => {
+    if (expandedProductId !== null || journey.selectedProductId !== null) {
+      return;
+    }
+    const firstProductId = products[0]?.id ?? null;
+    if (firstProductId !== null) {
+      setExpandedProductId(firstProductId);
+    }
+  }, [expandedProductId, journey.selectedProductId, products]);
 
   useEffect(() => {
     if (!validationRules || !selectedProduct) {

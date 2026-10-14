@@ -33,22 +33,26 @@ const expandProduct = async (user: ReturnType<typeof userEvent.setup>, productNa
 };
 
 describe('LoanDetailsScreen', () => {
-  it('keeps products collapsed until a header is clicked', () => {
+  it('opens the first loan product by default and keeps others collapsed', () => {
     renderScreen();
 
-    expect(screen.queryByLabelText('Home improvement')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/Required amount/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Personal Loan' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    expect(screen.getByLabelText('Home improvement')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Required amount/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Vehicle Finance' })).toHaveAttribute(
       'aria-expanded',
       'false',
     );
+    expect(screen.queryByLabelText('New vehicle')).not.toBeInTheDocument();
   });
 
   it('expands one product at a time and reveals purposes', async () => {
     const user = userEvent.setup();
     renderScreen();
 
-    await expandProduct(user, 'Personal Loan');
     expect(screen.getByRole('button', { name: 'Personal Loan' })).toHaveAttribute(
       'aria-expanded',
       'true',
@@ -74,7 +78,6 @@ describe('LoanDetailsScreen', () => {
     renderScreen();
 
     await expandProduct(user, 'Personal Loan');
-    await expandProduct(user, 'Personal Loan');
 
     expect(screen.getByRole('button', { name: 'Personal Loan' })).toHaveAttribute(
       'aria-expanded',
@@ -87,7 +90,6 @@ describe('LoanDetailsScreen', () => {
     const user = userEvent.setup();
     renderScreen();
 
-    await expandProduct(user, 'Personal Loan');
     expect(screen.queryByLabelText(/Required amount/)).not.toBeInTheDocument();
 
     await user.click(screen.getByLabelText('Home improvement'));
@@ -99,7 +101,6 @@ describe('LoanDetailsScreen', () => {
     const user = userEvent.setup();
     const { store } = renderScreen();
 
-    await expandProduct(user, 'Personal Loan');
     await user.click(screen.getByLabelText('Home improvement'));
     expect(store.getState().journey.selectedProductId).toBe('personal_loan');
     expect(store.getState().journey.selectedPurpose).toBe('home_improvement');
@@ -118,7 +119,6 @@ describe('LoanDetailsScreen', () => {
     const user = userEvent.setup();
     const { store } = renderScreen();
 
-    await expandProduct(user, 'Personal Loan');
     await user.click(screen.getByLabelText('Education'));
     await user.type(activeAmount(), '20000');
     await user.type(activeTerm(), '12');
@@ -134,7 +134,7 @@ describe('LoanDetailsScreen', () => {
     expect(screen.queryByLabelText(/Required amount/)).not.toBeInTheDocument();
   });
 
-  it('expands the first product and shows a purpose error when continue runs with nothing selected', async () => {
+  it('keeps the first product open and shows a purpose error when continue runs with nothing selected', async () => {
     const user = userEvent.setup();
     renderScreen();
 
@@ -147,7 +147,6 @@ describe('LoanDetailsScreen', () => {
     );
     expect(screen.getByLabelText('Home improvement')).toBeInTheDocument();
   });
-
   it('continues to your details without calling credit-check or calculate-rate', async () => {
     const user = userEvent.setup();
     let creditCheckCalls = 0;

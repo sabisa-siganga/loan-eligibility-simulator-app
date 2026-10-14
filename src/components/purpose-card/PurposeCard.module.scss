@@ -12,22 +12,29 @@
   border-radius: $radius-card;
   background-color: $color-surface;
   cursor: pointer;
+  outline: none;
   transition:
     border-color $duration-color ease,
     background-color $duration-color ease;
 
-  &:hover:not(.disabled) {
+  // Hover must not override selected or keyboard-focused borders.
+  &:hover:not(.disabled):not(.selected):not(:focus-within) {
     border-color: $color-input-hover-border;
   }
 
   &:focus-within {
-    @include focus-ring;
+    outline: none;
+    border-color: $color-primary;
   }
 }
 
 .selected {
   border-color: $color-primary;
   background-color: rgba($color-primary, 0.04);
+
+  &:focus-within {
+    border-color: $color-primary;
+  }
 
   .indicator {
     border-color: $color-primary;
@@ -46,6 +53,7 @@
 }
 
 .input {
+  // Visually hidden but still focusable for Tab / arrow-key radio behaviour.
   position: absolute;
   width: 1px;
   height: 1px;
@@ -56,6 +64,7 @@
   clip-path: inset(50%);
   overflow: hidden;
   white-space: nowrap;
+  outline: none;
 }
 
 .icon {

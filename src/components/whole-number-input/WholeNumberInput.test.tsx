@@ -43,4 +43,19 @@ describe('WholeNumberInput', () => {
     expect(screen.getByLabelText('Your credit score')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByText('Out of range')).toBeInTheDocument();
   });
+
+  it('hides helper text while an error is shown', () => {
+    render(
+      <WholeNumberInput
+        label="Term"
+        value="2"
+        onChange={() => undefined}
+        helperText="6 to 60 months"
+        error="Term too short"
+      />,
+    );
+
+    expect(screen.getByText('Term too short')).toBeInTheDocument();
+    expect(screen.queryByText('6 to 60 months')).not.toBeInTheDocument();
+  });
 });

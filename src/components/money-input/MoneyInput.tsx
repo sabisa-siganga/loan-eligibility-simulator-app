@@ -1,6 +1,14 @@
 import { useId, type ChangeEvent, type FocusEventHandler } from 'react';
 
-import { ErrorText, HelperText, InputGroup, InputGroupAddon, InputGroupInput, InputGroupText, Label } from '../ui';
+import {
+  ErrorText,
+  HelperText,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+  Label,
+} from '../ui';
 import { CURRENCY_SYMBOL } from '../../utils/formatMoney';
 import styles from './MoneyInput.module.scss';
 
@@ -37,9 +45,11 @@ export const MoneyInput = ({
   const inputId = id ?? generatedId;
   const helperId = `${inputId}-helper`;
   const errorId = `${inputId}-error`;
-  const describedBy = [helperText ? helperId : null, error ? errorId : null]
-    .filter(Boolean)
-    .join(' ') || undefined;
+  const showError = Boolean(error);
+  const showHelper = Boolean(helperText) && !showError;
+  const describedBy =
+    [showHelper ? helperId : null, showError ? errorId : null].filter(Boolean).join(' ') ||
+    undefined;
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(sanitizeMoneyInput(event.target.value));
@@ -69,8 +79,8 @@ export const MoneyInput = ({
           aria-describedby={describedBy}
         />
       </InputGroup>
-      {helperText ? <HelperText id={helperId}>{helperText}</HelperText> : null}
-      {error ? <ErrorText id={errorId}>{error}</ErrorText> : null}
+      {showHelper ? <HelperText id={helperId}>{helperText}</HelperText> : null}
+      {showError ? <ErrorText id={errorId}>{error}</ErrorText> : null}
     </div>
   );
 };

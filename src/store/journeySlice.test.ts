@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  clearLoanSelection,
   clearRateQuote,
   INITIAL_JOURNEY_SCREEN,
   journeyReducer,
@@ -54,6 +55,40 @@ describe('journeySlice', () => {
     expect(state.selectedPurpose).toBe('new_vehicle');
     expect(state.loanAmount).toBeNull();
     expect(state.loanTerm).toBeNull();
+  });
+
+  it('clears loan selection and quote while preserving credit scores', () => {
+    let state = journeyReducer(
+      undefined,
+      selectPurpose({ productId: 'personal_loan', purposeId: 'home_improvement' }),
+    );
+    state = journeyReducer(state, setLoanAmount(150000));
+    state = journeyReducer(state, setLoanTerm(24));
+    state = journeyReducer(state, setManualCreditScore(700));
+    state = journeyReducer(state, setCreditCheckScore(620));
+    state = journeyReducer(
+      state,
+      setRateQuote({
+        quote: sampleQuote,
+        inputs: {
+          loanType: 'personal_loan',
+          loanAmount: 150000,
+          loanTerm: 24,
+          creditScore: 700,
+        },
+      }),
+    );
+
+    state = journeyReducer(state, clearLoanSelection());
+
+    expect(state.selectedProductId).toBeNull();
+    expect(state.selectedPurpose).toBeNull();
+    expect(state.loanAmount).toBeNull();
+    expect(state.loanTerm).toBeNull();
+    expect(state.rateQuote).toBeNull();
+    expect(state.rateQuoteInputs).toBeNull();
+    expect(state.manualCreditScore).toBe(700);
+    expect(state.creditCheckScore).toBe(620);
   });
 
   it('preserves credit and personal details when loan values change', () => {

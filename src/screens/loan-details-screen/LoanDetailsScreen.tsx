@@ -8,6 +8,7 @@ import { WholeNumberInput } from '../../components/whole-number-input';
 import { calculateRate } from '../../services/calculateRate';
 import { runCreditCheck } from '../../services/creditCheck';
 import {
+  clearLoanSelection,
   selectPrimaryActionMode,
   selectPurpose,
   setCreditCheckScore,
@@ -56,6 +57,9 @@ export const LoanDetailsScreen = () => {
   const [creditText, setCreditText] = useState(
     journey.manualCreditScore === null ? '' : String(journey.manualCreditScore),
   );
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(
+    journey.selectedProductId,
+  );
   const [touched, setTouched] = useState({
     purpose: false,
     amount: false,
@@ -72,6 +76,7 @@ export const LoanDetailsScreen = () => {
   const calculateGenerationRef = useRef(0);
   const calculateControllerRef = useRef<AbortController | null>(null);
   const creditControllerRef = useRef<AbortController | null>(null);
+  const pendingPurposeFocusRef = useRef(false);
 
   const selectedProduct = useMemo(
     () => products.find((product) => product.id === journey.selectedProductId) ?? null,
@@ -112,14 +117,7 @@ export const LoanDetailsScreen = () => {
       }
     });
     setFieldErrors(nextErrors);
-  }, [
-    amountText,
-    creditText,
-    journey.selectedPurpose,
-    selectedProduct,
-    termText,
-    validationRules,
-  ]);
+  }, [amountText, creditText, journey.selectedPurpose, selectedProduct, termText, validationRules]);
 
   useEffect(
     () => () => {
@@ -129,6 +127,18 @@ export const LoanDetailsScreen = () => {
     [],
   );
 
+  useEffect(() => {
+    if (!pendingPurposeFocusRef.current || !expandedProductId) {
+      return;
+    }
+
+    pendingPurposeFocusRef.current = false;
+    const firstPurpose = document.querySelector<HTMLInputElement>(
+      `input[name="${PURPOSE_GROUP_NAME}"]`,
+    );
+    firstPurpose?.focus();
+  }, [expandedProductId, fieldErrors.purpose, submitAttempted]);
+
   if (!validationRules) {
     return null;
   }
@@ -137,6 +147,27 @@ export const LoanDetailsScreen = () => {
     const touchedKey =
       field === 'termMonths' ? 'term' : field === 'creditScore' ? 'creditScore' : field;
     return (submitAttempted || touched[touchedKey]) && Boolean(fieldErrors[field]);
+  };
+
+  const handleProductExpand = (productId: string) => {
+    if (expandedProductId === productId) {
+      return;
+    }
+
+    if (expandedProductId !== null || journey.selectedProductId !== null) {
+      dispatch(clearLoanSelection());
+      setAmountText('');
+      setTermText('');
+      setTouched((current) => ({
+        ...current,
+        purpose: false,
+        amount: false,
+        term: false,
+      }));
+    }
+
+    setExpandedProductId(productId);
+    setCalculateError(null);
   };
 
   const handlePurposeSelect = (productId: string, purposeId: string) => {
@@ -209,11 +240,17 @@ export const LoanDetailsScreen = () => {
     setCalculateError(null);
 
     if (!selectedProduct || !journey.selectedPurpose) {
+      const nextExpanded = expandedProductId ?? products[0]?.id ?? null;
       setFieldErrors((current) => ({
         ...current,
         purpose: 'Select a loan purpose to continue.',
       }));
-      focusFirstInvalid({ purpose: 'Select a loan purpose to continue.' });
+      if (nextExpanded !== expandedProductId) {
+        pendingPurposeFocusRef.current = true;
+        setExpandedProductId(nextExpanded);
+      } else {
+        focusFirstInvalid({ purpose: 'Select a loan purpose to continue.' });
+      }
       return;
     }
 
@@ -336,10 +373,8 @@ export const LoanDetailsScreen = () => {
   const purposeLabel = journey.selectedPurpose
     ? getPurposeLabel(journey.selectedPurpose)
     : 'Not selected';
-  const amountLabel =
-    journey.loanAmount === null ? 'Not entered' : formatMoney(journey.loanAmount);
-  const termLabel =
-    journey.loanTerm === null ? 'Not entered' : `${journey.loanTerm} months`;
+  const amountLabel = journey.loanAmount === null ? 'Not entered' : formatMoney(journey.loanAmount);
+  const termLabel = journey.loanTerm === null ? 'Not entered' : `${journey.loanTerm} months`;
   const creditScoreLabel =
     effectiveCreditScore === undefined ? 'Not provided' : String(effectiveCreditScore);
 
@@ -364,8 +399,7 @@ export const LoanDetailsScreen = () => {
               Select a loan type, tell us what it&apos;s for and enter your amount and term.
             </p>
             <p className={styles.requiredNote}>
-              Required fields are marked with an asterisk (
-              <span aria-hidden="true">*</span>
+              Required fields are marked with an asterisk (<span aria-hidden="true">*</span>
               ).
             </p>
           </div>
@@ -378,6 +412,7 @@ export const LoanDetailsScreen = () => {
 
           {products.map((product) => {
             const isSelected = journey.selectedProductId === product.id;
+            const isExpanded = expandedProductId === product.id;
             const amountBounds = getProductAmountBounds(validationRules, product);
             const termBounds = getProductTermBounds(validationRules, product);
 
@@ -386,23 +421,21 @@ export const LoanDetailsScreen = () => {
                 key={product.id}
                 product={product}
                 purposeGroupName={PURPOSE_GROUP_NAME}
-                selectedPurposeId={journey.selectedPurpose}
+                selectedPurposeId={isSelected ? journey.selectedPurpose : null}
+                isExpanded={isExpanded}
                 isSelected={isSelected}
                 amountText={amountText}
                 termText={termText}
-                amountHelperText={formatMoneyRange(amountBounds.min, amountBounds.max)}
-                termHelperText={`${termBounds.min} to ${termBounds.max} months`}
-                amountError={
-                  isSelected && showError('amount') ? fieldErrors.amount : undefined
-                }
+                amountHelperText={`How much do you need? Allowed: ${formatMoneyRange(amountBounds.min, amountBounds.max)}`}
+                termHelperText={`How long to repay? Allowed: ${termBounds.min} to ${termBounds.max} months`}
+                amountError={isSelected && showError('amount') ? fieldErrors.amount : undefined}
                 termError={
-                  isSelected && showError('termMonths')
-                    ? fieldErrors.termMonths
-                    : undefined
+                  isSelected && showError('termMonths') ? fieldErrors.termMonths : undefined
                 }
-                purposeError={
-                  isSelected && showError('purpose') ? fieldErrors.purpose : undefined
-                }
+                purposeError={isExpanded && showError('purpose') ? fieldErrors.purpose : undefined}
+                onHeaderClick={() => {
+                  handleProductExpand(product.id);
+                }}
                 onPurposeChange={(nextPurpose) => {
                   handlePurposeSelect(product.id, nextPurpose);
                 }}
@@ -422,9 +455,7 @@ export const LoanDetailsScreen = () => {
             );
           })}
 
-          {showError('purpose') &&
-          !journey.selectedPurpose &&
-          journey.selectedProductId === null ? (
+          {showError('purpose') && !journey.selectedPurpose && expandedProductId === null ? (
             <ErrorText id={purposeErrorId}>{fieldErrors.purpose}</ErrorText>
           ) : null}
 

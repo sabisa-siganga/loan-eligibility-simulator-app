@@ -12,6 +12,7 @@ export {
   type CatalogStatus,
 } from './catalogSlice';
 export {
+  clearLoanSelection,
   clearRateQuote,
   INITIAL_JOURNEY_SCREEN,
   initialJourneyState,

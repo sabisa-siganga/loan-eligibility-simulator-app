@@ -35,4 +35,19 @@ describe('MoneyInput', () => {
     expect(screen.getByLabelText(/Required amount/)).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByText('Too low')).toBeInTheDocument();
   });
+
+  it('hides helper text while an error is shown', () => {
+    render(
+      <MoneyInput
+        label="Required amount"
+        value="100"
+        onChange={() => undefined}
+        helperText="R5 000 to R300 000"
+        error="Too low"
+      />,
+    );
+
+    expect(screen.getByText('Too low')).toBeInTheDocument();
+    expect(screen.queryByText('R5 000 to R300 000')).not.toBeInTheDocument();
+  });
 });

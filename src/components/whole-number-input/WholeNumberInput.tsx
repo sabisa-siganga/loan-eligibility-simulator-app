@@ -51,8 +51,10 @@ export const WholeNumberInput = ({
   const helperId = `${inputId}-helper`;
   const errorId = `${inputId}-error`;
   const helpId = `${inputId}-help`;
+  const showError = Boolean(error);
+  const showHelper = Boolean(helperText) && !showError;
   const describedBy =
-    [helperText ? helperId : null, error ? errorId : null, helpText ? helpId : null]
+    [showHelper ? helperId : null, showError ? errorId : null, helpText ? helpId : null]
       .filter(Boolean)
       .join(' ') || undefined;
 
@@ -96,8 +98,8 @@ export const WholeNumberInput = ({
           </InputGroupAddon>
         ) : null}
       </InputGroup>
-      {helperText ? <HelperText id={helperId}>{helperText}</HelperText> : null}
-      {error ? <ErrorText id={errorId}>{error}</ErrorText> : null}
+      {showHelper ? <HelperText id={helperId}>{helperText}</HelperText> : null}
+      {showError ? <ErrorText id={errorId}>{error}</ErrorText> : null}
     </div>
   );
 };

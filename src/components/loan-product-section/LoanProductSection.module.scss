@@ -4,11 +4,46 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: $space-4;
+  gap: $space-6;
   padding-block: $space-5;
+  padding-top: 8px;
 }
 
-.headingRow {
+.headerButton {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+
+  &:focus-visible {
+    @include focus-ring;
+    border-radius: $radius-input;
+  }
+}
+
+.productIcon {
+  flex-shrink: 0;
+  margin-top: 0.1em;
+  color: $color-primary;
+}
+
+.headerContent {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.headerTop {
   display: flex;
   align-items: center;
   gap: $space-3;
@@ -33,9 +68,27 @@
   background-color: $color-input-border;
 }
 
+.chevron {
+  flex-shrink: 0;
+  color: $color-primary;
+  transition: transform $duration-accordion ease;
+}
+
+.chevronExpanded {
+  transform: rotate(180deg);
+}
+
 .description {
   margin: 0;
   color: $color-text-secondary;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
 }
 
 .purposeFieldset {
@@ -49,6 +102,10 @@
   @include field-label;
   margin-bottom: $space-2;
   padding: 0;
+
+  span {
+    color: $color-error;
+  }
 }
 
 .purposeGrid {

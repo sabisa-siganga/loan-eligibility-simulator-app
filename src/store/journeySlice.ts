@@ -98,6 +98,15 @@ const journeySlice = createSlice({
 
       invalidateDownstreamResults(state);
     },
+    clearLoanSelection(state) {
+      state.selectedProductId = null;
+      state.selectedPurpose = null;
+      state.loanAmount = null;
+      state.loanTerm = null;
+      state.rateQuote = null;
+      state.rateQuoteInputs = null;
+      invalidateDownstreamResults(state);
+    },
     setLoanAmount(state, action: PayloadAction<number | null>) {
       state.loanAmount = action.payload;
       invalidateDownstreamResults(state);
@@ -148,6 +157,7 @@ const journeySlice = createSlice({
 export const {
   setCurrentScreen,
   selectPurpose,
+  clearLoanSelection,
   setLoanAmount,
   setLoanTerm,
   setManualCreditScore,

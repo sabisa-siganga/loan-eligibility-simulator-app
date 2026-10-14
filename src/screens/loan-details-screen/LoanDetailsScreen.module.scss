@@ -37,8 +37,12 @@
 
 .requiredNote {
   margin: 0;
-  font-size: $font-size-sm;
+  font-size: 13px;
   color: $color-text-secondary;
+
+  span {
+    color: $color-error;
+  }
 }
 
 .creditSection {

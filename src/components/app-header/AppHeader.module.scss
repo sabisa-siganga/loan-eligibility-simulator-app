@@ -1,0 +1,30 @@
+@use '../../styles/mixins' as *;
+@use '../../styles/tokens' as *;
+
+.header {
+  background-color: $color-surface;
+  border-bottom: 1px solid $color-input-border;
+}
+
+.inner {
+  @include content-shell;
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+  padding-block: $space-3;
+}
+
+.brand {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text;
+}
+
+.icon {
+  color: $color-primary;
+  flex-shrink: 0;
+}

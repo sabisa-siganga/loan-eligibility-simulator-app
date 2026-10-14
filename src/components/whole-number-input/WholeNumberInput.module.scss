@@ -1,0 +1,19 @@
+@use '../../styles/tokens' as *;
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}
+
+.help {
+  display: inline-flex;
+  align-items: center;
+  color: $color-text-secondary;
+}

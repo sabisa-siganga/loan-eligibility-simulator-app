@@ -1,0 +1,89 @@
+@use '../../styles/mixins' as *;
+@use '../../styles/tokens' as *;
+
+.nav {
+  width: 100%;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  min-height: $touch-min;
+}
+
+.connector {
+  width: 48px;
+  height: 1px;
+  background-color: $color-input-border;
+  margin-inline: $space-2;
+
+  @include respond-below($bp-fields) {
+    width: 24px;
+  }
+}
+
+.marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  border: 1.5px solid $color-input-border;
+  color: $color-text-secondary;
+  background-color: $color-surface;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+}
+
+.current {
+  .marker {
+    border-color: $color-primary;
+    background-color: $color-primary;
+    color: $color-surface;
+  }
+
+  .label {
+    color: $color-primary;
+  }
+}
+
+.completed {
+  .marker {
+    border-color: $color-primary;
+    background-color: $color-surface;
+    color: $color-primary;
+  }
+
+  .label {
+    color: $color-text;
+  }
+
+  .connector {
+    background-color: $color-primary;
+  }
+}
+
+.upcoming {
+  .connector {
+    background-color: $color-input-border;
+  }
+}

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { MOCK_PRODUCTS } from '../mocks/data/products';
 import { MOCK_VALIDATION_RULES } from '../mocks/data/validationRules';
-import { buildLoanDetailsSchema } from './buildFormSchemas';
+import { buildBudgetSchema, buildLoanDetailsSchema } from './buildFormSchemas';
 
 describe('buildLoanDetailsSchema', () => {
   const personalLoan = MOCK_PRODUCTS[0];
@@ -120,5 +120,55 @@ describe('buildLoanDetailsSchema', () => {
         creditScore: 200,
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('buildBudgetSchema', () => {
+  const validBudget = {
+    age: '35',
+    employmentStatus: 'employed',
+    employmentDuration: '24',
+    monthlyIncome: '25000',
+    monthlyExpenses: '8000',
+    existingDebt: '0',
+  };
+
+  it('accepts a valid budget submission including zero existing debt', () => {
+    const schema = buildBudgetSchema({ rules: MOCK_VALIDATION_RULES });
+    const result = schema.safeParse(validBudget);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.existingDebt).toBe(0);
+      expect(result.data.age).toBe(35);
+    }
+  });
+
+  it('rejects blank required fields while distinguishing blank from zero', () => {
+    const schema = buildBudgetSchema({ rules: MOCK_VALIDATION_RULES });
+
+    expect(schema.safeParse({ ...validBudget, monthlyExpenses: '' }).success).toBe(false);
+    expect(schema.safeParse({ ...validBudget, monthlyExpenses: '0' }).success).toBe(true);
+    expect(schema.safeParse({ ...validBudget, existingDebt: '' }).success).toBe(false);
+  });
+
+  it('rejects age outside validation-rules bounds and unknown employment status', () => {
+    const schema = buildBudgetSchema({ rules: MOCK_VALIDATION_RULES });
+
+    expect(schema.safeParse({ ...validBudget, age: '17' }).success).toBe(false);
+    expect(schema.safeParse({ ...validBudget, employmentStatus: '' }).success).toBe(false);
+    expect(schema.safeParse({ ...validBudget, employmentStatus: 'contractor' }).success).toBe(
+      false,
+    );
+  });
+
+  it('rejects employment duration below the validation-rules minimum', () => {
+    const schema = buildBudgetSchema({ rules: MOCK_VALIDATION_RULES });
+    const result = schema.safeParse({ ...validBudget, employmentDuration: '2' });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe('Minimum 3 months employment required');
+    }
   });
 });

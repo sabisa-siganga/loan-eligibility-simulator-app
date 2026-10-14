@@ -1,7 +1,7 @@
 @use '../../../styles/tokens' as *;
 
 .errorText {
-  margin: $space-1 0 0;
-  font-size: $font-size-sm;
+  margin: -3px 0 0;
+  font-size: 13px;
   color: $color-error;
 }

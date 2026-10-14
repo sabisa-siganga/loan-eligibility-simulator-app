@@ -4,6 +4,7 @@ import { JourneyLayout } from './components/journey-layout';
 import { Button } from './components/ui';
 import { LoanDetailsScreen } from './screens/loan-details-screen';
 import { YourDetailsScreen } from './screens/your-details-screen';
+import { YourResultScreen } from './screens/your-result-screen';
 import { getProducts } from './services/products';
 import { getValidationRules } from './services/validationRules';
 import {
@@ -87,8 +88,12 @@ const App = () => {
     );
   }
 
-  if (currentScreen === 'yourBudget' || currentScreen === 'yourResult') {
+  if (currentScreen === 'yourBudget') {
     return <YourDetailsScreen />;
+  }
+
+  if (currentScreen === 'yourResult') {
+    return <YourResultScreen />;
   }
 
   return <LoanDetailsScreen />;

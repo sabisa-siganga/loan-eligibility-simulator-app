@@ -1,0 +1,21 @@
+@use '../../styles/mixins' as *;
+@use '../../styles/tokens' as *;
+
+.panel {
+  @include card-surface;
+  padding: $space-7;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.title {
+  @include screen-title;
+  margin: 0;
+}
+
+.description {
+  @include screen-description;
+  margin: 0;
+}

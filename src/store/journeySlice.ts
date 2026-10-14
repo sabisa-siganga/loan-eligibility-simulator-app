@@ -70,13 +70,9 @@ export const initialJourneyState: JourneyState = {
   financialDetails: emptyFinancialDetails,
 };
 
-const clearDerivedResults = (state: JourneyState): void => {
-  state.rateQuote = null;
-  state.rateQuoteInputs = null;
-  state.eligibilityResult = null;
-};
-
-const clearEligibility = (state: JourneyState): void => {
+const invalidateDownstreamResults = (state: JourneyState): void => {
+  // Keep rateQuote + rateQuoteInputs so Screen 1 can show Recalculate when
+  // the stored quote no longer matches the current draft inputs.
   state.eligibilityResult = null;
 };
 
@@ -100,23 +96,23 @@ const journeySlice = createSlice({
         state.loanTerm = null;
       }
 
-      clearDerivedResults(state);
+      invalidateDownstreamResults(state);
     },
     setLoanAmount(state, action: PayloadAction<number | null>) {
       state.loanAmount = action.payload;
-      clearDerivedResults(state);
+      invalidateDownstreamResults(state);
     },
     setLoanTerm(state, action: PayloadAction<number | null>) {
       state.loanTerm = action.payload;
-      clearDerivedResults(state);
+      invalidateDownstreamResults(state);
     },
     setManualCreditScore(state, action: PayloadAction<number | null>) {
       state.manualCreditScore = action.payload;
-      clearDerivedResults(state);
+      invalidateDownstreamResults(state);
     },
     setCreditCheckScore(state, action: PayloadAction<number | null>) {
       state.creditCheckScore = action.payload;
-      clearDerivedResults(state);
+      invalidateDownstreamResults(state);
     },
     setRateQuote(
       state,
@@ -127,10 +123,12 @@ const journeySlice = createSlice({
     ) {
       state.rateQuote = action.payload.quote;
       state.rateQuoteInputs = action.payload.inputs;
-      clearEligibility(state);
+      invalidateDownstreamResults(state);
     },
     clearRateQuote(state) {
-      clearDerivedResults(state);
+      state.rateQuote = null;
+      state.rateQuoteInputs = null;
+      invalidateDownstreamResults(state);
     },
     setPersonalDetails(state, action: PayloadAction<PersonalDetailsDraft>) {
       state.personalDetails = action.payload;

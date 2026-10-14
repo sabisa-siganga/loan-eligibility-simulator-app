@@ -25,7 +25,10 @@ export const runCreditCheck = async (options?: {
     });
 
     if (!response.ok) {
-      return { ok: false, message: 'Credit check failed. You can try again or continue without a score.' };
+      return {
+        ok: false,
+        message: 'Credit check failed. You can try again or continue without a score.',
+      };
     }
 
     const body = await readJsonBody(response);

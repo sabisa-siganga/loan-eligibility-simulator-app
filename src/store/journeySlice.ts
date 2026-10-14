@@ -85,10 +85,7 @@ const journeySlice = createSlice({
     setCurrentScreen(state, action: PayloadAction<JourneyScreen>) {
       state.currentScreen = action.payload;
     },
-    selectPurpose(
-      state,
-      action: PayloadAction<{ productId: string; purposeId: string }>,
-    ) {
+    selectPurpose(state, action: PayloadAction<{ productId: string; purposeId: string }>) {
       const productChanged = state.selectedProductId !== action.payload.productId;
       state.selectedProductId = action.payload.productId;
       state.selectedPurpose = action.payload.purposeId;
@@ -190,24 +187,20 @@ export const selectCurrentScreen = (state: { journey: JourneyState }): JourneySc
 
 export const selectJourney = (state: { journey: JourneyState }): JourneyState => state.journey;
 
-export const selectEffectiveCreditScoreValue = (
-  state: { journey: JourneyState },
-): number | undefined =>
+export const selectEffectiveCreditScoreValue = (state: {
+  journey: JourneyState;
+}): number | undefined =>
   resolveEffectiveCreditScore({
     entered: state.journey.manualCreditScore,
     creditCheckScore: state.journey.creditCheckScore,
     creditCheckOptIn: state.journey.creditCheckOptIn,
   });
 
-export const selectCurrentRateInputs = (
-  state: { journey: JourneyState },
-): RateQuoteInputs | null => {
+export const selectCurrentRateInputs = (state: {
+  journey: JourneyState;
+}): RateQuoteInputs | null => {
   const { selectedProductId, loanAmount, loanTerm } = state.journey;
-  if (
-    selectedProductId === null ||
-    loanAmount === null ||
-    loanTerm === null
-  ) {
+  if (selectedProductId === null || loanAmount === null || loanTerm === null) {
     return null;
   }
 
@@ -220,9 +213,7 @@ export const selectCurrentRateInputs = (
   };
 };
 
-export const selectRateQuoteMatchesCurrentInputs = (state: {
-  journey: JourneyState;
-}): boolean => {
+export const selectRateQuoteMatchesCurrentInputs = (state: { journey: JourneyState }): boolean => {
   const current = selectCurrentRateInputs(state);
   const stored = state.journey.rateQuoteInputs;
   if (!current || !stored || !state.journey.rateQuote) {
@@ -239,9 +230,7 @@ export const selectRateQuoteMatchesCurrentInputs = (state: {
 
 export type PrimaryActionMode = 'calculate' | 'recalculate' | 'continue';
 
-export const selectPrimaryActionMode = (state: {
-  journey: JourneyState;
-}): PrimaryActionMode => {
+export const selectPrimaryActionMode = (state: { journey: JourneyState }): PrimaryActionMode => {
   if (selectRateQuoteMatchesCurrentInputs(state)) {
     return 'continue';
   }

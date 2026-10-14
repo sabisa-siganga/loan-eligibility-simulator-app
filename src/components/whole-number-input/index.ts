@@ -1,5 +1,1 @@
-export {
-  WholeNumberInput,
-  default,
-  type WholeNumberInputProps,
-} from './WholeNumberInput';
+export { WholeNumberInput, default, type WholeNumberInputProps } from './WholeNumberInput';

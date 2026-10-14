@@ -13,13 +13,7 @@ export const MOCK_PRODUCTS: readonly LoanProduct[] = [
       min: 10.5,
       max: 18.5,
     },
-    purposes: [
-      'debt_consolidation',
-      'home_improvement',
-      'education',
-      'medical',
-      'other',
-    ],
+    purposes: ['debt_consolidation', 'home_improvement', 'education', 'medical', 'other'],
   },
   {
     id: 'vehicle_loan',

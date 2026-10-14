@@ -45,8 +45,7 @@ const catalogSlice = createSlice({
   },
 });
 
-export const { catalogLoadStarted, catalogLoadSucceeded, catalogLoadFailed } =
-  catalogSlice.actions;
+export const { catalogLoadStarted, catalogLoadSucceeded, catalogLoadFailed } = catalogSlice.actions;
 export const catalogReducer = catalogSlice.reducer;
 
 export const selectCatalog = (state: { catalog: CatalogState }): CatalogState => state.catalog;
@@ -54,6 +53,6 @@ export const selectCatalogStatus = (state: { catalog: CatalogState }): CatalogSt
   state.catalog.status;
 export const selectProducts = (state: { catalog: CatalogState }): LoanProduct[] =>
   state.catalog.products;
-export const selectValidationRules = (
-  state: { catalog: CatalogState },
-): ValidationRulesResponse | null => state.catalog.validationRules;
+export const selectValidationRules = (state: {
+  catalog: CatalogState;
+}): ValidationRulesResponse | null => state.catalog.validationRules;

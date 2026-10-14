@@ -12,13 +12,9 @@ describe('App', () => {
   it('loads catalog data and shows Choose your loan', async () => {
     renderWithProviders(<App />);
 
-    expect(
-      screen.getByText('Loading loan products and validation rules…'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Loading loan products and validation rules…')).toBeInTheDocument();
 
-    expect(
-      await screen.findByRole('heading', { name: 'Choose your loan' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Choose your loan' })).toBeInTheDocument();
     expect(screen.getByText('Loan Simulator')).toBeInTheDocument();
     expect(screen.getByText('Personal Loan')).toBeInTheDocument();
     expect(screen.getByText('Vehicle Finance')).toBeInTheDocument();
@@ -104,9 +100,7 @@ describe('App', () => {
     server.resetHandlers();
     await user.click(screen.getByRole('button', { name: 'Retry' }));
 
-    expect(
-      await screen.findByRole('heading', { name: 'Choose your loan' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Choose your loan' })).toBeInTheDocument();
   });
 
   it('shows a retryable error when validation rules fail to load', async () => {
@@ -124,9 +118,7 @@ describe('App', () => {
   });
 
   it('shows a retryable error when the products list is empty', async () => {
-    server.use(
-      http.get('*/api/loans/products', () => HttpResponse.json({ products: [] })),
-    );
+    server.use(http.get('*/api/loans/products', () => HttpResponse.json({ products: [] })));
 
     renderWithProviders(<App />);
 

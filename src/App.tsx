@@ -25,10 +25,7 @@ const App = () => {
   const loadCatalog = useCallback(async () => {
     dispatch(catalogLoadStarted());
 
-    const [productsResult, rulesResult] = await Promise.all([
-      getProducts(),
-      getValidationRules(),
-    ]);
+    const [productsResult, rulesResult] = await Promise.all([getProducts(), getValidationRules()]);
 
     if (!productsResult.ok) {
       dispatch(catalogLoadFailed(productsResult.message));

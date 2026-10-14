@@ -31,14 +31,12 @@ export const buildLoanDetailsSchema = ({
   const termMin = product.minTerm;
   const termMax = product.maxTerm;
 
-  const amountMessage =
-    `Loan amount must be between ${formatMoney(amountMin)} and ${formatMoney(amountMax)}`;
+  const amountMessage = `Loan amount must be between ${formatMoney(amountMin)} and ${formatMoney(amountMax)}`;
   const termMessage = `Loan term must be between ${termMin} and ${termMax} months`;
   const creditRule = rules.financialInfo.creditScore;
   const creditMin = creditRule.min ?? 300;
   const creditMax = creditRule.max ?? 850;
-  const creditMessage =
-    creditRule.errorMessage ?? 'Credit score must be between 300 and 850';
+  const creditMessage = creditRule.errorMessage ?? 'Credit score must be between 300 and 850';
 
   const purposeValues = product.purposes as [string, ...string[]];
 

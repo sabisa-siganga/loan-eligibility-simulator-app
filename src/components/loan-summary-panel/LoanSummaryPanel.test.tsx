@@ -42,4 +42,55 @@ describe('LoanSummaryPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Continue to your details' }));
     expect(onAction).toHaveBeenCalledTimes(1);
   });
+
+  it('shows error text and describes the button when error is set', () => {
+    render(
+      <LoanSummaryPanel
+        productLabel="Personal Loan"
+        purposeLabel="Education"
+        amountLabel="R 20,000.00"
+        termLabel="12 months"
+        error="Select a loan purpose to continue."
+        onAction={() => {}}
+      />,
+    );
+
+    expect(screen.getByText('Select a loan purpose to continue.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Continue to your details' })).toHaveAttribute(
+      'aria-describedby',
+      'loan-summary-error',
+    );
+  });
+
+  it('shows Continuing label and disables the button while submitting', () => {
+    render(
+      <LoanSummaryPanel
+        productLabel="Personal Loan"
+        purposeLabel="Education"
+        amountLabel="R 20,000.00"
+        termLabel="12 months"
+        isSubmitting
+        onAction={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Continuing…' })).toBeDisabled();
+  });
+
+  it('renders notice content and honors disabled without submitting', () => {
+    render(
+      <LoanSummaryPanel
+        productLabel="Personal Loan"
+        purposeLabel="Education"
+        amountLabel="R 20,000.00"
+        termLabel="12 months"
+        notice={<p>Optional notice</p>}
+        disabled
+        onAction={() => {}}
+      />,
+    );
+
+    expect(screen.getByText('Optional notice')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Continue to your details' })).toBeDisabled();
+  });
 });

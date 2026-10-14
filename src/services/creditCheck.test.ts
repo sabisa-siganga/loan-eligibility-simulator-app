@@ -59,10 +59,7 @@ describe('runCreditCheck', () => {
   });
 
   it('rethrows AbortError', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockRejectedValue(new DOMException('Aborted', 'AbortError')),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new DOMException('Aborted', 'AbortError')));
 
     await expect(runCreditCheck()).rejects.toMatchObject({ name: 'AbortError' });
   });

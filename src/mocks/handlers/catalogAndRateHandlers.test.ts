@@ -10,10 +10,7 @@ describe('catalog and rate handlers', () => {
     };
 
     expect(response.status).toBe(200);
-    expect(body.products.map((product) => product.id)).toEqual([
-      'personal_loan',
-      'vehicle_loan',
-    ]);
+    expect(body.products.map((product) => product.id)).toEqual(['personal_loan', 'vehicle_loan']);
   });
 
   it('returns validation rules including optional creditScore', async () => {

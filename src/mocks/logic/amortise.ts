@@ -28,11 +28,7 @@ export type AmortiseLoanInput = {
   readonly annualRatePercent: number;
 };
 
-export const amortiseLoan = ({
-  principal,
-  termMonths,
-  annualRatePercent,
-}: AmortiseLoanInput) => {
+export const amortiseLoan = ({ principal, termMonths, annualRatePercent }: AmortiseLoanInput) => {
   const monthlyRate = annualRatePercent / 100 / 12;
   const payment =
     monthlyRate === 0
@@ -44,12 +40,8 @@ export const amortiseLoan = ({
   const paymentSchedule = Array.from({ length: termMonths }, (_, index) => {
     const interest = roundMoney(balance * monthlyRate);
     const isLast = index === termMonths - 1;
-    const principalPortion = isLast
-      ? roundMoney(balance)
-      : roundMoney(monthlyPayment - interest);
-    const paymentAmount = isLast
-      ? roundMoney(principalPortion + interest)
-      : monthlyPayment;
+    const principalPortion = isLast ? roundMoney(balance) : roundMoney(monthlyPayment - interest);
+    const paymentAmount = isLast ? roundMoney(principalPortion + interest) : monthlyPayment;
     balance = roundMoney(Math.max(0, balance - principalPortion));
 
     return {
@@ -61,9 +53,7 @@ export const amortiseLoan = ({
     };
   });
 
-  const totalRepayment = roundMoney(
-    paymentSchedule.reduce((sum, entry) => sum + entry.payment, 0),
-  );
+  const totalRepayment = roundMoney(paymentSchedule.reduce((sum, entry) => sum + entry.payment, 0));
   const totalInterest = roundMoney(totalRepayment - principal);
 
   return {

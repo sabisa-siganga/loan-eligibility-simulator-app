@@ -87,4 +87,38 @@ describe('buildLoanDetailsSchema', () => {
       }).success,
     ).toBe(true);
   });
+
+  it('falls back to default credit bounds when validation-rules omit them', () => {
+    const rulesWithoutCreditBounds = {
+      ...MOCK_VALIDATION_RULES,
+      financialInfo: {
+        ...MOCK_VALIDATION_RULES.financialInfo,
+        creditScore: {
+          required: false,
+        },
+      },
+    };
+
+    const schema = buildLoanDetailsSchema({
+      rules: rulesWithoutCreditBounds,
+      product: personalLoan,
+    });
+
+    expect(
+      schema.safeParse({
+        purpose: 'medical',
+        amount: 5000,
+        termMonths: 6,
+        creditScore: 300,
+      }).success,
+    ).toBe(true);
+    expect(
+      schema.safeParse({
+        purpose: 'medical',
+        amount: 5000,
+        termMonths: 6,
+        creditScore: 200,
+      }).success,
+    ).toBe(false);
+  });
 });

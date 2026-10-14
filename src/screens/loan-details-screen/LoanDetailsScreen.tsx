@@ -1,9 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { JourneyLayout } from '../../components/journey-layout';
+import { LoanProductSection } from '../../components/loan-product-section';
 import { LoanSummaryPanel } from '../../components/loan-summary-panel';
-import { MoneyInput } from '../../components/money-input';
-import { PurposeCard } from '../../components/purpose-card';
 import { Button, ErrorText, HelperText } from '../../components/ui';
 import { WholeNumberInput } from '../../components/whole-number-input';
 import { calculateRate } from '../../services/calculateRate';
@@ -20,7 +19,6 @@ import {
   useAppDispatch,
   useAppSelector,
 } from '../../store';
-import type { LoanProduct } from '../../types/api';
 import {
   buildLoanDetailsSchema,
   getProductAmountBounds,
@@ -39,13 +37,6 @@ const parseOptionalNumber = (value: string): number | null => {
   }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
-};
-
-const getPurposePrompt = (product: LoanProduct): string => {
-  if (product.id === 'vehicle_loan') {
-    return 'What type of vehicle?';
-  }
-  return "What's the loan for?";
 };
 
 export const LoanDetailsScreen = () => {
@@ -391,89 +382,43 @@ export const LoanDetailsScreen = () => {
             const termBounds = getProductTermBounds(validationRules, product);
 
             return (
-              <section
+              <LoanProductSection
                 key={product.id}
-                className={styles.productSection}
-                aria-labelledby={`product-${product.id}-heading`}
-              >
-                <h2 id={`product-${product.id}-heading`} className={styles.productHeading}>
-                  {product.name}
-                </h2>
-                <p className={styles.productDescription}>{product.description}</p>
-
-                <fieldset className={styles.purposeFieldset}>
-                  <legend className={styles.purposeLegend}>
-                    {getPurposePrompt(product)}{' '}
-                    <span aria-hidden="true">*</span>
-                  </legend>
-                  <div
-                    className={styles.purposeGrid}
-                    role="radiogroup"
-                    aria-labelledby={`product-${product.id}-heading`}
-                    aria-describedby={
-                      showError('purpose') && isSelected ? purposeErrorId : undefined
-                    }
-                  >
-                    {product.purposes.map((purposeId) => (
-                      <PurposeCard
-                        key={purposeId}
-                        purposeId={purposeId}
-                        name={PURPOSE_GROUP_NAME}
-                        checked={journey.selectedPurpose === purposeId}
-                        onChange={(nextPurpose) => {
-                          handlePurposeSelect(product.id, nextPurpose);
-                        }}
-                      />
-                    ))}
-                  </div>
-                </fieldset>
-
-                {showError('purpose') && isSelected ? (
-                  <ErrorText id={purposeErrorId}>{fieldErrors.purpose}</ErrorText>
-                ) : null}
-
-                <div className={styles.fields}>
-                  <MoneyInput
-                    id={isSelected ? 'loan-amount' : `loan-amount-${product.id}`}
-                    label="Required amount"
-                    value={isSelected ? amountText : ''}
-                    onChange={handleAmountChange}
-                    onBlur={() => {
-                      if (isSelected) {
-                        setTouched((current) => ({ ...current, amount: true }));
-                      }
-                    }}
-                    required={isSelected}
-                    disabled={!isSelected}
-                    helperText={formatMoneyRange(amountBounds.min, amountBounds.max)}
-                    error={
-                      isSelected && showError('amount') ? fieldErrors.amount : undefined
-                    }
-                  />
-                  <WholeNumberInput
-                    id={isSelected ? 'loan-term' : `loan-term-${product.id}`}
-                    label="Term"
-                    value={isSelected ? termText : ''}
-                    onChange={handleTermChange}
-                    onBlur={() => {
-                      if (isSelected) {
-                        setTouched((current) => ({ ...current, term: true }));
-                      }
-                    }}
-                    required={isSelected}
-                    disabled={!isSelected}
-                    placeholder="Enter term"
-                    suffix="months"
-                    helperText={`${termBounds.min} to ${termBounds.max} months`}
-                    helpText="The repayment period is the number of months you will take to repay the loan."
-                    error={
-                      isSelected && showError('termMonths')
-                        ? fieldErrors.termMonths
-                        : undefined
-                    }
-                  />
-                </div>
-              </section>
+                product={product}
+                purposeGroupName={PURPOSE_GROUP_NAME}
+                selectedPurposeId={journey.selectedPurpose}
+                isSelected={isSelected}
+                amountText={amountText}
+                termText={termText}
+                amountHelperText={formatMoneyRange(amountBounds.min, amountBounds.max)}
+                termHelperText={`${termBounds.min} to ${termBounds.max} months`}
+                amountError={
+                  isSelected && showError('amount') ? fieldErrors.amount : undefined
+                }
+                termError={
+                  isSelected && showError('termMonths')
+                    ? fieldErrors.termMonths
+                    : undefined
+                }
+                purposeError={
+                  isSelected && showError('purpose') ? fieldErrors.purpose : undefined
+                }
+                onPurposeChange={(nextPurpose) => {
+                  handlePurposeSelect(product.id, nextPurpose);
+                }}
+                onAmountChange={handleAmountChange}
+                onTermChange={handleTermChange}
+                onAmountBlur={() => {
+                  if (isSelected) {
+                    setTouched((current) => ({ ...current, amount: true }));
+                  }
+                }}
+                onTermBlur={() => {
+                  if (isSelected) {
+                    setTouched((current) => ({ ...current, term: true }));
+                  }
+                }}
+              />
             );
           })}
 
@@ -484,10 +429,13 @@ export const LoanDetailsScreen = () => {
           ) : null}
 
           <section className={styles.creditSection} aria-labelledby="credit-score-heading">
-            <h2 id="credit-score-heading" className={styles.productHeading}>
-              Credit score (optional)
-            </h2>
-            <p className={styles.productDescription}>
+            <div className={styles.creditHeadingRow}>
+              <h2 id="credit-score-heading" className={styles.creditHeading}>
+                Credit score (optional)
+              </h2>
+              <span className={styles.creditHeadingRule} aria-hidden="true" />
+            </div>
+            <p className={styles.creditDescription}>
               A higher credit score may improve your chances of a better rate.
             </p>
             <div className={styles.creditControls}>

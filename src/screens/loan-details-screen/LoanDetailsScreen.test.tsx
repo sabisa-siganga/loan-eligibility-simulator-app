@@ -234,4 +234,123 @@ describe('LoanDetailsScreen', () => {
       await screen.findByText('Credit score must be between 300 and 850'),
     ).toBeInTheDocument();
   });
+
+  it('shows an empty-products message when the catalog has no products', () => {
+    renderWithProviders(<LoanDetailsScreen />, {
+      preloadedState: {
+        catalog: {
+          ...readyCatalog,
+          products: [],
+        },
+        journey: initialJourneyState,
+      },
+    });
+
+    expect(screen.getByText('No loan products are available right now.')).toBeInTheDocument();
+  });
+
+  it('continues to your details without recalculating when the quote matches', async () => {
+    const user = userEvent.setup();
+    const { store } = renderScreen({
+      ...initialJourneyState,
+      selectedProductId: 'personal_loan',
+      selectedPurpose: 'education',
+      loanAmount: 50000,
+      loanTerm: 24,
+      rateQuote: {
+        interestRate: 12,
+        monthlyPayment: 100,
+        totalInterest: 200,
+        totalRepayment: 2400,
+        paymentSchedule: [],
+      },
+      rateQuoteInputs: {
+        loanType: 'personal_loan',
+        loanAmount: 50000,
+        loanTerm: 24,
+        creditScore: null,
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Continue to your details' }));
+    expect(store.getState().journey.currentScreen).toBe('yourBudget');
+  });
+
+  it('shows a credit-check error when the request fails', async () => {
+    const user = userEvent.setup();
+
+    server.use(
+      http.post('*/api/loans/credit-check', () =>
+        HttpResponse.json({ message: 'fail' }, { status: 500 }),
+      ),
+    );
+
+    renderScreen();
+    await user.click(screen.getByRole('button', { name: 'Run a credit check' }));
+
+    expect(
+      await screen.findByText(
+        'Credit check failed. You can try again or continue without a score.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('validates amount on blur after interaction', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+
+    await user.click(screen.getByLabelText('Education'));
+    await user.type(activeAmount(), '100');
+    await user.tab();
+
+    expect(
+      await screen.findByText(/Loan amount must be between/),
+    ).toBeInTheDocument();
+  });
+
+  it('shows a purpose error under the selected product after a failed submit', async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      ...initialJourneyState,
+      selectedProductId: 'personal_loan',
+      selectedPurpose: null,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Calculate repayment' }));
+
+    expect(await screen.findByText('Select a loan purpose to continue.')).toBeInTheDocument();
+  });
+
+  it('uses the credit-check score when the manual field is empty', async () => {
+    const user = userEvent.setup();
+    let requestBody: unknown;
+
+    server.use(
+      http.post('*/api/loans/calculate-rate', async ({ request }) => {
+        requestBody = await request.json();
+        return HttpResponse.json({
+          interestRate: 12,
+          monthlyPayment: 100,
+          totalInterest: 200,
+          totalRepayment: 2400,
+          paymentSchedule: [],
+        });
+      }),
+    );
+
+    const { store } = renderScreen({
+      ...initialJourneyState,
+      creditCheckScore: 680,
+    });
+
+    await user.click(screen.getByLabelText('Education'));
+    await user.type(activeAmount(), '20000');
+    await user.type(activeTerm(), '12');
+    await user.click(screen.getByRole('button', { name: 'Calculate repayment' }));
+
+    await waitFor(() => {
+      expect(store.getState().journey.currentScreen).toBe('yourBudget');
+    });
+    expect(requestBody).toMatchObject({ creditScore: 680 });
+  });
 });

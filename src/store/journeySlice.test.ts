@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  clearRateQuote,
   INITIAL_JOURNEY_SCREEN,
   journeyReducer,
   resetJourney,
@@ -10,6 +11,7 @@ import {
   setCreditCheckScore,
   setCurrentScreen,
   setEligibilityResult,
+  setFinancialDetails,
   setLoanAmount,
   setLoanTerm,
   setManualCreditScore,
@@ -156,5 +158,32 @@ describe('journeySlice', () => {
     const state = journeyReducer(dirty, resetJourney());
     expect(state.currentScreen).toBe(INITIAL_JOURNEY_SCREEN);
     expect(state.loanAmount).toBeNull();
+  });
+
+  it('clears a stored rate quote on demand and stores budget drafts', () => {
+    let state = journeyReducer(
+      undefined,
+      setRateQuote({
+        quote: sampleQuote,
+        inputs: {
+          loanType: 'personal_loan',
+          loanAmount: 150000,
+          loanTerm: 24,
+          creditScore: null,
+        },
+      }),
+    );
+    state = journeyReducer(state, clearRateQuote());
+    expect(state.rateQuote).toBeNull();
+
+    state = journeyReducer(
+      state,
+      setFinancialDetails({
+        monthlyIncome: 25000,
+        monthlyExpenses: 10000,
+        existingDebt: 1000,
+      }),
+    );
+    expect(state.financialDetails.monthlyIncome).toBe(25000);
   });
 });

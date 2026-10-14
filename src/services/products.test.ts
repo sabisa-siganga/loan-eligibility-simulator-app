@@ -33,4 +33,39 @@ describe('getProducts', () => {
       message: 'Loan products response was invalid.',
     });
   });
+
+  it('returns failure when the HTTP response is not ok', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({}),
+      }),
+    );
+
+    const result = await getProducts();
+    expect(result).toEqual({
+      ok: false,
+      message: 'Unable to load loan products. Please try again.',
+    });
+  });
+
+  it('returns failure when fetch throws a network error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+
+    const result = await getProducts();
+    expect(result).toEqual({
+      ok: false,
+      message: 'Unable to load loan products. Please try again.',
+    });
+  });
+
+  it('rethrows AbortError', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new DOMException('Aborted', 'AbortError')),
+    );
+
+    await expect(getProducts()).rejects.toMatchObject({ name: 'AbortError' });
+  });
 });

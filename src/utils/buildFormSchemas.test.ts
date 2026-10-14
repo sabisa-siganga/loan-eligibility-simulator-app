@@ -55,4 +55,36 @@ describe('buildLoanDetailsSchema', () => {
 
     expect(result.success).toBe(false);
   });
+
+  it('rejects a fractional term and an amount above the product max', () => {
+    const schema = buildLoanDetailsSchema({
+      rules: MOCK_VALIDATION_RULES,
+      product: personalLoan,
+    });
+
+    expect(
+      schema.safeParse({
+        purpose: 'other',
+        amount: 400000,
+        termMonths: 12.5,
+        creditScore: '',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('accepts a credit score at the validation-rules boundary', () => {
+    const schema = buildLoanDetailsSchema({
+      rules: MOCK_VALIDATION_RULES,
+      product: personalLoan,
+    });
+
+    expect(
+      schema.safeParse({
+        purpose: 'medical',
+        amount: 5000,
+        termMonths: 6,
+        creditScore: 300,
+      }).success,
+    ).toBe(true);
+  });
 });

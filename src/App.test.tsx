@@ -1,8 +1,10 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
 import App from './App';
+import { server } from './mocks/server';
 import { initialJourneyState } from './store';
 import { renderWithProviders } from './test/renderWithProviders';
 
@@ -82,5 +84,54 @@ describe('App', () => {
       expect(screen.getByRole('heading', { name: 'Choose your loan' })).toBeInTheDocument();
     });
     expect(screen.getByDisplayValue('150000')).toBeInTheDocument();
+  });
+
+  it('shows a retryable error when catalog loading fails', async () => {
+    const user = userEvent.setup();
+
+    server.use(
+      http.get('*/api/loans/products', () =>
+        HttpResponse.json({ message: 'fail' }, { status: 500 }),
+      ),
+    );
+
+    renderWithProviders(<App />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Unable to load loan products. Please try again.',
+    );
+
+    server.resetHandlers();
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Choose your loan' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows a retryable error when validation rules fail to load', async () => {
+    server.use(
+      http.get('*/api/loans/validation-rules', () =>
+        HttpResponse.json({ message: 'fail' }, { status: 500 }),
+      ),
+    );
+
+    renderWithProviders(<App />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Unable to load validation rules. Please try again.',
+    );
+  });
+
+  it('shows a retryable error when the products list is empty', async () => {
+    server.use(
+      http.get('*/api/loans/products', () => HttpResponse.json({ products: [] })),
+    );
+
+    renderWithProviders(<App />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'No loan products are available right now.',
+    );
   });
 });

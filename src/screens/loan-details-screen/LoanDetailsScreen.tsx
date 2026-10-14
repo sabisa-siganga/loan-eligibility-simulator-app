@@ -477,7 +477,9 @@ export const LoanDetailsScreen = () => {
             );
           })}
 
-          {showError('purpose') && !journey.selectedPurpose ? (
+          {showError('purpose') &&
+          !journey.selectedPurpose &&
+          journey.selectedProductId === null ? (
             <ErrorText id={purposeErrorId}>{fieldErrors.purpose}</ErrorText>
           ) : null}
 

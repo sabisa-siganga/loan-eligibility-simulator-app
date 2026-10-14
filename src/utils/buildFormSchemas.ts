@@ -24,15 +24,19 @@ export const buildLoanDetailsSchema = ({
   readonly rules: ValidationRulesResponse;
   readonly product: LoanProduct;
 }) => {
-  const amountMin = Math.max(rules.loanDetails.requestedAmount.min ?? product.minAmount, product.minAmount);
-  const amountMax = Math.min(rules.loanDetails.requestedAmount.max ?? product.maxAmount, product.maxAmount);
-  const termMin = Math.max(rules.loanDetails.loanTerm.min ?? product.minTerm, product.minTerm);
-  const termMax = Math.min(rules.loanDetails.loanTerm.max ?? product.maxTerm, product.maxTerm);
+  // Product bounds are the source of truth for amount/term so Vehicle Finance
+  // is never constrained by Personal Loan validation-rules defaults.
+  const amountMin = product.minAmount;
+  const amountMax = product.maxAmount;
+  const termMin = product.minTerm;
+  const termMax = product.maxTerm;
 
   const amountMessage =
     `Loan amount must be between ${formatMoney(amountMin)} and ${formatMoney(amountMax)}`;
   const termMessage = `Loan term must be between ${termMin} and ${termMax} months`;
   const creditRule = rules.financialInfo.creditScore;
+  const creditMin = creditRule.min ?? 300;
+  const creditMax = creditRule.max ?? 850;
   const creditMessage =
     creditRule.errorMessage ?? 'Credit score must be between 300 and 850';
 
@@ -77,8 +81,8 @@ export const buildLoanDetailsSchema = ({
           error: creditMessage,
         })
         .int({ message: creditMessage })
-        .min(creditRule.min ?? 300, creditMessage)
-        .max(creditRule.max ?? 850, creditMessage)
+        .min(creditMin, creditMessage)
+        .max(creditMax, creditMessage)
         .nullable()
         .optional(),
     ),
@@ -86,17 +90,17 @@ export const buildLoanDetailsSchema = ({
 };
 
 export const getProductAmountBounds = (
-  rules: ValidationRulesResponse,
+  _rules: ValidationRulesResponse,
   product: LoanProduct,
 ): { readonly min: number; readonly max: number } => ({
-  min: Math.max(rules.loanDetails.requestedAmount.min ?? product.minAmount, product.minAmount),
-  max: Math.min(rules.loanDetails.requestedAmount.max ?? product.maxAmount, product.maxAmount),
+  min: product.minAmount,
+  max: product.maxAmount,
 });
 
 export const getProductTermBounds = (
-  rules: ValidationRulesResponse,
+  _rules: ValidationRulesResponse,
   product: LoanProduct,
 ): { readonly min: number; readonly max: number } => ({
-  min: Math.max(rules.loanDetails.loanTerm.min ?? product.minTerm, product.minTerm),
-  max: Math.min(rules.loanDetails.loanTerm.max ?? product.maxTerm, product.maxTerm),
+  min: product.minTerm,
+  max: product.maxTerm,
 });

@@ -31,4 +31,39 @@ describe('runCreditCheck', () => {
       message: 'Credit check response was invalid.',
     });
   });
+
+  it('returns failure when the HTTP response is not ok', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({}),
+      }),
+    );
+
+    const result = await runCreditCheck();
+    expect(result).toEqual({
+      ok: false,
+      message: 'Credit check failed. You can try again or continue without a score.',
+    });
+  });
+
+  it('returns failure when fetch throws a network error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+
+    const result = await runCreditCheck();
+    expect(result).toEqual({
+      ok: false,
+      message: 'Credit check failed. You can try again or continue without a score.',
+    });
+  });
+
+  it('rethrows AbortError', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new DOMException('Aborted', 'AbortError')),
+    );
+
+    await expect(runCreditCheck()).rejects.toMatchObject({ name: 'AbortError' });
+  });
 });

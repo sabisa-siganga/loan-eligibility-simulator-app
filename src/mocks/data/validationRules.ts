@@ -23,7 +23,7 @@ export const MOCK_VALIDATION_RULES: ValidationRulesResponse = {
     monthlyIncome: {
       min: 5000,
       required: true,
-      errorMessage: 'Minimum monthly income of R5,000 required',
+      errorMessage: 'Minimum monthly income of R5 000 required',
     },
     monthlyExpenses: {
       min: 0,
@@ -42,7 +42,7 @@ export const MOCK_VALIDATION_RULES: ValidationRulesResponse = {
       min: 5000,
       max: 300000,
       required: true,
-      errorMessage: 'Loan amount must be between R5,000 and R300,000',
+      errorMessage: 'Loan amount must be between R5 000 and R300 000',
     },
     loanTerm: {
       min: 6,

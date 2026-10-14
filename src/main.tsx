@@ -16,10 +16,26 @@ if (!rootElement) {
   throw new Error('Root element #root was not found.');
 }
 
-createRoot(rootElement).render(
-  <StrictMode>
-    <Provider store={store}>
-      <App />
-    </Provider>
-  </StrictMode>,
-);
+const enableMocking = async (): Promise<void> => {
+  if (import.meta.env.MODE === 'test') {
+    return;
+  }
+
+  const { worker } = await import('./mocks/browser');
+  await worker.start({
+    onUnhandledRequest: 'bypass',
+    serviceWorker: {
+      url: `${import.meta.env.BASE_URL}mockServiceWorker.js`,
+    },
+  });
+};
+
+void enableMocking().then(() => {
+  createRoot(rootElement).render(
+    <StrictMode>
+      <Provider store={store}>
+        <App />
+      </Provider>
+    </StrictMode>,
+  );
+});

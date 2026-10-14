@@ -43,3 +43,6 @@ lerna-debug.log*
 # TypeScript / tooling caches
 *.tsbuildinfo
 .eslintcache
+
+# Local git worktrees
+.worktrees/

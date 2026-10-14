@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import App from './App';
+import { initialJourneyState } from './store';
 import { renderWithProviders } from './test/renderWithProviders';
 
 describe('App shell', () => {
@@ -19,6 +20,7 @@ describe('App shell', () => {
     const { store } = renderWithProviders(<App />, {
       preloadedState: {
         journey: {
+          ...initialJourneyState,
           currentScreen: 'yourResult',
         },
       },

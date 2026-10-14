@@ -1,46 +1,46 @@
 export type InterestRateRange = {
-  readonly min: number;
-  readonly max: number;
+  min: number;
+  max: number;
 };
 
 export type LoanProduct = {
-  readonly id: string;
-  readonly name: string;
-  readonly description: string;
-  readonly minAmount: number;
-  readonly maxAmount: number;
-  readonly minTerm: number;
-  readonly maxTerm: number;
-  readonly interestRateRange: InterestRateRange;
-  readonly purposes: readonly string[];
+  id: string;
+  name: string;
+  description: string;
+  minAmount: number;
+  maxAmount: number;
+  minTerm: number;
+  maxTerm: number;
+  interestRateRange: InterestRateRange;
+  purposes: string[];
 };
 
 export type ProductsResponse = {
-  readonly products: readonly LoanProduct[];
+  products: LoanProduct[];
 };
 
 export type FieldRule = {
-  readonly min?: number;
-  readonly max?: number;
-  readonly required?: boolean;
-  readonly options?: readonly string[];
-  readonly errorMessage?: string;
+  min?: number;
+  max?: number;
+  required?: boolean;
+  options?: string[];
+  errorMessage?: string;
 };
 
 export type ValidationRulesResponse = {
-  readonly personalInfo: {
-    readonly age: FieldRule;
-    readonly employmentStatus: FieldRule;
-    readonly employmentDuration: FieldRule;
+  personalInfo: {
+    age: FieldRule;
+    employmentStatus: FieldRule;
+    employmentDuration: FieldRule;
   };
-  readonly financialInfo: {
-    readonly monthlyIncome: FieldRule;
-    readonly monthlyExpenses: FieldRule;
-    readonly creditScore: FieldRule;
+  financialInfo: {
+    monthlyIncome: FieldRule;
+    monthlyExpenses: FieldRule;
+    creditScore: FieldRule;
   };
-  readonly loanDetails: {
-    readonly requestedAmount: FieldRule;
-    readonly loanTerm: FieldRule;
+  loanDetails: {
+    requestedAmount: FieldRule;
+    loanTerm: FieldRule;
   };
 };
 
@@ -56,19 +56,19 @@ export type CalculateRateRequest = {
 };
 
 export type PaymentScheduleEntry = {
-  readonly month: number;
-  readonly payment: number;
-  readonly principal: number;
-  readonly interest: number;
-  readonly balance: number;
+  month: number;
+  payment: number;
+  principal: number;
+  interest: number;
+  balance: number;
 };
 
 export type CalculateRateResponse = {
-  readonly interestRate: number;
-  readonly monthlyPayment: number;
-  readonly totalInterest: number;
-  readonly totalRepayment: number;
-  readonly paymentSchedule: readonly PaymentScheduleEntry[];
+  interestRate: number;
+  monthlyPayment: number;
+  totalInterest: number;
+  totalRepayment: number;
+  paymentSchedule: PaymentScheduleEntry[];
 };
 
 export type EligibilityRequest = {

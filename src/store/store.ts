@@ -1,8 +1,10 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 
+import { catalogReducer } from './catalogSlice';
 import { journeyReducer } from './journeySlice';
 
 const rootReducer = combineReducers({
+  catalog: catalogReducer,
   journey: journeyReducer,
 });
 

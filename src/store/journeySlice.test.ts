@@ -6,7 +6,9 @@ import {
   INITIAL_JOURNEY_SCREEN,
   journeyReducer,
   resetJourney,
+  selectDetailsPrimaryActionMode,
   selectEffectiveCreditScoreValue,
+  selectEligibilityMatchesCurrentInputs,
   selectPrimaryActionMode,
   selectPurpose,
   selectRateQuoteMatchesCurrentInputs,
@@ -20,6 +22,7 @@ import {
   setManualCreditScore,
   setPersonalDetails,
   setRateQuote,
+  type EligibilityInputs,
 } from './journeySlice';
 
 const sampleQuote = {
@@ -29,6 +32,42 @@ const sampleQuote = {
   totalRepayment: 2400,
   paymentSchedule: [],
 };
+
+const sampleEligibilityResult = {
+  eligibilityResult: {
+    isEligible: true,
+    approvalLikelihood: 80,
+    riskCategory: 'low',
+    decisionReason: 'ok',
+  },
+  recommendedLoan: {
+    maxAmount: 180000,
+    recommendedAmount: 150000,
+    interestRate: 12.5,
+    monthlyPayment: 100,
+    totalRepayment: 2400,
+  },
+  affordabilityAnalysis: {
+    disposableIncome: 10000,
+    debtToIncomeRatio: 20,
+    loanToIncomeRatio: 60,
+    affordabilityScore: 'good',
+  },
+};
+
+const sampleEligibilityInputs = (): EligibilityInputs => ({
+  age: 35,
+  employmentStatus: 'employed',
+  employmentDuration: 24,
+  monthlyIncome: 25000,
+  monthlyExpenses: 10000,
+  existingDebt: 1000,
+  creditScore: null,
+  requestedAmount: 150000,
+  loanTerm: 24,
+  loanPurpose: 'education',
+  productId: 'personal_loan',
+});
 
 describe('journeySlice', () => {
   it('starts on the loan details screen', () => {
@@ -133,25 +172,8 @@ describe('journeySlice', () => {
     state = journeyReducer(
       state,
       setEligibilityResult({
-        eligibilityResult: {
-          isEligible: true,
-          approvalLikelihood: 80,
-          riskCategory: 'low',
-          decisionReason: 'ok',
-        },
-        recommendedLoan: {
-          maxAmount: 180000,
-          recommendedAmount: 150000,
-          interestRate: 12.5,
-          monthlyPayment: 100,
-          totalRepayment: 2400,
-        },
-        affordabilityAnalysis: {
-          disposableIncome: 10000,
-          debtToIncomeRatio: 20,
-          loanToIncomeRatio: 60,
-          affordabilityScore: 'good',
-        },
+        result: sampleEligibilityResult,
+        inputs: sampleEligibilityInputs(),
       }),
     );
 
@@ -159,7 +181,88 @@ describe('journeySlice', () => {
 
     expect(state.rateQuote).toEqual(sampleQuote);
     expect(state.eligibilityResult).toBeNull();
+    expect(state.eligibilityInputs).toBeNull();
     expect(selectPrimaryActionMode({ journey: state })).toBe('recalculate');
+  });
+
+  it('clears eligibility when personal or financial drafts change', () => {
+    let state = journeyReducer(
+      undefined,
+      selectPurpose({ productId: 'personal_loan', purposeId: 'education' }),
+    );
+    state = journeyReducer(state, setLoanAmount(150000));
+    state = journeyReducer(state, setLoanTerm(24));
+    state = journeyReducer(
+      state,
+      setPersonalDetails({
+        age: 35,
+        employmentStatus: 'employed',
+        employmentDuration: 24,
+      }),
+    );
+    state = journeyReducer(
+      state,
+      setFinancialDetails({
+        monthlyIncome: 25000,
+        monthlyExpenses: 10000,
+        existingDebt: 1000,
+      }),
+    );
+    state = journeyReducer(
+      state,
+      setEligibilityResult({
+        result: sampleEligibilityResult,
+        inputs: sampleEligibilityInputs(),
+      }),
+    );
+
+    state = journeyReducer(
+      state,
+      setPersonalDetails({
+        age: 36,
+        employmentStatus: 'employed',
+        employmentDuration: 24,
+      }),
+    );
+
+    expect(state.eligibilityResult).toBeNull();
+    expect(selectDetailsPrimaryActionMode({ journey: state })).toBe('check');
+  });
+
+  it('reports view mode when stored eligibility matches current inputs', () => {
+    let state = journeyReducer(
+      undefined,
+      selectPurpose({ productId: 'personal_loan', purposeId: 'education' }),
+    );
+    state = journeyReducer(state, setLoanAmount(150000));
+    state = journeyReducer(state, setLoanTerm(24));
+    state = journeyReducer(
+      state,
+      setPersonalDetails({
+        age: 35,
+        employmentStatus: 'employed',
+        employmentDuration: 24,
+      }),
+    );
+    state = journeyReducer(
+      state,
+      setFinancialDetails({
+        monthlyIncome: 25000,
+        monthlyExpenses: 10000,
+        existingDebt: 1000,
+      }),
+    );
+    state = journeyReducer(
+      state,
+      setEligibilityResult({
+        result: sampleEligibilityResult,
+        inputs: sampleEligibilityInputs(),
+      }),
+    );
+
+    const root = { journey: state };
+    expect(selectEligibilityMatchesCurrentInputs(root)).toBe(true);
+    expect(selectDetailsPrimaryActionMode(root)).toBe('view');
   });
 
   it('reports continue mode when the stored quote matches current inputs', () => {

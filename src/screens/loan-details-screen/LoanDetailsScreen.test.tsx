@@ -214,6 +214,33 @@ describe('LoanDetailsScreen', () => {
     expect(screen.getByText('No loan products are available right now.')).toBeInTheDocument();
   });
 
+  it('renders nothing when validation rules are missing', () => {
+    const { container } = renderWithProviders(<LoanDetailsScreen />, {
+      preloadedState: {
+        catalog: {
+          ...readyCatalog,
+          validationRules: null,
+        },
+        journey: initialJourneyState,
+      },
+    });
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('focuses the term field when continue runs with an invalid term', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+
+    await user.click(screen.getByLabelText('Education'));
+    await user.type(activeAmount(), '20000');
+    await user.type(activeTerm(), '2');
+    await user.click(screen.getByRole('button', { name: 'Continue to your details' }));
+
+    expect(await screen.findByText(/Loan term must be between/)).toBeInTheDocument();
+    expect(activeTerm()).toHaveFocus();
+  });
+
   it('validates amount on blur after interaction', async () => {
     const user = userEvent.setup();
     renderScreen();
@@ -241,5 +268,6 @@ describe('LoanDetailsScreen', () => {
       'aria-expanded',
       'true',
     );
+    expect(screen.getByLabelText('Debt consolidation')).toHaveFocus();
   });
 });

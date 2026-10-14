@@ -34,6 +34,22 @@ describe('getProducts', () => {
     });
   });
 
+  it('returns failure when the response body is null', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => null,
+      }),
+    );
+
+    const result = await getProducts();
+    expect(result).toEqual({
+      ok: false,
+      message: 'Loan products response was invalid.',
+    });
+  });
+
   it('returns failure when the HTTP response is not ok', async () => {
     vi.stubGlobal(
       'fetch',

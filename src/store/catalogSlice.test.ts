@@ -7,6 +7,9 @@ import {
   catalogLoadStarted,
   catalogLoadSucceeded,
   catalogReducer,
+  selectCatalogStatus,
+  selectProducts,
+  selectValidationRules,
   type CatalogState,
 } from './catalogSlice';
 
@@ -42,5 +45,20 @@ describe('catalogSlice', () => {
     const next = catalogReducer(initial, catalogLoadFailed('Unable to load'));
     expect(next.status).toBe('error');
     expect(next.errorMessage).toBe('Unable to load');
+  });
+
+  it('exposes catalog status products and validation rules via selectors', () => {
+    const ready = catalogReducer(
+      catalogReducer(initial, catalogLoadStarted()),
+      catalogLoadSucceeded({
+        products: MOCK_PRODUCTS,
+        validationRules: MOCK_VALIDATION_RULES,
+      }),
+    );
+    const state = { catalog: ready };
+
+    expect(selectCatalogStatus(state)).toBe('ready');
+    expect(selectProducts(state)).toEqual(MOCK_PRODUCTS);
+    expect(selectValidationRules(state)).toEqual(MOCK_VALIDATION_RULES);
   });
 });

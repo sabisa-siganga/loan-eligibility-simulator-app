@@ -32,6 +32,22 @@ describe('runCreditCheck', () => {
     });
   });
 
+  it('returns failure when the response body is null', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => null,
+      }),
+    );
+
+    const result = await runCreditCheck();
+    expect(result).toEqual({
+      ok: false,
+      message: 'Credit check response was invalid.',
+    });
+  });
+
   it('returns failure when the HTTP response is not ok', async () => {
     vi.stubGlobal(
       'fetch',

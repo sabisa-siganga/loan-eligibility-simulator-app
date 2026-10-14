@@ -42,6 +42,27 @@ describe('calculateRate', () => {
     });
   });
 
+  it('returns failure when the response body is null', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => null,
+      }),
+    );
+
+    const result = await calculateRate({
+      loanAmount: 150000,
+      loanTerm: 24,
+      loanType: 'personal_loan',
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      message: 'Repayment calculation response was invalid.',
+    });
+  });
+
   it('returns failure when the HTTP response is not ok', async () => {
     vi.stubGlobal(
       'fetch',

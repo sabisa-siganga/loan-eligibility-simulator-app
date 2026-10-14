@@ -31,6 +31,22 @@ describe('getValidationRules', () => {
     });
   });
 
+  it('returns failure when the response body is null', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => null,
+      }),
+    );
+
+    const result = await getValidationRules();
+    expect(result).toEqual({
+      ok: false,
+      message: 'Validation rules response was invalid.',
+    });
+  });
+
   it('returns failure when the HTTP response is not ok', async () => {
     vi.stubGlobal(
       'fetch',

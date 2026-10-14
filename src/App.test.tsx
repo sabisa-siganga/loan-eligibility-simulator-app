@@ -74,7 +74,7 @@ describe('App', () => {
 
     expect(screen.getByRole('heading', { name: 'Your details' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Back to your loan' }));
+    await user.click(screen.getByRole('button', { name: 'Back' }));
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Choose your loan' })).toBeInTheDocument();

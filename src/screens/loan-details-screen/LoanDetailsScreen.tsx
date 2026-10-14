@@ -58,7 +58,7 @@ export const LoanDetailsScreen = () => {
     journey.manualCreditScore === null ? '' : String(journey.manualCreditScore),
   );
   const [expandedProductId, setExpandedProductId] = useState<string | null>(
-    journey.selectedProductId,
+    () => journey.selectedProductId ?? products[0]?.id ?? null,
   );
   const [touched, setTouched] = useState({
     purpose: false,

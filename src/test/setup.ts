@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 
+import { resetCreditCheckCount } from '../mocks/handlers/creditCheck';
 import { server } from '../mocks/server';
 
 beforeAll(() => {
@@ -9,6 +10,7 @@ beforeAll(() => {
 
 afterEach(() => {
   server.resetHandlers();
+  resetCreditCheckCount();
 });
 
 afterAll(() => {

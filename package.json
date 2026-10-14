@@ -46,6 +46,7 @@
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
     "jsdom": "^27.0.0",
+    "msw": "^2.15.0",
     "prettier": "^3.6.2",
     "sass": "^1.93.0",
     "typescript": "~5.9.2",
@@ -55,5 +56,10 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

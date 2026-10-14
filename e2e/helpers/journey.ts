@@ -1,18 +1,17 @@
 import type { Page } from '@playwright/test';
 
 /**
- * Shared journey helpers. Full fill/mock behaviour lands with screen work;
- * these stubs open the foundation shell for smoke coverage today.
+ * Shared journey helpers for Playwright coverage.
  */
 export const openLoanDetails = async (page: Page) => {
   await page.goto('/');
-  await page.getByTestId('current-screen').waitFor();
+  await page.getByRole('heading', { name: 'Choose your loan' }).waitFor();
 };
 
 export const continueToBudgetWithPurpose = async (page: Page, purpose = ''): Promise<never> => {
   void page;
   void purpose;
-  throw new Error('continueToBudgetWithPurpose requires loan screens — not implemented yet.');
+  throw new Error('continueToBudgetWithPurpose requires budget screens — not implemented yet.');
 };
 
 export const fillEmployedBudgetThatPasses = async (page: Page): Promise<never> => {

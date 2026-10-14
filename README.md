@@ -46,7 +46,7 @@ Recorded for later screen implementation:
 
 | Field                         | Starting value |
 | ----------------------------- | -------------- |
-| Loan amount                   | R5,000         |
+| Loan amount                   | R5 000         |
 | Repayment term                | 6 months       |
 | Example annual interest rate  | 12.5%          |
 | Loan purpose                  | Unselected     |

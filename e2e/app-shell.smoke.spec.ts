@@ -2,10 +2,10 @@ import { expect, test } from '@playwright/test';
 
 import { openLoanDetails } from './helpers/journey';
 
-test('shows the Loan Eligibility Simulator foundation shell', async ({ page }) => {
+test('shows Choose your loan after catalog load', async ({ page }) => {
   await openLoanDetails(page);
 
-  await expect(page.getByRole('heading', { name: 'Loan Eligibility Simulator' })).toBeVisible();
-  await expect(page.getByTestId('current-screen')).toHaveText('Current screen: Loan details');
-  await expect(page.getByRole('button', { name: 'Start again' })).toBeVisible();
+  await expect(page.getByText('Loan Simulator')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Choose your loan' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue to your details' })).toBeVisible();
 });

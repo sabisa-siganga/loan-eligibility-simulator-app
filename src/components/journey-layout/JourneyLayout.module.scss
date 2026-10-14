@@ -1,0 +1,20 @@
+@use '../../styles/mixins' as *;
+@use '../../styles/tokens' as *;
+
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: $color-page-bg;
+}
+
+.stepperWrap {
+  @include content-shell;
+  padding-block: $space-5;
+}
+
+.main {
+  @include content-shell;
+  flex: 1;
+  padding-bottom: $space-8;
+}

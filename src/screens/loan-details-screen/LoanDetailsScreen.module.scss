@@ -1,0 +1,72 @@
+@use '../../styles/mixins' as *;
+@use '../../styles/tokens' as *;
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: $space-7;
+  align-items: start;
+
+  @include respond-below($bp-stack) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+  min-width: 0;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.title {
+  @include screen-title;
+  margin: 0;
+}
+
+.description {
+  @include screen-description;
+  margin: 0;
+}
+
+.requiredNote {
+  margin: 0;
+  font-size: 13px;
+  color: $color-text-secondary;
+
+  span {
+    color: $color-error;
+  }
+}
+
+.summary {
+  min-width: 0;
+
+  @include respond-below($bp-stack) {
+    order: 1;
+  }
+}
+
+.formColumn {
+  @include respond-below($bp-stack) {
+    order: 0;
+  }
+}
+
+.statusBanner {
+  @include message-banner;
+  margin: 0;
+}
+
+.errorBanner {
+  @include message-banner;
+  border-color: $color-error-border;
+  background-color: $color-error-surface;
+  color: $color-error;
+}

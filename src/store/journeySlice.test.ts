@@ -72,7 +72,7 @@ describe('journeySlice', () => {
     expect(state.personalDetails.age).toBe(35);
   });
 
-  it('invalidates rate quote and eligibility when loan inputs change', () => {
+  it('keeps the previous quote but clears eligibility when loan inputs change', () => {
     let state = journeyReducer(
       undefined,
       selectPurpose({ productId: 'personal_loan', purposeId: 'education' }),
@@ -118,8 +118,9 @@ describe('journeySlice', () => {
 
     state = journeyReducer(state, setLoanAmount(160000));
 
-    expect(state.rateQuote).toBeNull();
+    expect(state.rateQuote).toEqual(sampleQuote);
     expect(state.eligibilityResult).toBeNull();
+    expect(selectPrimaryActionMode({ journey: state })).toBe('recalculate');
   });
 
   it('reports continue mode when the stored quote matches current inputs', () => {

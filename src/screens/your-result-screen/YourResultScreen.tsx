@@ -9,10 +9,7 @@ export const YourResultScreen = () => {
   const result = journey.eligibilityResult;
 
   return (
-    <JourneyLayout
-      currentStepId="yourResult"
-      completedStepIds={['loanDetails', 'yourBudget']}
-    >
+    <JourneyLayout currentStepId="yourResult" completedStepIds={['loanDetails', 'yourBudget']}>
       <section className={styles.panel} aria-labelledby="your-result-heading">
         <h1 id="your-result-heading" className={styles.title}>
           Eligibility

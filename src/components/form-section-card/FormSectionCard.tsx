@@ -10,12 +10,7 @@ export type FormSectionCardProps = {
   readonly footer?: ReactNode;
 };
 
-export const FormSectionCard = ({
-  icon: Icon,
-  title,
-  children,
-  footer,
-}: FormSectionCardProps) => {
+export const FormSectionCard = ({ icon: Icon, title, children, footer }: FormSectionCardProps) => {
   const headingId = useId();
 
   return (

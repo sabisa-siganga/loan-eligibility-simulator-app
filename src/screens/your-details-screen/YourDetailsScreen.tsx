@@ -32,8 +32,7 @@ import {
 import { getEmploymentStatusLabel } from '../../utils/employmentStatusLabels';
 import styles from './YourDetailsScreen.module.scss';
 
-const draftNumberToText = (value: number | null): string =>
-  value === null ? '' : String(value);
+const draftNumberToText = (value: number | null): string => (value === null ? '' : String(value));
 
 const textToDraftNumber = (value: string): number | null => {
   if (value.trim() === '') {
@@ -108,9 +107,7 @@ export const YourDetailsScreen = () => {
     const nextPersonal = {
       age: textToDraftNumber(watchedValues.age),
       employmentStatus:
-        watchedValues.employmentStatus.trim() === ''
-          ? null
-          : watchedValues.employmentStatus,
+        watchedValues.employmentStatus.trim() === '' ? null : watchedValues.employmentStatus,
       employmentDuration: textToDraftNumber(watchedValues.employmentDuration),
     };
     const nextFinancial = {
@@ -467,9 +464,7 @@ export const YourDetailsScreen = () => {
             />
           </div>
 
-          {submitError ? (
-            <ErrorText id="eligibility-submit-error">{submitError}</ErrorText>
-          ) : null}
+          {submitError ? <ErrorText id="eligibility-submit-error">{submitError}</ErrorText> : null}
 
           <div className={styles.actions}>
             <Button

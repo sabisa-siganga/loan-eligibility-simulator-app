@@ -3,6 +3,7 @@ coverage
 node_modules
 package-lock.json
 public/fonts
+public/mockServiceWorker.js
 documents
 playwright-report
 test-results

@@ -34,6 +34,7 @@ export type JourneyState = {
   loanTerm: number | null;
   manualCreditScore: number | null;
   creditCheckScore: number | null;
+  creditCheckOptIn: boolean;
   rateQuote: CalculateRateResponse | null;
   rateQuoteInputs: RateQuoteInputs | null;
   eligibilityResult: EligibilityResponse | null;
@@ -63,6 +64,7 @@ export const initialJourneyState: JourneyState = {
   loanTerm: null,
   manualCreditScore: null,
   creditCheckScore: null,
+  creditCheckOptIn: false,
   rateQuote: null,
   rateQuoteInputs: null,
   eligibilityResult: null,
@@ -117,10 +119,20 @@ const journeySlice = createSlice({
     },
     setManualCreditScore(state, action: PayloadAction<number | null>) {
       state.manualCreditScore = action.payload;
+      if (action.payload !== null) {
+        state.creditCheckOptIn = false;
+      }
       invalidateDownstreamResults(state);
     },
     setCreditCheckScore(state, action: PayloadAction<number | null>) {
       state.creditCheckScore = action.payload;
+      invalidateDownstreamResults(state);
+    },
+    setCreditCheckOptIn(state, action: PayloadAction<boolean>) {
+      state.creditCheckOptIn = action.payload;
+      if (action.payload === true) {
+        state.manualCreditScore = null;
+      }
       invalidateDownstreamResults(state);
     },
     setRateQuote(
@@ -162,6 +174,7 @@ export const {
   setLoanTerm,
   setManualCreditScore,
   setCreditCheckScore,
+  setCreditCheckOptIn,
   setRateQuote,
   clearRateQuote,
   setPersonalDetails,
@@ -183,6 +196,7 @@ export const selectEffectiveCreditScoreValue = (
   resolveEffectiveCreditScore({
     entered: state.journey.manualCreditScore,
     creditCheckScore: state.journey.creditCheckScore,
+    creditCheckOptIn: state.journey.creditCheckOptIn,
   });
 
 export const selectCurrentRateInputs = (

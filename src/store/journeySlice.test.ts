@@ -6,9 +6,11 @@ import {
   INITIAL_JOURNEY_SCREEN,
   journeyReducer,
   resetJourney,
+  selectEffectiveCreditScoreValue,
   selectPrimaryActionMode,
   selectPurpose,
   selectRateQuoteMatchesCurrentInputs,
+  setCreditCheckOptIn,
   setCreditCheckScore,
   setCurrentScreen,
   setEligibilityResult,
@@ -220,5 +222,35 @@ describe('journeySlice', () => {
       }),
     );
     expect(state.financialDetails.monthlyIncome).toBe(25000);
+  });
+
+  it('defaults creditCheckOptIn to false', () => {
+    const state = journeyReducer(undefined, { type: 'unknown' });
+    expect(state.creditCheckOptIn).toBe(false);
+  });
+
+  it('clears opt-in when a manual credit score is set', () => {
+    let state = journeyReducer(undefined, setCreditCheckOptIn(true));
+    state = journeyReducer(state, setManualCreditScore(710));
+    expect(state.creditCheckOptIn).toBe(false);
+    expect(state.manualCreditScore).toBe(710);
+  });
+
+  it('clears manual credit score when opt-in is enabled', () => {
+    let state = journeyReducer(undefined, setManualCreditScore(710));
+    state = journeyReducer(state, setCreditCheckOptIn(true));
+    expect(state.creditCheckOptIn).toBe(true);
+    expect(state.manualCreditScore).toBeNull();
+  });
+
+  it('does not use stale credit-check score in selector when opt-in is false', () => {
+    const state = journeyReducer(undefined, setCreditCheckScore(680));
+    expect(selectEffectiveCreditScoreValue({ journey: state })).toBeUndefined();
+  });
+
+  it('uses credit-check score in selector when opted in', () => {
+    let state = journeyReducer(undefined, setCreditCheckOptIn(true));
+    state = journeyReducer(state, setCreditCheckScore(680));
+    expect(selectEffectiveCreditScoreValue({ journey: state })).toBe(680);
   });
 });

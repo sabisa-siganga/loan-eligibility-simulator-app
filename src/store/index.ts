@@ -25,6 +25,7 @@ export {
   selectPrimaryActionMode,
   selectPurpose,
   selectRateQuoteMatchesCurrentInputs,
+  setCreditCheckOptIn,
   setCreditCheckScore,
   setCurrentScreen,
   setEligibilityResult,

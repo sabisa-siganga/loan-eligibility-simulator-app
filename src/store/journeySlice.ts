@@ -26,6 +26,20 @@ export type FinancialDetailsDraft = {
   readonly existingDebt: number | null;
 };
 
+export type EligibilityInputs = {
+  readonly age: number;
+  readonly employmentStatus: string;
+  readonly employmentDuration: number;
+  readonly monthlyIncome: number;
+  readonly monthlyExpenses: number;
+  readonly existingDebt: number;
+  readonly creditScore: number | null;
+  readonly requestedAmount: number;
+  readonly loanTerm: number;
+  readonly loanPurpose: string;
+  readonly productId: string;
+};
+
 export type JourneyState = {
   currentScreen: JourneyScreen;
   selectedProductId: string | null;
@@ -38,6 +52,7 @@ export type JourneyState = {
   rateQuote: CalculateRateResponse | null;
   rateQuoteInputs: RateQuoteInputs | null;
   eligibilityResult: EligibilityResponse | null;
+  eligibilityInputs: EligibilityInputs | null;
   personalDetails: PersonalDetailsDraft;
   financialDetails: FinancialDetailsDraft;
 };
@@ -68,6 +83,7 @@ export const initialJourneyState: JourneyState = {
   rateQuote: null,
   rateQuoteInputs: null,
   eligibilityResult: null,
+  eligibilityInputs: null,
   personalDetails: emptyPersonalDetails,
   financialDetails: emptyFinancialDetails,
 };
@@ -76,6 +92,7 @@ const invalidateDownstreamResults = (state: JourneyState): void => {
   // Keep rateQuote + rateQuoteInputs so Screen 1 can show Recalculate when
   // the stored quote no longer matches the current draft inputs.
   state.eligibilityResult = null;
+  state.eligibilityInputs = null;
 };
 
 const journeySlice = createSlice({
@@ -149,13 +166,44 @@ const journeySlice = createSlice({
       invalidateDownstreamResults(state);
     },
     setPersonalDetails(state, action: PayloadAction<PersonalDetailsDraft>) {
-      state.personalDetails = action.payload;
+      const previous = state.personalDetails;
+      const next = action.payload;
+      const changed =
+        previous.age !== next.age ||
+        previous.employmentStatus !== next.employmentStatus ||
+        previous.employmentDuration !== next.employmentDuration;
+      state.personalDetails = next;
+      if (changed) {
+        invalidateDownstreamResults(state);
+      }
     },
     setFinancialDetails(state, action: PayloadAction<FinancialDetailsDraft>) {
-      state.financialDetails = action.payload;
+      const previous = state.financialDetails;
+      const next = action.payload;
+      const changed =
+        previous.monthlyIncome !== next.monthlyIncome ||
+        previous.monthlyExpenses !== next.monthlyExpenses ||
+        previous.existingDebt !== next.existingDebt;
+      state.financialDetails = next;
+      if (changed) {
+        invalidateDownstreamResults(state);
+      }
     },
-    setEligibilityResult(state, action: PayloadAction<EligibilityResponse | null>) {
-      state.eligibilityResult = action.payload;
+    setEligibilityResult(
+      state,
+      action: PayloadAction<{
+        result: EligibilityResponse;
+        inputs: EligibilityInputs;
+      } | null>,
+    ) {
+      if (action.payload === null) {
+        state.eligibilityResult = null;
+        state.eligibilityInputs = null;
+        return;
+      }
+
+      state.eligibilityResult = action.payload.result;
+      state.eligibilityInputs = action.payload.inputs;
     },
     resetJourney() {
       return initialJourneyState;
@@ -241,3 +289,76 @@ export const selectPrimaryActionMode = (state: { journey: JourneyState }): Prima
 
   return 'calculate';
 };
+
+export const selectCurrentEligibilityInputs = (state: {
+  journey: JourneyState;
+}): EligibilityInputs | null => {
+  const {
+    personalDetails,
+    financialDetails,
+    selectedProductId,
+    selectedPurpose,
+    loanAmount,
+    loanTerm,
+  } = state.journey;
+
+  if (
+    personalDetails.age === null ||
+    personalDetails.employmentStatus === null ||
+    personalDetails.employmentDuration === null ||
+    financialDetails.monthlyIncome === null ||
+    financialDetails.monthlyExpenses === null ||
+    financialDetails.existingDebt === null ||
+    selectedProductId === null ||
+    selectedPurpose === null ||
+    loanAmount === null ||
+    loanTerm === null
+  ) {
+    return null;
+  }
+
+  return {
+    age: personalDetails.age,
+    employmentStatus: personalDetails.employmentStatus,
+    employmentDuration: personalDetails.employmentDuration,
+    monthlyIncome: financialDetails.monthlyIncome,
+    monthlyExpenses: financialDetails.monthlyExpenses,
+    existingDebt: financialDetails.existingDebt,
+    creditScore: selectEffectiveCreditScoreValue(state) ?? null,
+    requestedAmount: loanAmount,
+    loanTerm,
+    loanPurpose: selectedPurpose,
+    productId: selectedProductId,
+  };
+};
+
+export const selectEligibilityMatchesCurrentInputs = (state: {
+  journey: JourneyState;
+}): boolean => {
+  const current = selectCurrentEligibilityInputs(state);
+  const stored = state.journey.eligibilityInputs;
+  if (!current || !stored || !state.journey.eligibilityResult) {
+    return false;
+  }
+
+  return (
+    current.age === stored.age &&
+    current.employmentStatus === stored.employmentStatus &&
+    current.employmentDuration === stored.employmentDuration &&
+    current.monthlyIncome === stored.monthlyIncome &&
+    current.monthlyExpenses === stored.monthlyExpenses &&
+    current.existingDebt === stored.existingDebt &&
+    current.creditScore === stored.creditScore &&
+    current.requestedAmount === stored.requestedAmount &&
+    current.loanTerm === stored.loanTerm &&
+    current.loanPurpose === stored.loanPurpose &&
+    current.productId === stored.productId
+  );
+};
+
+export type DetailsPrimaryActionMode = 'check' | 'view';
+
+export const selectDetailsPrimaryActionMode = (state: {
+  journey: JourneyState;
+}): DetailsPrimaryActionMode =>
+  selectEligibilityMatchesCurrentInputs(state) ? 'view' : 'check';

@@ -102,3 +102,103 @@ export const getProductTermBounds = (
   min: product.minTerm,
   max: product.maxTerm,
 });
+
+export type BudgetFormValues = {
+  age: string;
+  employmentStatus: string;
+  employmentDuration: string;
+  monthlyIncome: string;
+  monthlyExpenses: string;
+  existingDebt: string;
+};
+
+export type BudgetFormParsedValues = {
+  age: number;
+  employmentStatus: string;
+  employmentDuration: number;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  existingDebt: number;
+};
+
+const emptyStringToUndefined = (value: unknown): unknown => {
+  if (value === '' || value === undefined || value === null) {
+    return undefined;
+  }
+  return value;
+};
+
+const toNumberOrUndefined = (value: unknown): unknown => {
+  const normalized = emptyStringToUndefined(value);
+  if (normalized === undefined) {
+    return undefined;
+  }
+  if (typeof normalized === 'number') {
+    return normalized;
+  }
+  if (typeof normalized === 'string') {
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : normalized;
+  }
+  return normalized;
+};
+
+export const buildBudgetSchema = ({ rules }: { readonly rules: ValidationRulesResponse }) => {
+  const ageRule = rules.personalInfo.age;
+  const employmentRule = rules.personalInfo.employmentStatus;
+  const durationRule = rules.personalInfo.employmentDuration;
+  const incomeRule = rules.financialInfo.monthlyIncome;
+  const expensesRule = rules.financialInfo.monthlyExpenses;
+
+  const ageMin = ageRule.min ?? 18;
+  const ageMax = ageRule.max ?? 65;
+  const ageMessage = ageRule.errorMessage ?? `Age must be between ${ageMin} and ${ageMax}`;
+  const employmentMessage = employmentRule.errorMessage ?? 'Please select your employment status';
+  const durationMin = durationRule.min ?? 3;
+  const durationMessage = durationRule.errorMessage ?? `Minimum ${durationMin} months employment required`;
+  const incomeMin = incomeRule.min ?? 5000;
+  const incomeMessage = incomeRule.errorMessage ?? 'Minimum monthly income of R5 000 required';
+  const expensesMin = expensesRule.min ?? 0;
+  const expensesMessage = expensesRule.errorMessage ?? 'Please enter your monthly expenses';
+  const existingDebtMessage = 'Please enter your existing debt';
+
+  const employmentOptions = employmentRule.options ?? [];
+  const employmentEnum =
+    employmentOptions.length > 0
+      ? z.enum(employmentOptions as [string, ...string[]], { message: employmentMessage })
+      : z.string().min(1, employmentMessage);
+
+  return z.object({
+    age: z.preprocess(
+      toNumberOrUndefined,
+      z
+        .number({ error: ageMessage })
+        .int({ message: ageMessage })
+        .min(ageMin, ageMessage)
+        .max(ageMax, ageMessage),
+    ),
+    employmentStatus: z.preprocess((value) => {
+      const normalized = emptyStringToUndefined(value);
+      return normalized === undefined ? undefined : String(normalized);
+    }, employmentEnum),
+    employmentDuration: z.preprocess(
+      toNumberOrUndefined,
+      z
+        .number({ error: durationMessage })
+        .int({ message: durationMessage })
+        .min(durationMin, durationMessage),
+    ),
+    monthlyIncome: z.preprocess(
+      toNumberOrUndefined,
+      z.number({ error: incomeMessage }).finite().min(incomeMin, incomeMessage),
+    ),
+    monthlyExpenses: z.preprocess(
+      toNumberOrUndefined,
+      z.number({ error: expensesMessage }).finite().min(expensesMin, expensesMessage),
+    ),
+    existingDebt: z.preprocess(
+      toNumberOrUndefined,
+      z.number({ error: existingDebtMessage }).finite().min(0, existingDebtMessage),
+    ),
+  });
+};

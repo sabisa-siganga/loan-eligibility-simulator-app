@@ -179,17 +179,33 @@ GET /api/loans/validation-rules
     }
   },
   "loanDetails": {
-    "requestedAmount": {
-      "min": 5000.00,
-      "max": 300000.00,
-      "required": true,
-      "errorMessage": "Loan amount must be between R5,000 and R300,000"
+    "personal_loan":{
+      "requestedAmount": {
+        "min": 5000.00,
+        "max": 300000.00,
+        "required": true,
+        "errorMessage": "Loan amount must be between R5,000 and R300,000"
+      },
+      "loanTerm": {
+        "min": 6,
+        "max": 60,
+        "required": true,
+        "errorMessage": "Loan term must be between 6 and 60 months"
+      }
     },
-    "loanTerm": {
-      "min": 6,
-      "max": 60,
-      "required": true,
-      "errorMessage": "Loan term must be between 6 and 60 months"
+     "vehicle_loan": {
+        "requestedAmount": {
+          "min": 50000.00,
+          "max": 1500000.00,
+          "required": true,
+          "errorMessage": "Loan amount must be between R5,000 and R300,000"
+        },
+        "loanTerm": {
+          "min": 6,
+          "max": 60,
+          "required": true,
+          "errorMessage": "Loan term must be between 6 and 60 months"
+        }
     }
   }
 }

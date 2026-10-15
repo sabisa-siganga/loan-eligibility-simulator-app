@@ -1,10 +1,44 @@
-import type { ValidationRulesResponse } from '../../types/api';
+import type {
+  LoanProduct,
+  LoanProductValidationRules,
+  ValidationRulesResponse,
+} from '../../types/api';
+import { formatMoney } from '../../utils/formatMoney';
+import { MOCK_PRODUCTS } from './products';
+
+/**
+ * Creates validation rules for a given array of products
+ * @param products - The products to create validation rules for
+ * @returns A record of validation rules for each product
+ */
+export const createValidationRules = (
+  products: readonly LoanProduct[],
+): Record<string, LoanProductValidationRules> =>
+  Object.fromEntries(
+    products.map((product) => [
+      product.id,
+      {
+        requestedAmount: {
+          min: product.minAmount,
+          max: product.maxAmount,
+          required: true,
+          errorMessage: `Loan amount must be between ${formatMoney(product.minAmount)} and ${formatMoney(product.maxAmount)}`,
+        },
+        loanTerm: {
+          min: product.minTerm,
+          max: product.maxTerm,
+          required: true,
+          errorMessage: `Loan term must be between ${product.minTerm} and ${product.maxTerm} months`,
+        },
+      },
+    ]),
+  );
 
 export const MOCK_VALIDATION_RULES: ValidationRulesResponse = {
   personalInfo: {
     age: {
       min: 18,
-      max: 65,
+      max: 60,
       required: true,
       errorMessage: 'Age must be between 18 and 65',
     },
@@ -37,18 +71,5 @@ export const MOCK_VALIDATION_RULES: ValidationRulesResponse = {
       errorMessage: 'Credit score must be between 300 and 850',
     },
   },
-  loanDetails: {
-    requestedAmount: {
-      min: 5000,
-      max: 300000,
-      required: true,
-      errorMessage: 'Loan amount must be between R5 000 and R300 000',
-    },
-    loanTerm: {
-      min: 6,
-      max: 60,
-      required: true,
-      errorMessage: 'Loan term must be between 6 and 60 months',
-    },
-  },
+  loanDetails: createValidationRules(MOCK_PRODUCTS),
 };

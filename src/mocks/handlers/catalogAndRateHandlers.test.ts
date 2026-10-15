@@ -17,10 +17,36 @@ describe('catalog and rate handlers', () => {
     const response = await fetch('/api/loans/validation-rules');
     const body = (await response.json()) as {
       financialInfo: { creditScore: { required: boolean } };
+      loanDetails: {
+        personal_loan: {
+          requestedAmount: { min: number; max: number };
+          loanTerm: { min: number; max: number };
+        };
+        vehicle_loan: {
+          requestedAmount: { min: number; max: number };
+          loanTerm: { min: number; max: number };
+        };
+      };
     };
 
     expect(response.status).toBe(200);
     expect(body.financialInfo.creditScore.required).toBe(false);
+    expect(body.loanDetails.personal_loan.requestedAmount).toMatchObject({
+      min: 5000,
+      max: 300000,
+    });
+    expect(body.loanDetails.personal_loan.loanTerm).toMatchObject({
+      min: 6,
+      max: 60,
+    });
+    expect(body.loanDetails.vehicle_loan.requestedAmount).toMatchObject({
+      min: 50000,
+      max: 1500000,
+    });
+    expect(body.loanDetails.vehicle_loan.loanTerm).toMatchObject({
+      min: 12,
+      max: 72,
+    });
   });
 
   it('returns a credit score in range from POST /api/loans/credit-check', async () => {

@@ -28,6 +28,28 @@ const isFieldRule = (value: unknown): boolean => {
   );
 };
 
+const isLoanProductValidationRules = (value: unknown): boolean => {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return isFieldRule(candidate.requestedAmount) && isFieldRule(candidate.loanTerm);
+};
+
+const isProductKeyedLoanDetails = (value: unknown): boolean => {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const entries = Object.entries(value as Record<string, unknown>);
+  if (entries.length === 0) {
+    return false;
+  }
+
+  return entries.every(([, productRules]) => isLoanProductValidationRules(productRules));
+};
+
 const isValidationRulesResponse = (value: unknown): value is ValidationRulesResponse => {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -51,7 +73,6 @@ const isValidationRulesResponse = (value: unknown): value is ValidationRulesResp
 
   const personal = personalInfo as Record<string, unknown>;
   const financial = financialInfo as Record<string, unknown>;
-  const loan = loanDetails as Record<string, unknown>;
 
   return (
     isFieldRule(personal.age) &&
@@ -60,8 +81,7 @@ const isValidationRulesResponse = (value: unknown): value is ValidationRulesResp
     isFieldRule(financial.monthlyIncome) &&
     isFieldRule(financial.monthlyExpenses) &&
     isFieldRule(financial.creditScore) &&
-    isFieldRule(loan.requestedAmount) &&
-    isFieldRule(loan.loanTerm)
+    isProductKeyedLoanDetails(loanDetails)
   );
 };
 

@@ -27,6 +27,11 @@ export type FieldRule = {
   errorMessage?: string;
 };
 
+export type LoanProductValidationRules = {
+  requestedAmount: FieldRule;
+  loanTerm: FieldRule;
+};
+
 export type ValidationRulesResponse = {
   personalInfo: {
     age: FieldRule;
@@ -38,10 +43,7 @@ export type ValidationRulesResponse = {
     monthlyExpenses: FieldRule;
     creditScore: FieldRule;
   };
-  loanDetails: {
-    requestedAmount: FieldRule;
-    loanTerm: FieldRule;
-  };
+  loanDetails: Record<string, LoanProductValidationRules>;
 };
 
 export type CreditCheckResponse = {

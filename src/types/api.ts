@@ -46,6 +46,12 @@ export type ValidationRulesResponse = {
   loanDetails: Record<string, LoanProductValidationRules>;
 };
 
+export type CreditCheckState = 'bad' | 'good' | 'over_limit';
+
+export type CreditCheckRequest = {
+  readonly state: CreditCheckState;
+};
+
 export type CreditCheckResponse = {
   readonly creditScore: number;
 };

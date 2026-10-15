@@ -1,4 +1,4 @@
-import type { CreditCheckResponse } from '../types/api';
+import type { CreditCheckResponse, CreditCheckState } from '../types/api';
 import { loansApiPath } from './apiBase';
 import { isAbortError, readJsonBody } from './httpResult';
 
@@ -17,10 +17,13 @@ export type RunCreditCheckResult =
 
 export const runCreditCheck = async (options?: {
   readonly signal?: AbortSignal;
+  readonly state?: CreditCheckState;
 }): Promise<RunCreditCheckResult> => {
   try {
     const response = await fetch(loansApiPath('/credit-check'), {
       method: 'POST',
+      headers: options?.state ? { 'Content-Type': 'application/json' } : undefined,
+      body: options?.state ? JSON.stringify({ state: options.state }) : undefined,
       signal: options?.signal,
     });
 

@@ -1,17 +1,46 @@
 import { delay, http, HttpResponse } from 'msw';
 
-const FIXED_SCORES = [620, 680, 720, 760] as const;
-let creditCheckCount = 0;
+import type { CreditCheckState } from '../../types/api';
 
-export const resetCreditCheckCount = (): void => {
-  creditCheckCount = 0;
+const CREDIT_CHECK_STATES: readonly CreditCheckState[] = ['bad', 'good', 'over_limit'];
+
+const FIXED_SCORES: Record<CreditCheckState, number> = {
+  bad: 200,
+  good: 400,
+  over_limit: 900,
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const isCreditCheckState = (value: unknown): value is CreditCheckState =>
+  typeof value === 'string' && (CREDIT_CHECK_STATES as readonly string[]).includes(value);
+
 export const creditCheckHandlers = [
-  http.post('*/api/loans/credit-check', async () => {
+  http.post('*/api/loans/credit-check', async ({ request }) => {
+    let body: unknown = null;
+
+    try {
+      const text = await request.text();
+      if (text.trim() !== '') {
+        body = JSON.parse(text) as unknown;
+      }
+    } catch {
+      return HttpResponse.json({ message: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    let state: CreditCheckState = 'good';
+    if (body !== null) {
+      if (!isRecord(body) || !isCreditCheckState(body.state)) {
+        return HttpResponse.json(
+          { message: 'Body must include state: bad | good | over_limit' },
+          { status: 400 },
+        );
+      }
+      state = body.state;
+    }
+
     await delay(50);
-    const creditScore = FIXED_SCORES[creditCheckCount % FIXED_SCORES.length];
-    creditCheckCount += 1;
-    return HttpResponse.json({ creditScore });
+    return HttpResponse.json({ creditScore: FIXED_SCORES[state] });
   }),
 ];

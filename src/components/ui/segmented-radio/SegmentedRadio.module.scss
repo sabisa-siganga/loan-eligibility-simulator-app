@@ -1,0 +1,92 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/tokens' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.option {
+  position: relative;
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: $control-min-height;
+  min-width: 0;
+  padding: $space-3 $space-4;
+  border: 1px solid $color-input-border;
+  border-radius: $radius-control;
+  background-color: $color-surface;
+  color: $color-text;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  line-height: $line-height-base;
+  cursor: pointer;
+  transition:
+    color $duration-color ease,
+    background-color $duration-color ease,
+    border-color $duration-color ease;
+
+  &:hover:not(.disabled):not(.selected) {
+    border-color: $color-primary;
+    color: $color-primary;
+  }
+}
+
+.selected {
+  border-color: $color-primary;
+  background-color: $color-primary;
+  color: $color-surface;
+
+  &:hover:not(.disabled) {
+    border-color: $color-primary-hover;
+    background-color: $color-primary-hover;
+    color: $color-surface;
+  }
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  background-color: $color-disabled-surface;
+  color: $color-disabled-text;
+
+  &.selected {
+    background-color: $color-primary;
+    border-color: $color-primary;
+    color: $color-surface;
+    opacity: 0.55;
+  }
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible + .label {
+    @include focus-ring;
+  }
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-control;
+  pointer-events: none;
+}

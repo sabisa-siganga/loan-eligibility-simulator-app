@@ -14,6 +14,7 @@ import {
   selectRateQuoteMatchesCurrentInputs,
   setCreditCheckOptIn,
   setCreditCheckScore,
+  setCreditCheckState,
   setCurrentScreen,
   setEligibilityResult,
   setFinancialDetails,
@@ -330,6 +331,27 @@ describe('journeySlice', () => {
   it('defaults creditCheckOptIn to false', () => {
     const state = journeyReducer(undefined, { type: 'unknown' });
     expect(state.creditCheckOptIn).toBe(false);
+  });
+
+  it('defaults creditCheckState to good', () => {
+    const state = journeyReducer(undefined, { type: 'unknown' });
+    expect(state.creditCheckState).toBe('good');
+  });
+
+  it('updates creditCheckState and clears a prior credit-check score', () => {
+    let state = journeyReducer(undefined, setCreditCheckOptIn(true));
+    state = journeyReducer(state, setCreditCheckScore(680));
+    state = journeyReducer(state, setCreditCheckState('bad'));
+    expect(state.creditCheckState).toBe('bad');
+    expect(state.creditCheckScore).toBeNull();
+  });
+
+  it('keeps creditCheckState when opt-in is turned off', () => {
+    let state = journeyReducer(undefined, setCreditCheckState('over_limit'));
+    state = journeyReducer(state, setCreditCheckOptIn(true));
+    state = journeyReducer(state, setCreditCheckOptIn(false));
+    expect(state.creditCheckOptIn).toBe(false);
+    expect(state.creditCheckState).toBe('over_limit');
   });
 
   it('clears opt-in when a manual credit score is set', () => {

@@ -1,7 +1,11 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import type { CalculateRateResponse, EligibilityResponse } from '../types/api';
+import type { CalculateRateResponse, CreditCheckState, EligibilityResponse } from '../types/api';
 import { resolveEffectiveCreditScore } from '../utils/resolveEffectiveCreditScore';
+
+export const CREDIT_CHECK_STATES = ['bad', 'good', 'over_limit'] as const;
+
+export const DEFAULT_CREDIT_CHECK_STATE: CreditCheckState = 'good';
 
 export const JOURNEY_SCREENS = ['loanDetails', 'yourBudget', 'yourResult'] as const;
 
@@ -49,6 +53,7 @@ export type JourneyState = {
   manualCreditScore: number | null;
   creditCheckScore: number | null;
   creditCheckOptIn: boolean;
+  creditCheckState: CreditCheckState;
   rateQuote: CalculateRateResponse | null;
   rateQuoteInputs: RateQuoteInputs | null;
   eligibilityResult: EligibilityResponse | null;
@@ -80,6 +85,7 @@ export const initialJourneyState: JourneyState = {
   manualCreditScore: null,
   creditCheckScore: null,
   creditCheckOptIn: false,
+  creditCheckState: DEFAULT_CREDIT_CHECK_STATE,
   rateQuote: null,
   rateQuoteInputs: null,
   eligibilityResult: null,
@@ -147,6 +153,11 @@ const journeySlice = createSlice({
       if (action.payload === true) {
         state.manualCreditScore = null;
       }
+      invalidateDownstreamResults(state);
+    },
+    setCreditCheckState(state, action: PayloadAction<CreditCheckState>) {
+      state.creditCheckState = action.payload;
+      state.creditCheckScore = null;
       invalidateDownstreamResults(state);
     },
     setRateQuote(
@@ -220,6 +231,7 @@ export const {
   setManualCreditScore,
   setCreditCheckScore,
   setCreditCheckOptIn,
+  setCreditCheckState,
   setRateQuote,
   clearRateQuote,
   setPersonalDetails,
@@ -308,7 +320,6 @@ export const selectCurrentEligibilityInputs = (state: {
     personalDetails.employmentDuration === null ||
     financialDetails.monthlyIncome === null ||
     financialDetails.monthlyExpenses === null ||
-    financialDetails.existingDebt === null ||
     selectedProductId === null ||
     selectedPurpose === null ||
     loanAmount === null ||
@@ -323,7 +334,7 @@ export const selectCurrentEligibilityInputs = (state: {
     employmentDuration: personalDetails.employmentDuration,
     monthlyIncome: financialDetails.monthlyIncome,
     monthlyExpenses: financialDetails.monthlyExpenses,
-    existingDebt: financialDetails.existingDebt,
+    existingDebt: financialDetails.existingDebt ?? 0,
     creditScore: selectEffectiveCreditScoreValue(state) ?? null,
     requestedAmount: loanAmount,
     loanTerm,
@@ -360,5 +371,4 @@ export type DetailsPrimaryActionMode = 'check' | 'view';
 
 export const selectDetailsPrimaryActionMode = (state: {
   journey: JourneyState;
-}): DetailsPrimaryActionMode =>
-  selectEligibilityMatchesCurrentInputs(state) ? 'view' : 'check';
+}): DetailsPrimaryActionMode => (selectEligibilityMatchesCurrentInputs(state) ? 'view' : 'check');

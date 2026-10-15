@@ -53,10 +53,29 @@ describe('YourDetailsScreen', () => {
     expect(screen.getByRole('heading', { name: 'Personal details' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Monthly finances' })).toBeInTheDocument();
     expect(screen.getByLabelText('I consent to a credit bureau check')).toBeInTheDocument();
+    expect(
+      screen.getByRole('radiogroup', { name: 'Simulated credit check scenario' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Good credit' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Poor credit' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'Good credit' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'Over limit' })).toBeDisabled();
     expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/phone|cellphone/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/repayment estimate/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/^Employment duration/)).not.toBeInTheDocument();
+  });
+
+  it('enables scenario radios after consent and keeps Good credit selected by default', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+
+    await user.click(screen.getByLabelText('I consent to a credit bureau check'));
+
+    expect(screen.getByRole('radio', { name: 'Poor credit' })).toBeEnabled();
+    expect(screen.getByRole('radio', { name: 'Good credit' })).toBeEnabled();
+    expect(screen.getByRole('radio', { name: 'Good credit' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Over limit' })).toBeEnabled();
   });
 
   it('shows helper captions for personal and financial fields', async () => {
@@ -74,7 +93,10 @@ describe('YourDetailsScreen', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(`Enter at least ${formatMoney(incomeMin)}.`)).toBeInTheDocument();
     expect(screen.getByText('Enter your typical monthly expenses in rand.')).toBeInTheDocument();
-    expect(screen.getByText('Enter your monthly financial details in rand.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Optional. Enter monthly debt repayments in rand, or leave blank.'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Existing debt/)).not.toBeRequired();
 
     await user.selectOptions(screen.getByLabelText(/^Employment status/), 'employed');
     expect(
@@ -104,6 +126,27 @@ describe('YourDetailsScreen', () => {
 
     expect(await screen.findByText('Age must be between 18 and 65')).toBeInTheDocument();
     expect(store.getState().journey.currentScreen).toBe('yourBudget');
+  });
+
+  it('focuses the first invalid field when check eligibility runs with empty fields', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+
+    await user.click(screen.getByRole('button', { name: /Check eligibility/i }));
+
+    expect(await screen.findByText('Age must be between 18 and 65')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Age/)).toHaveFocus();
+  });
+
+  it('focuses employment status when age is valid and status is missing', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+
+    await user.type(screen.getByLabelText(/^Age/), '35');
+    await user.click(screen.getByRole('button', { name: /Check eligibility/i }));
+
+    expect(await screen.findByText('Please select your employment status')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Employment status/)).toHaveFocus();
   });
 
   it('shows employment duration min error on blur before other fields are filled', async () => {
@@ -163,13 +206,65 @@ describe('YourDetailsScreen', () => {
     expect(store.getState().journey.eligibilityResult).not.toBeNull();
   });
 
+  it('allows check eligibility when existing debt is left blank and treats it as zero', async () => {
+    const user = userEvent.setup();
+    let requestedExistingDebt: number | undefined;
+    server.use(
+      http.post('*/api/loans/eligibility', async ({ request }) => {
+        const body = (await request.json()) as {
+          financialInfo?: { existingDebt?: number };
+        };
+        requestedExistingDebt = body.financialInfo?.existingDebt;
+        return HttpResponse.json({
+          eligibilityResult: {
+            isEligible: true,
+            approvalLikelihood: 80,
+            riskCategory: 'low',
+            decisionReason: 'ok',
+          },
+          recommendedLoan: {
+            maxAmount: 150000,
+            recommendedAmount: 150000,
+            interestRate: 12.5,
+            monthlyPayment: 5000,
+            totalRepayment: 120000,
+          },
+          affordabilityAnalysis: {
+            disposableIncome: 10000,
+            debtToIncomeRatio: 20,
+            loanToIncomeRatio: 60,
+            affordabilityScore: 'good',
+          },
+        });
+      }),
+    );
+
+    const { store } = renderScreen();
+
+    await user.type(screen.getByLabelText(/^Age/), '35');
+    await user.selectOptions(screen.getByLabelText(/^Employment status/), 'employed');
+    await user.type(screen.getByLabelText(/^Employment duration/), '24');
+    await user.type(screen.getByLabelText(/^Monthly income/), '25000');
+    await user.type(screen.getByLabelText(/^Monthly expenses/), '8000');
+    await user.click(screen.getByRole('button', { name: /Check eligibility/i }));
+
+    await waitFor(() => {
+      expect(store.getState().journey.currentScreen).toBe('yourResult');
+    });
+    expect(requestedExistingDebt).toBe(0);
+    expect(store.getState().journey.eligibilityInputs?.existingDebt).toBe(0);
+  });
+
   it('runs a credit check when consent is enabled before eligibility', async () => {
     const user = userEvent.setup();
     let creditCheckCalls = 0;
+    let requestedState: string | null = null;
     server.use(
-      http.post('*/api/loans/credit-check', () => {
+      http.post('*/api/loans/credit-check', async ({ request }) => {
         creditCheckCalls += 1;
-        return HttpResponse.json({ creditScore: 720 });
+        const body = (await request.json()) as { state?: string };
+        requestedState = body.state ?? null;
+        return HttpResponse.json({ creditScore: 400 });
       }),
     );
 
@@ -183,7 +278,34 @@ describe('YourDetailsScreen', () => {
       expect(store.getState().journey.currentScreen).toBe('yourResult');
     });
     expect(creditCheckCalls).toBe(1);
-    expect(store.getState().journey.creditCheckScore).toBe(720);
+    expect(requestedState).toBe('good');
+    expect(store.getState().journey.creditCheckScore).toBe(400);
+  });
+
+  it('sends the selected poor-credit scenario to the credit check endpoint', async () => {
+    const user = userEvent.setup();
+    let requestedState: string | null = null;
+    server.use(
+      http.post('*/api/loans/credit-check', async ({ request }) => {
+        const body = (await request.json()) as { state?: string };
+        requestedState = body.state ?? null;
+        return HttpResponse.json({ creditScore: 200 });
+      }),
+    );
+
+    const { store } = renderScreen();
+
+    await fillValidForm(user);
+    await user.click(screen.getByLabelText('I consent to a credit bureau check'));
+    await user.click(screen.getByRole('radio', { name: 'Poor credit' }));
+    await user.click(screen.getByRole('button', { name: /Check eligibility/i }));
+
+    await waitFor(() => {
+      expect(store.getState().journey.currentScreen).toBe('yourResult');
+    });
+    expect(requestedState).toBe('bad');
+    expect(store.getState().journey.creditCheckState).toBe('bad');
+    expect(store.getState().journey.creditCheckScore).toBe(200);
   });
 
   it('stays on the screen and shows an error when eligibility fails', async () => {
@@ -282,6 +404,7 @@ describe('YourDetailsScreen', () => {
     saveJourneyState({
       ...loanReadyJourney,
       creditCheckOptIn: true,
+      creditCheckState: 'over_limit',
       personalDetails: {
         age: 42,
         employmentStatus: 'self_employed',
@@ -308,5 +431,7 @@ describe('YourDetailsScreen', () => {
     expect(screen.getByLabelText(/^Monthly expenses/)).toHaveValue('9000');
     expect(screen.getByLabelText(/^Existing debt/)).toHaveValue('1500');
     expect(screen.getByLabelText('I consent to a credit bureau check')).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Over limit' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Over limit' })).toBeEnabled();
   });
 });

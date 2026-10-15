@@ -7,7 +7,7 @@ import { FormSectionCard } from '../../components/form-section-card';
 import { JourneyLayout } from '../../components/journey-layout';
 import { MoneyInput } from '../../components/money-input';
 import { WholeNumberInput } from '../../components/whole-number-input';
-import { Button, Checkbox, ErrorText, Select } from '../../components/ui';
+import { Button, Checkbox, ErrorText, SegmentedRadio, Select } from '../../components/ui';
 import { runCreditCheck } from '../../services/creditCheck';
 import { checkEligibility } from '../../services/eligibility';
 import {
@@ -16,6 +16,7 @@ import {
   selectJourney,
   setCreditCheckOptIn,
   setCreditCheckScore,
+  setCreditCheckState,
   setCurrentScreen,
   setEligibilityResult,
   setFinancialDetails,
@@ -24,6 +25,7 @@ import {
   useAppSelector,
   type EligibilityInputs,
 } from '../../store';
+import type { CreditCheckState } from '../../types/api';
 import {
   buildBudgetSchema,
   type BudgetFormParsedValues,
@@ -37,6 +39,15 @@ import { formatMoney } from '../../utils/formatMoney';
 import styles from './YourDetailsScreen.module.scss';
 
 const draftNumberToText = (value: number | null): string => (value === null ? '' : String(value));
+
+const CREDIT_CHECK_SCENARIO_OPTIONS: ReadonlyArray<{
+  value: CreditCheckState;
+  label: string;
+}> = [
+  { value: 'bad', label: 'Poor credit' },
+  { value: 'good', label: 'Good credit' },
+  { value: 'over_limit', label: 'Over limit' },
+];
 
 const textToDraftNumber = (value: string): number | null => {
   if (value.trim() === '') {
@@ -95,7 +106,6 @@ export const YourDetailsScreen = () => {
     control,
     handleSubmit,
     watch,
-    setFocus,
     setValue,
     clearErrors,
     formState: { errors, isSubmitted, touchedFields },
@@ -205,9 +215,10 @@ export const YourDetailsScreen = () => {
 
   const focusFirstInvalid = (fieldErrors: Partial<Record<keyof BudgetFormValues, unknown>>) => {
     const firstInvalid = FIELD_ORDER.find((field) => fieldErrors[field]);
-    if (firstInvalid) {
-      setFocus(firstInvalid);
+    if (!firstInvalid) {
+      return;
     }
+    document.getElementById(firstInvalid)?.focus();
   };
 
   const buildEligibilityInputs = (values: BudgetFormParsedValues): EligibilityInputs => ({
@@ -248,7 +259,10 @@ export const YourDetailsScreen = () => {
       let creditScore = effectiveCreditScore;
 
       if (journey.creditCheckOptIn) {
-        const checkResult = await runCreditCheck({ signal: controller.signal });
+        const checkResult = await runCreditCheck({
+          signal: controller.signal,
+          state: journey.creditCheckState,
+        });
         if (generation !== requestGenerationRef.current) {
           return;
         }
@@ -319,8 +333,8 @@ export const YourDetailsScreen = () => {
     }
   };
 
-  const onInvalidSubmit = () => {
-    focusFirstInvalid(errors);
+  const onInvalidSubmit = (fieldErrors: Partial<Record<keyof BudgetFormValues, unknown>>) => {
+    focusFirstInvalid(fieldErrors);
   };
 
   return (
@@ -332,6 +346,10 @@ export const YourDetailsScreen = () => {
           </h1>
           <p className={styles.description}>
             Tell us about your personal and financial situation so we can check eligibility.
+          </p>
+          <p className={styles.requiredNote}>
+            Required fields are marked with an asterisk (<span aria-hidden="true">*</span>
+            ).
           </p>
         </header>
 
@@ -419,15 +437,7 @@ export const YourDetailsScreen = () => {
             ) : null}
           </FormSectionCard>
 
-          <FormSectionCard
-            icon={Wallet}
-            title="Monthly finances"
-            footer={
-              <p className={styles.requiredNote}>
-                <span aria-hidden="true">*</span> Required fields
-              </p>
-            }
-          >
+          <FormSectionCard icon={Wallet} title="Monthly finances">
             <div className={styles.fieldRow}>
               <Controller
                 name="monthlyIncome"
@@ -474,9 +484,8 @@ export const YourDetailsScreen = () => {
                   id="existingDebt"
                   name={field.name}
                   label="Existing debt"
-                  required
                   placeholder="Enter debt"
-                  helperText="Enter your monthly financial details in rand."
+                  helperText="Optional. Enter monthly debt repayments in rand, or leave blank."
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -497,6 +506,18 @@ export const YourDetailsScreen = () => {
                 if (event.target.checked) {
                   dispatch(setCreditCheckScore(null));
                 }
+              }}
+            />
+            <SegmentedRadio
+              name="creditCheckState"
+              aria-label="Simulated credit check scenario"
+              value={journey.creditCheckState}
+              disabled={!journey.creditCheckOptIn}
+              options={CREDIT_CHECK_SCENARIO_OPTIONS}
+              helperText="Demo scenarios only. No real credit check is performed."
+              onChange={(next) => {
+                setSubmitError(null);
+                dispatch(setCreditCheckState(next));
               }}
             />
           </div>

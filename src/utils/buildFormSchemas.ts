@@ -140,7 +140,7 @@ export const buildBudgetSchema = ({ rules }: { readonly rules: ValidationRulesRe
   const incomeMessage = incomeRule.errorMessage ?? 'Minimum monthly income of R5 000 required';
   const expensesMin = expensesRule.min ?? 0;
   const expensesMessage = expensesRule.errorMessage ?? 'Please enter your monthly expenses';
-  const existingDebtMessage = 'Please enter your existing debt';
+  const existingDebtMessage = 'Enter a non-negative amount for existing debt';
 
   const employmentOptions = employmentRule.options ?? [];
   const employmentEnum =
@@ -177,9 +177,15 @@ export const buildBudgetSchema = ({ rules }: { readonly rules: ValidationRulesRe
         toNumberOrUndefined,
         z.number({ error: expensesMessage }).finite().min(expensesMin, expensesMessage),
       ),
+      // Optional: blank means no existing debt (0). When filled, must be a non-negative number.
       existingDebt: z.preprocess(
         toNumberOrUndefined,
-        z.number({ error: existingDebtMessage }).finite().min(0, existingDebtMessage),
+        z
+          .number({ error: existingDebtMessage })
+          .finite()
+          .min(0, existingDebtMessage)
+          .optional()
+          .default(0),
       ),
     })
     .transform((data) => ({

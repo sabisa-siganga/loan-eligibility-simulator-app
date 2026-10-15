@@ -30,6 +30,7 @@ export {
   selectRateQuoteMatchesCurrentInputs,
   setCreditCheckOptIn,
   setCreditCheckScore,
+  setCreditCheckState,
   setCurrentScreen,
   setEligibilityResult,
   setFinancialDetails,

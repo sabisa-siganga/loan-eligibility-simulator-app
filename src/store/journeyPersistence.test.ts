@@ -41,6 +41,31 @@ describe('journeyPersistence', () => {
     expect(loaded.personalDetails.age).toBe(35);
   });
 
+  it('round-trips creditCheckState through sessionStorage', () => {
+    saveJourneyState({
+      ...sampleJourney,
+      creditCheckOptIn: true,
+      creditCheckState: 'bad',
+    });
+
+    const loaded = loadJourneyState();
+
+    expect(loaded.creditCheckOptIn).toBe(true);
+    expect(loaded.creditCheckState).toBe('bad');
+  });
+
+  it('rejects payloads with an invalid creditCheckState', () => {
+    sessionStorage.setItem(
+      JOURNEY_STORAGE_KEY,
+      JSON.stringify({
+        ...sampleJourney,
+        creditCheckState: 'excellent',
+      }),
+    );
+
+    expect(loadJourneyState()).toEqual(initialJourneyState);
+  });
+
   it('returns initialJourneyState for garbage JSON', () => {
     sessionStorage.setItem(JOURNEY_STORAGE_KEY, '{not-json');
 

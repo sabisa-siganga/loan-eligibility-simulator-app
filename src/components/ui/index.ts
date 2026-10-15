@@ -31,5 +31,8 @@ export type { LabelProps } from './label';
 export { Select } from './select';
 export type { SelectOption, SelectProps } from './select';
 
+export { SegmentedRadio } from './segmented-radio';
+export type { SegmentedRadioOption, SegmentedRadioProps } from './segmented-radio';
+
 export { Slider } from './slider';
 export type { SliderProps } from './slider';

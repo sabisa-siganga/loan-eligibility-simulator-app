@@ -106,7 +106,20 @@ describe('buildBudgetSchema', () => {
 
     expect(schema.safeParse({ ...validBudget, monthlyExpenses: '' }).success).toBe(false);
     expect(schema.safeParse({ ...validBudget, monthlyExpenses: '0' }).success).toBe(true);
-    expect(schema.safeParse({ ...validBudget, existingDebt: '' }).success).toBe(false);
+  });
+
+  it('treats blank existing debt as optional zero and rejects negative values', () => {
+    const schema = buildBudgetSchema({ rules: MOCK_VALIDATION_RULES });
+
+    const blank = schema.safeParse({ ...validBudget, existingDebt: '' });
+    expect(blank.success).toBe(true);
+    if (blank.success) {
+      expect(blank.data.existingDebt).toBe(0);
+    }
+
+    expect(schema.safeParse({ ...validBudget, existingDebt: '0' }).success).toBe(true);
+    expect(schema.safeParse({ ...validBudget, existingDebt: '1500' }).success).toBe(true);
+    expect(schema.safeParse({ ...validBudget, existingDebt: '-1' }).success).toBe(false);
   });
 
   it('rejects age outside validation-rules bounds and unknown employment status', () => {

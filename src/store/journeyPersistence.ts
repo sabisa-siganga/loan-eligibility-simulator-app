@@ -1,4 +1,6 @@
+import type { CreditCheckState } from '../types/api';
 import {
+  CREDIT_CHECK_STATES,
   initialJourneyState,
   JOURNEY_SCREENS,
   type JourneyScreen,
@@ -12,6 +14,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isJourneyScreen = (value: unknown): value is JourneyScreen =>
   typeof value === 'string' && (JOURNEY_SCREENS as readonly string[]).includes(value);
+
+const isCreditCheckState = (value: unknown): value is CreditCheckState =>
+  typeof value === 'string' && (CREDIT_CHECK_STATES as readonly string[]).includes(value);
 
 const isNullableNumber = (value: unknown): value is number | null =>
   value === null || (typeof value === 'number' && Number.isFinite(value));
@@ -55,6 +60,7 @@ export const isJourneyState = (value: unknown): value is JourneyState => {
     isNullableNumber(value.manualCreditScore) &&
     isNullableNumber(value.creditCheckScore) &&
     typeof value.creditCheckOptIn === 'boolean' &&
+    isCreditCheckState(value.creditCheckState) &&
     isPersonalDetails(value.personalDetails) &&
     isFinancialDetails(value.financialDetails) &&
     'rateQuote' in value &&

@@ -192,4 +192,30 @@ describe('buildBudgetSchema', () => {
 
     expect(result.success).toBe(false);
   });
+
+  it('rejects empty employment duration for employed and self_employed even when siblings are invalid', () => {
+    const schema = buildBudgetSchema({ rules: MOCK_VALIDATION_RULES });
+
+    for (const employmentStatus of ['employed', 'self_employed'] as const) {
+      const result = schema.safeParse({
+        age: '',
+        employmentStatus,
+        employmentDuration: '',
+        monthlyIncome: '',
+        monthlyExpenses: '',
+        existingDebt: '',
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(
+          result.error.issues.some(
+            (issue) =>
+              issue.path[0] === 'employmentDuration' &&
+              issue.message === 'Minimum 3 months employment required',
+          ),
+        ).toBe(true);
+      }
+    }
+  });
 });

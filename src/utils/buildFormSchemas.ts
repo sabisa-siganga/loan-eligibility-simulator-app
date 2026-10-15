@@ -167,8 +167,7 @@ export const buildBudgetSchema = ({ rules }: { readonly rules: ValidationRulesRe
         z
           .number({ error: durationMessage })
           .int({ message: durationMessage })
-          .min(durationMin, durationMessage)
-          .optional(),
+          .min(durationMin, durationMessage),
       ),
       monthlyIncome: z.preprocess(
         toNumberOrUndefined,
@@ -183,27 +182,15 @@ export const buildBudgetSchema = ({ rules }: { readonly rules: ValidationRulesRe
         z.number({ error: existingDebtMessage }).finite().min(0, existingDebtMessage),
       ),
     })
-    .superRefine((data, ctx) => {
-      if (!requiresEmploymentDuration(data.employmentStatus)) {
-        return;
-      }
-      if (data.employmentDuration === undefined) {
-        ctx.addIssue({
-          code: 'custom',
-          message: durationMessage,
-          path: ['employmentDuration'],
-        });
-      }
-    })
     .transform((data) => ({
       ...data,
       employmentDuration: requiresEmploymentDuration(data.employmentStatus)
-        ? (data.employmentDuration as number)
+        ? data.employmentDuration
         : 0,
     }));
 
-  // Blank duration before field validation when status does not require it, so a
-  // leftover value cannot fail the field-level min for unemployed/retired.
+  // When status does not require duration, inject a field-valid placeholder so leftover
+  // or empty values cannot fail min/required checks; transform still coerces to 0.
   // Cast preserves the inner schema's input type for zodResolver (preprocess widens to unknown).
   return z.preprocess((raw) => {
     if (raw === null || typeof raw !== 'object') {
@@ -214,6 +201,6 @@ export const buildBudgetSchema = ({ rules }: { readonly rules: ValidationRulesRe
     if (requiresEmploymentDuration(status)) {
       return raw;
     }
-    return { ...data, employmentDuration: '' };
+    return { ...data, employmentDuration: String(durationMin) };
   }, budgetObjectSchema) as unknown as typeof budgetObjectSchema;
 };

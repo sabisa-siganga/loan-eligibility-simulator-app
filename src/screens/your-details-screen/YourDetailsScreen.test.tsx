@@ -134,6 +134,22 @@ describe('YourDetailsScreen', () => {
     expect(store.getState().journey.currentScreen).toBe('yourBudget');
   });
 
+  it('blocks submit when employment duration is empty for employed and self_employed', async () => {
+    const user = userEvent.setup();
+
+    for (const employmentStatus of ['employed', 'self_employed'] as const) {
+      const { store, unmount } = renderScreen();
+
+      await user.type(screen.getByLabelText(/^Age/), '35');
+      await user.selectOptions(screen.getByLabelText(/^Employment status/), employmentStatus);
+      await user.click(screen.getByRole('button', { name: /Check eligibility/i }));
+
+      expect(await screen.findByText('Minimum 3 months employment required')).toBeInTheDocument();
+      expect(store.getState().journey.currentScreen).toBe('yourBudget');
+      unmount();
+    }
+  });
+
   it('checks eligibility and navigates to the result screen on success', async () => {
     const user = userEvent.setup();
     const { store } = renderScreen();

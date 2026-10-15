@@ -47,4 +47,10 @@ export {
   type PrimaryActionMode,
   type RateQuoteInputs,
 } from './journeySlice';
+export {
+  clearJourneyStorage,
+  JOURNEY_STORAGE_KEY,
+  loadJourneyState,
+  saveJourneyState,
+} from './journeyPersistence';
 export { createAppStore, store, type AppDispatch, type AppStore, type RootState } from './store';

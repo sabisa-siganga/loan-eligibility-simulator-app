@@ -29,7 +29,10 @@ import {
   type BudgetFormParsedValues,
   type BudgetFormValues,
 } from '../../utils/buildFormSchemas';
-import { getEmploymentStatusLabel } from '../../utils/employmentStatusLabels';
+import {
+  getEmploymentStatusLabel,
+  requiresEmploymentDuration,
+} from '../../utils/employmentStatusLabels';
 import styles from './YourDetailsScreen.module.scss';
 
 const draftNumberToText = (value: number | null): string => (value === null ? '' : String(value));
@@ -91,6 +94,8 @@ export const YourDetailsScreen = () => {
     handleSubmit,
     watch,
     setFocus,
+    setValue,
+    clearErrors,
     formState: { errors, isSubmitted, touchedFields },
   } = useForm<BudgetFormValues, unknown, BudgetFormParsedValues>({
     resolver: schema
@@ -102,13 +107,30 @@ export const YourDetailsScreen = () => {
   });
 
   const watchedValues = watch();
+  const employmentStatus = watchedValues.employmentStatus;
+  const showEmploymentDuration = requiresEmploymentDuration(employmentStatus);
 
   useEffect(() => {
+    if (requiresEmploymentDuration(employmentStatus)) {
+      return;
+    }
+    if (watchedValues.employmentDuration === '') {
+      return;
+    }
+    setValue('employmentDuration', '');
+    clearErrors('employmentDuration');
+  }, [clearErrors, employmentStatus, setValue, watchedValues.employmentDuration]);
+
+  useEffect(() => {
+    const status =
+      watchedValues.employmentStatus.trim() === '' ? null : watchedValues.employmentStatus;
     const nextPersonal = {
       age: textToDraftNumber(watchedValues.age),
-      employmentStatus:
-        watchedValues.employmentStatus.trim() === '' ? null : watchedValues.employmentStatus,
-      employmentDuration: textToDraftNumber(watchedValues.employmentDuration),
+      employmentStatus: status,
+      employmentDuration:
+        status !== null && !requiresEmploymentDuration(status)
+          ? 0
+          : textToDraftNumber(watchedValues.employmentDuration),
     };
     const nextFinancial = {
       monthlyIncome: textToDraftNumber(watchedValues.monthlyIncome),
@@ -361,27 +383,29 @@ export const YourDetailsScreen = () => {
                 )}
               />
             </div>
-            <div className={styles.fieldHalf}>
-              <Controller
-                name="employmentDuration"
-                control={control}
-                render={({ field }) => (
-                  <WholeNumberInput
-                    id="employmentDuration"
-                    name={field.name}
-                    label="Employment duration"
-                    required
-                    placeholder="Enter duration"
-                    suffix="months"
-                    helperText={durationHelper}
-                    value={field.value}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    error={showFieldError('employmentDuration')}
-                  />
-                )}
-              />
-            </div>
+            {showEmploymentDuration ? (
+              <div className={styles.fieldHalf}>
+                <Controller
+                  name="employmentDuration"
+                  control={control}
+                  render={({ field }) => (
+                    <WholeNumberInput
+                      id="employmentDuration"
+                      name={field.name}
+                      label="Employment duration"
+                      required
+                      placeholder="Enter duration"
+                      suffix="months"
+                      helperText={durationHelper}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      error={showFieldError('employmentDuration')}
+                    />
+                  )}
+                />
+              </div>
+            ) : null}
           </FormSectionCard>
 
           <FormSectionCard

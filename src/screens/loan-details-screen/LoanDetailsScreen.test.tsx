@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { MOCK_PRODUCTS } from '../../mocks/data/products';
 import { MOCK_VALIDATION_RULES } from '../../mocks/data/validationRules';
 import { server } from '../../mocks/server';
-import { initialJourneyState } from '../../store';
+import { createAppStore, initialJourneyState } from '../../store';
+import { saveJourneyState } from '../../store/journeyPersistence';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import { LoanDetailsScreen } from './LoanDetailsScreen';
 
@@ -269,5 +270,27 @@ describe('LoanDetailsScreen', () => {
       'true',
     );
     expect(screen.getByLabelText('Debt consolidation')).toHaveFocus();
+  });
+
+  it('restores loan draft fields when the store hydrates from sessionStorage', () => {
+    saveJourneyState({
+      ...initialJourneyState,
+      selectedProductId: 'personal_loan',
+      selectedPurpose: 'education',
+      loanAmount: 20000,
+      loanTerm: 12,
+    });
+
+    const store = createAppStore({
+      catalog: readyCatalog,
+    });
+
+    renderWithProviders(<LoanDetailsScreen />, { store });
+
+    expect(screen.getByLabelText('Education')).toBeChecked();
+    expect(activeAmount()).toHaveValue('20000');
+    expect(activeTerm()).toHaveValue('12');
+    expect(screen.getByText('R20 000')).toBeInTheDocument();
+    expect(screen.getByText('12 months')).toBeInTheDocument();
   });
 });

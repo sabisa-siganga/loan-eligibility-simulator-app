@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { MOCK_PRODUCTS } from '../../mocks/data/products';
 import { MOCK_VALIDATION_RULES } from '../../mocks/data/validationRules';
 import { server } from '../../mocks/server';
-import { initialJourneyState } from '../../store';
+import { createAppStore, initialJourneyState } from '../../store';
+import { saveJourneyState } from '../../store/journeyPersistence';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import { YourDetailsScreen } from './YourDetailsScreen';
 
@@ -54,6 +55,21 @@ describe('YourDetailsScreen', () => {
     expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/phone|cellphone/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/repayment estimate/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Employment duration/)).not.toBeInTheDocument();
+  });
+
+  it('hides employment duration for unemployed and retired statuses', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+
+    await user.selectOptions(screen.getByLabelText(/^Employment status/), 'employed');
+    expect(screen.getByLabelText(/^Employment duration/)).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText(/^Employment status/), 'unemployed');
+    expect(screen.queryByLabelText(/^Employment duration/)).not.toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText(/^Employment status/), 'retired');
+    expect(screen.queryByLabelText(/^Employment duration/)).not.toBeInTheDocument();
   });
 
   it('shows validation errors after submit and keeps the user on the screen', async () => {
@@ -192,5 +208,37 @@ describe('YourDetailsScreen', () => {
       expect(store.getState().journey.currentScreen).toBe('loanDetails');
     });
     expect(store.getState().journey.personalDetails.age).toBe(40);
+  });
+
+  it('restores budget draft fields and credit consent when the store hydrates from sessionStorage', () => {
+    saveJourneyState({
+      ...loanReadyJourney,
+      creditCheckOptIn: true,
+      personalDetails: {
+        age: 42,
+        employmentStatus: 'self_employed',
+        employmentDuration: 36,
+      },
+      financialDetails: {
+        monthlyIncome: 30000,
+        monthlyExpenses: 9000,
+        existingDebt: 1500,
+      },
+    });
+
+    const store = createAppStore({
+      catalog: readyCatalog,
+    });
+
+    renderWithProviders(<YourDetailsScreen />, { store });
+
+    expect(store.getState().journey.currentScreen).toBe('yourBudget');
+    expect(screen.getByLabelText(/^Age/)).toHaveValue('42');
+    expect(screen.getByLabelText(/^Employment status/)).toHaveValue('self_employed');
+    expect(screen.getByLabelText(/^Employment duration/)).toHaveValue('36');
+    expect(screen.getByLabelText(/^Monthly income/)).toHaveValue('30000');
+    expect(screen.getByLabelText(/^Monthly expenses/)).toHaveValue('9000');
+    expect(screen.getByLabelText(/^Existing debt/)).toHaveValue('1500');
+    expect(screen.getByLabelText('I consent to a credit bureau check')).toBeChecked();
   });
 });

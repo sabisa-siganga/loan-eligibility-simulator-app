@@ -16,15 +16,14 @@ describe('buildLoanDetailsSchema', () => {
 
     const result = schema.safeParse({
       purpose: 'new_vehicle',
-      amount: 10000,
-      termMonths: 24,
-      creditScore: null,
+      amount: '10000',
+      termMonths: '24',
     });
 
     expect(result.success).toBe(false);
   });
 
-  it('accepts a valid personal loan submission and allows omitting creditScore', () => {
+  it('accepts a valid personal loan submission from string drafts', () => {
     const schema = buildLoanDetailsSchema({
       rules: MOCK_VALIDATION_RULES,
       product: personalLoan,
@@ -32,28 +31,37 @@ describe('buildLoanDetailsSchema', () => {
 
     const result = schema.safeParse({
       purpose: 'home_improvement',
-      amount: 150000,
-      termMonths: 24,
-      creditScore: null,
+      amount: '150000',
+      termMonths: '24',
     });
 
     expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.amount).toBe(150000);
+      expect(result.data.termMonths).toBe(24);
+    }
   });
 
-  it('rejects an out-of-range manual credit score', () => {
+  it('rejects blank purpose and blank amount', () => {
     const schema = buildLoanDetailsSchema({
       rules: MOCK_VALIDATION_RULES,
       product: personalLoan,
     });
 
-    const result = schema.safeParse({
-      purpose: 'education',
-      amount: 20000,
-      termMonths: 12,
-      creditScore: 200,
-    });
-
-    expect(result.success).toBe(false);
+    expect(
+      schema.safeParse({
+        purpose: '',
+        amount: '20000',
+        termMonths: '12',
+      }).success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({
+        purpose: 'education',
+        amount: '',
+        termMonths: '12',
+      }).success,
+    ).toBe(false);
   });
 
   it('rejects a fractional term and an amount above the product max', () => {
@@ -65,59 +73,8 @@ describe('buildLoanDetailsSchema', () => {
     expect(
       schema.safeParse({
         purpose: 'other',
-        amount: 400000,
-        termMonths: 12.5,
-        creditScore: '',
-      }).success,
-    ).toBe(false);
-  });
-
-  it('accepts a credit score at the validation-rules boundary', () => {
-    const schema = buildLoanDetailsSchema({
-      rules: MOCK_VALIDATION_RULES,
-      product: personalLoan,
-    });
-
-    expect(
-      schema.safeParse({
-        purpose: 'medical',
-        amount: 5000,
-        termMonths: 6,
-        creditScore: 300,
-      }).success,
-    ).toBe(true);
-  });
-
-  it('falls back to default credit bounds when validation-rules omit them', () => {
-    const rulesWithoutCreditBounds = {
-      ...MOCK_VALIDATION_RULES,
-      financialInfo: {
-        ...MOCK_VALIDATION_RULES.financialInfo,
-        creditScore: {
-          required: false,
-        },
-      },
-    };
-
-    const schema = buildLoanDetailsSchema({
-      rules: rulesWithoutCreditBounds,
-      product: personalLoan,
-    });
-
-    expect(
-      schema.safeParse({
-        purpose: 'medical',
-        amount: 5000,
-        termMonths: 6,
-        creditScore: 300,
-      }).success,
-    ).toBe(true);
-    expect(
-      schema.safeParse({
-        purpose: 'medical',
-        amount: 5000,
-        termMonths: 6,
-        creditScore: 200,
+        amount: '400000',
+        termMonths: '12.5',
       }).success,
     ).toBe(false);
   });
@@ -170,5 +127,29 @@ describe('buildBudgetSchema', () => {
     if (!result.success) {
       expect(result.error.issues[0]?.message).toBe('Minimum 3 months employment required');
     }
+  });
+
+  it('accepts unemployed and retired with empty employment duration as zero', () => {
+    const schema = buildBudgetSchema({ rules: MOCK_VALIDATION_RULES });
+
+    for (const employmentStatus of ['unemployed', 'retired'] as const) {
+      const result = schema.safeParse({
+        ...validBudget,
+        employmentStatus,
+        employmentDuration: '',
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.employmentDuration).toBe(0);
+      }
+    }
+  });
+
+  it('still requires employment duration when employed', () => {
+    const schema = buildBudgetSchema({ rules: MOCK_VALIDATION_RULES });
+    const result = schema.safeParse({ ...validBudget, employmentDuration: '' });
+
+    expect(result.success).toBe(false);
   });
 });

@@ -14,3 +14,7 @@ const humanizeStatusId = (statusId: string): string =>
 
 export const getEmploymentStatusLabel = (statusId: string): string =>
   EMPLOYMENT_STATUS_LABELS[statusId] ?? humanizeStatusId(statusId);
+
+/** Duration only applies when the applicant is (self-)employed. */
+export const requiresEmploymentDuration = (status: string): boolean =>
+  status === 'employed' || status === 'self_employed';

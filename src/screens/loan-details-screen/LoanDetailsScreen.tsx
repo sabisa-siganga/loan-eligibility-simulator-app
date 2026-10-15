@@ -1,4 +1,6 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useForm, type Resolver } from 'react-hook-form';
 
 import { JourneyLayout } from '../../components/journey-layout';
 import { LoanProductSection } from '../../components/loan-product-section';
@@ -17,6 +19,8 @@ import {
   buildLoanDetailsSchema,
   getProductAmountBounds,
   getProductTermBounds,
+  type LoanDetailsFormParsedValues,
+  type LoanDetailsFormValues,
 } from '../../utils/buildFormSchemas';
 import { formatMoney, formatMoneyRange } from '../../utils/formatMoney';
 import { getPurposeLabel } from '../../utils/purposeLabels';
@@ -24,7 +28,11 @@ import styles from './LoanDetailsScreen.module.scss';
 
 const PURPOSE_GROUP_NAME = 'loan-purpose';
 
-const parseOptionalNumber = (value: string): number | null => {
+const FIELD_ORDER: (keyof LoanDetailsFormValues)[] = ['purpose', 'amount', 'termMonths'];
+
+const draftNumberToText = (value: number | null): string => (value === null ? '' : String(value));
+
+const textToDraftNumber = (value: string): number | null => {
   if (value.trim() === '') {
     return null;
   }
@@ -38,29 +46,62 @@ export const LoanDetailsScreen = () => {
   const validationRules = useAppSelector((state) => state.catalog.validationRules);
   const journey = useAppSelector((state) => state.journey);
   const purposeErrorId = useId();
+  const pendingPurposeFocusRef = useRef(false);
 
-  const [amountText, setAmountText] = useState(
-    journey.loanAmount === null ? '' : String(journey.loanAmount),
-  );
-  const [termText, setTermText] = useState(
-    journey.loanTerm === null ? '' : String(journey.loanTerm),
-  );
   const [expandedProductId, setExpandedProductId] = useState<string | null>(
     () => journey.selectedProductId ?? products[0]?.id ?? null,
   );
-  const [touched, setTouched] = useState({
-    purpose: false,
-    amount: false,
-    term: false,
-  });
-  const [submitAttempted, setSubmitAttempted] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const pendingPurposeFocusRef = useRef(false);
 
   const selectedProduct = useMemo(
     () => products.find((product) => product.id === journey.selectedProductId) ?? null,
     [products, journey.selectedProductId],
   );
+
+  const schemaProduct = useMemo(() => {
+    if (selectedProduct) {
+      return selectedProduct;
+    }
+    return products.find((product) => product.id === expandedProductId) ?? products[0] ?? null;
+  }, [expandedProductId, products, selectedProduct]);
+
+  const schema = useMemo(
+    () =>
+      validationRules && schemaProduct
+        ? buildLoanDetailsSchema({ rules: validationRules, product: schemaProduct })
+        : null,
+    [schemaProduct, validationRules],
+  );
+
+  const defaultValues = useMemo<LoanDetailsFormValues>(
+    () => ({
+      purpose: journey.selectedPurpose ?? '',
+      amount: draftNumberToText(journey.loanAmount),
+      termMonths: draftNumberToText(journey.loanTerm),
+    }),
+    [journey.loanAmount, journey.loanTerm, journey.selectedPurpose],
+  );
+
+  const {
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    trigger,
+    formState: { errors, isSubmitted, touchedFields },
+  } = useForm<LoanDetailsFormValues, unknown, LoanDetailsFormParsedValues>({
+    resolver: schema
+      ? (zodResolver(schema) as Resolver<
+          LoanDetailsFormValues,
+          unknown,
+          LoanDetailsFormParsedValues
+        >)
+      : undefined,
+    defaultValues,
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
+  });
+
+  const watchedValues = watch();
 
   useEffect(() => {
     if (expandedProductId !== null || journey.selectedProductId !== null) {
@@ -73,35 +114,22 @@ export const LoanDetailsScreen = () => {
   }, [expandedProductId, journey.selectedProductId, products]);
 
   useEffect(() => {
-    if (!validationRules || !selectedProduct) {
-      return;
+    const nextAmount = textToDraftNumber(watchedValues.amount);
+    const nextTerm = textToDraftNumber(watchedValues.termMonths);
+
+    if (nextAmount !== journey.loanAmount) {
+      dispatch(setLoanAmount(nextAmount));
     }
-
-    const schema = buildLoanDetailsSchema({
-      rules: validationRules,
-      product: selectedProduct,
-    });
-    const parsed = schema.safeParse({
-      purpose: journey.selectedPurpose ?? '',
-      amount: parseOptionalNumber(amountText),
-      termMonths: parseOptionalNumber(termText),
-      creditScore: null,
-    });
-
-    if (parsed.success) {
-      setFieldErrors({});
-      return;
+    if (nextTerm !== journey.loanTerm) {
+      dispatch(setLoanTerm(nextTerm));
     }
-
-    const nextErrors: Record<string, string> = {};
-    parsed.error.issues.forEach((issue) => {
-      const key = String(issue.path[0] ?? '');
-      if (key && key !== 'creditScore' && !nextErrors[key]) {
-        nextErrors[key] = issue.message;
-      }
-    });
-    setFieldErrors(nextErrors);
-  }, [amountText, journey.selectedPurpose, selectedProduct, termText, validationRules]);
+  }, [
+    dispatch,
+    journey.loanAmount,
+    journey.loanTerm,
+    watchedValues.amount,
+    watchedValues.termMonths,
+  ]);
 
   useEffect(() => {
     if (!pendingPurposeFocusRef.current || !expandedProductId) {
@@ -113,15 +141,37 @@ export const LoanDetailsScreen = () => {
       `input[name="${PURPOSE_GROUP_NAME}"]`,
     );
     firstPurpose?.focus();
-  }, [expandedProductId, fieldErrors.purpose, submitAttempted]);
+  }, [expandedProductId, errors.purpose, isSubmitted]);
 
   if (!validationRules) {
     return null;
   }
 
-  const showError = (field: 'purpose' | 'amount' | 'termMonths') => {
-    const touchedKey = field === 'termMonths' ? 'term' : field;
-    return (submitAttempted || touched[touchedKey]) && Boolean(fieldErrors[field]);
+  const showFieldError = (field: keyof LoanDetailsFormValues): string | undefined => {
+    if (!(isSubmitted || touchedFields[field])) {
+      return undefined;
+    }
+    return errors[field]?.message;
+  };
+
+  const focusFirstInvalid = (
+    fieldErrors: Partial<Record<keyof LoanDetailsFormValues, unknown>>,
+  ) => {
+    const firstInvalid = FIELD_ORDER.find((field) => fieldErrors[field]);
+    if (firstInvalid === 'purpose') {
+      const firstPurpose = document.querySelector<HTMLInputElement>(
+        `input[name="${PURPOSE_GROUP_NAME}"]`,
+      );
+      firstPurpose?.focus();
+      return;
+    }
+    if (firstInvalid === 'amount') {
+      document.getElementById('loan-amount')?.focus();
+      return;
+    }
+    if (firstInvalid === 'termMonths') {
+      document.getElementById('loan-term')?.focus();
+    }
   };
 
   const handleProductExpand = (productId: string) => {
@@ -131,14 +181,11 @@ export const LoanDetailsScreen = () => {
 
     if (expandedProductId !== null || journey.selectedProductId !== null) {
       dispatch(clearLoanSelection());
-      setAmountText('');
-      setTermText('');
-      setTouched((current) => ({
-        ...current,
-        purpose: false,
-        amount: false,
-        term: false,
-      }));
+      reset({
+        purpose: '',
+        amount: '',
+        termMonths: '',
+      });
     }
 
     setExpandedProductId(productId);
@@ -146,94 +193,32 @@ export const LoanDetailsScreen = () => {
 
   const handlePurposeSelect = (productId: string, purposeId: string) => {
     const productChanged = journey.selectedProductId !== productId;
+    setValue('purpose', purposeId, { shouldTouch: true, shouldValidate: true });
     dispatch(selectPurpose({ productId, purposeId }));
-    setTouched((current) => ({ ...current, purpose: true }));
 
     if (productChanged) {
-      setAmountText('');
-      setTermText('');
-      setTouched((current) => ({
-        ...current,
-        purpose: true,
-        amount: false,
-        term: false,
-      }));
+      setValue('amount', '', { shouldTouch: false });
+      setValue('termMonths', '', { shouldTouch: false });
     }
   };
 
-  const handleAmountChange = (value: string) => {
-    setAmountText(value);
-    const numeric = parseOptionalNumber(value);
-    dispatch(setLoanAmount(numeric));
-  };
-
-  const handleTermChange = (value: string) => {
-    setTermText(value);
-    const numeric = parseOptionalNumber(value);
-    dispatch(setLoanTerm(numeric));
-  };
-
-  const focusFirstInvalid = (errors: Record<string, string>) => {
-    if (errors.purpose) {
-      const firstPurpose = document.querySelector<HTMLInputElement>(
-        `input[name="${PURPOSE_GROUP_NAME}"]`,
-      );
-      firstPurpose?.focus();
-      return;
-    }
-    if (errors.amount) {
-      document.getElementById('loan-amount')?.focus();
-      return;
-    }
-    if (errors.termMonths) {
-      document.getElementById('loan-term')?.focus();
-    }
-  };
-
-  const handlePrimaryAction = () => {
-    setSubmitAttempted(true);
-
-    if (!selectedProduct || !journey.selectedPurpose) {
-      const nextExpanded = expandedProductId ?? products[0]?.id ?? null;
-      setFieldErrors((current) => ({
-        ...current,
-        purpose: 'Select a loan purpose to continue.',
-      }));
-      if (nextExpanded !== expandedProductId) {
-        pendingPurposeFocusRef.current = true;
-        setExpandedProductId(nextExpanded);
-      } else {
-        focusFirstInvalid({ purpose: 'Select a loan purpose to continue.' });
-      }
-      return;
-    }
-
-    const schema = buildLoanDetailsSchema({
-      rules: validationRules,
-      product: selectedProduct,
-    });
-    const parsed = schema.safeParse({
-      purpose: journey.selectedPurpose,
-      amount: parseOptionalNumber(amountText),
-      termMonths: parseOptionalNumber(termText),
-      creditScore: null,
-    });
-
-    if (!parsed.success) {
-      const nextErrors: Record<string, string> = {};
-      parsed.error.issues.forEach((issue) => {
-        const key = String(issue.path[0] ?? '');
-        if (key && key !== 'creditScore' && !nextErrors[key]) {
-          nextErrors[key] = issue.message;
-        }
-      });
-      setFieldErrors(nextErrors);
-      focusFirstInvalid(nextErrors);
-      return;
-    }
-
+  const onValidSubmit = () => {
     dispatch(setCurrentScreen('yourBudget'));
   };
+
+  const onInvalidSubmit = (fieldErrors: Partial<Record<keyof LoanDetailsFormValues, unknown>>) => {
+    if (fieldErrors.purpose) {
+      const nextExpanded = expandedProductId ?? products[0]?.id ?? null;
+      if (nextExpanded !== null && nextExpanded !== expandedProductId) {
+        pendingPurposeFocusRef.current = true;
+        setExpandedProductId(nextExpanded);
+        return;
+      }
+    }
+    focusFirstInvalid(fieldErrors);
+  };
+
+  const handlePrimaryAction = handleSubmit(onValidSubmit, onInvalidSubmit);
 
   const productLabel = selectedProduct?.name ?? 'Not selected';
   const purposeLabel = journey.selectedPurpose
@@ -241,6 +226,7 @@ export const LoanDetailsScreen = () => {
     : 'Not selected';
   const amountLabel = journey.loanAmount === null ? 'Not entered' : formatMoney(journey.loanAmount);
   const termLabel = journey.loanTerm === null ? 'Not entered' : `${journey.loanTerm} months`;
+  const purposeError = showFieldError('purpose');
 
   return (
     <JourneyLayout currentStepId="loanDetails">
@@ -277,39 +263,49 @@ export const LoanDetailsScreen = () => {
                 selectedPurposeId={isSelected ? journey.selectedPurpose : null}
                 isExpanded={isExpanded}
                 isSelected={isSelected}
-                amountText={amountText}
-                termText={termText}
+                amountText={watchedValues.amount}
+                termText={watchedValues.termMonths}
                 amountHelperText={`How much do you need? Allowed: ${formatMoneyRange(amountBounds.min, amountBounds.max)}`}
                 termHelperText={`How long to repay? Allowed: ${termBounds.min} to ${termBounds.max} months`}
-                amountError={isSelected && showError('amount') ? fieldErrors.amount : undefined}
-                termError={
-                  isSelected && showError('termMonths') ? fieldErrors.termMonths : undefined
-                }
-                purposeError={isExpanded && showError('purpose') ? fieldErrors.purpose : undefined}
+                amountError={isSelected ? showFieldError('amount') : undefined}
+                termError={isSelected ? showFieldError('termMonths') : undefined}
+                purposeError={isExpanded ? purposeError : undefined}
                 onHeaderClick={() => {
                   handleProductExpand(product.id);
                 }}
                 onPurposeChange={(nextPurpose) => {
                   handlePurposeSelect(product.id, nextPurpose);
                 }}
-                onAmountChange={handleAmountChange}
-                onTermChange={handleTermChange}
+                onAmountChange={(value) => {
+                  setValue('amount', value, {
+                    shouldDirty: true,
+                    shouldValidate: isSubmitted,
+                  });
+                }}
+                onTermChange={(value) => {
+                  setValue('termMonths', value, {
+                    shouldDirty: true,
+                    shouldValidate: isSubmitted,
+                  });
+                }}
                 onAmountBlur={() => {
                   if (isSelected) {
-                    setTouched((current) => ({ ...current, amount: true }));
+                    setValue('amount', watchedValues.amount, { shouldTouch: true });
+                    void trigger('amount');
                   }
                 }}
                 onTermBlur={() => {
                   if (isSelected) {
-                    setTouched((current) => ({ ...current, term: true }));
+                    setValue('termMonths', watchedValues.termMonths, { shouldTouch: true });
+                    void trigger('termMonths');
                   }
                 }}
               />
             );
           })}
 
-          {showError('purpose') && !journey.selectedPurpose && expandedProductId === null ? (
-            <ErrorText id={purposeErrorId}>{fieldErrors.purpose}</ErrorText>
+          {purposeError && !journey.selectedPurpose && expandedProductId === null ? (
+            <ErrorText id={purposeErrorId}>{purposeError}</ErrorText>
           ) : null}
         </div>
 

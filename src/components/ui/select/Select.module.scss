@@ -1,8 +1,10 @@
 @use '../../../styles/mixins' as *;
+@use '../../../styles/tokens' as *;
 
 .field {
   display: flex;
   flex-direction: column;
+  gap: $space-2;
 }
 
 .select {

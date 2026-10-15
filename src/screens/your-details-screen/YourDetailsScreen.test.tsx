@@ -82,6 +82,34 @@ describe('YourDetailsScreen', () => {
     expect(store.getState().journey.currentScreen).toBe('yourBudget');
   });
 
+  it('shows employment duration min error on blur before other fields are filled', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+
+    await user.selectOptions(screen.getByLabelText(/^Employment status/), 'employed');
+    const duration = screen.getByLabelText(/^Employment duration/);
+    await user.type(duration, '2');
+    await user.tab();
+
+    expect(await screen.findByText('Minimum 3 months employment required')).toBeInTheDocument();
+  });
+
+  it('blocks submit when employment duration is below the validation-rules minimum', async () => {
+    const user = userEvent.setup();
+    const { store } = renderScreen();
+
+    await user.type(screen.getByLabelText(/^Age/), '35');
+    await user.selectOptions(screen.getByLabelText(/^Employment status/), 'employed');
+    await user.type(screen.getByLabelText(/^Employment duration/), '2');
+    await user.type(screen.getByLabelText(/^Monthly income/), '25000');
+    await user.type(screen.getByLabelText(/^Monthly expenses/), '8000');
+    await user.type(screen.getByLabelText(/^Existing debt/), '0');
+    await user.click(screen.getByRole('button', { name: /Check eligibility/i }));
+
+    expect(await screen.findByText('Minimum 3 months employment required')).toBeInTheDocument();
+    expect(store.getState().journey.currentScreen).toBe('yourBudget');
+  });
+
   it('checks eligibility and navigates to the result screen on success', async () => {
     const user = userEvent.setup();
     const { store } = renderScreen();

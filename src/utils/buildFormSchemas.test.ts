@@ -129,6 +129,29 @@ describe('buildBudgetSchema', () => {
     }
   });
 
+  it('rejects employment duration below the minimum even when sibling fields are invalid', () => {
+    const schema = buildBudgetSchema({ rules: MOCK_VALIDATION_RULES });
+    const result = schema.safeParse({
+      age: '',
+      employmentStatus: 'employed',
+      employmentDuration: '2',
+      monthlyIncome: '',
+      monthlyExpenses: '',
+      existingDebt: '',
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some(
+          (issue) =>
+            issue.path[0] === 'employmentDuration' &&
+            issue.message === 'Minimum 3 months employment required',
+        ),
+      ).toBe(true);
+    }
+  });
+
   it('accepts unemployed and retired with empty employment duration as zero', () => {
     const schema = buildBudgetSchema({ rules: MOCK_VALIDATION_RULES });
 
@@ -137,6 +160,23 @@ describe('buildBudgetSchema', () => {
         ...validBudget,
         employmentStatus,
         employmentDuration: '',
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.employmentDuration).toBe(0);
+      }
+    }
+  });
+
+  it('accepts unemployed and retired even when a leftover duration value is present', () => {
+    const schema = buildBudgetSchema({ rules: MOCK_VALIDATION_RULES });
+
+    for (const employmentStatus of ['unemployed', 'retired'] as const) {
+      const result = schema.safeParse({
+        ...validBudget,
+        employmentStatus,
+        employmentDuration: '2',
       });
 
       expect(result.success).toBe(true);

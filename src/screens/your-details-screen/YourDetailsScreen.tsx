@@ -66,11 +66,12 @@ export const YourDetailsScreen = () => {
   const requestGenerationRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
 
-  const hasLoanContext =
-    journey.selectedProductId !== null &&
-    journey.selectedPurpose !== null &&
-    journey.loanAmount !== null &&
-    journey.loanTerm !== null;
+  const hasLoanContext = [
+    journey.selectedProductId,
+    journey.selectedPurpose,
+    journey.loanAmount,
+    journey.loanTerm,
+  ].every((value) => value !== null);
 
   const schema = useMemo(
     () => (validationRules ? buildBudgetSchema({ rules: validationRules }) : null),

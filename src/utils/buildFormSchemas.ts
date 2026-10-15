@@ -148,7 +148,7 @@ export const buildBudgetSchema = ({ rules }: { readonly rules: ValidationRulesRe
       ? z.enum(employmentOptions as [string, ...string[]], { message: employmentMessage })
       : z.string().min(1, employmentMessage);
 
-  return z
+  const budgetObjectSchema = z
     .object({
       age: z.preprocess(
         toNumberOrUndefined,
@@ -164,7 +164,11 @@ export const buildBudgetSchema = ({ rules }: { readonly rules: ValidationRulesRe
       }, employmentEnum),
       employmentDuration: z.preprocess(
         toNumberOrUndefined,
-        z.number({ error: durationMessage }).int({ message: durationMessage }).optional(),
+        z
+          .number({ error: durationMessage })
+          .int({ message: durationMessage })
+          .min(durationMin, durationMessage)
+          .optional(),
       ),
       monthlyIncome: z.preprocess(
         toNumberOrUndefined,
@@ -183,7 +187,7 @@ export const buildBudgetSchema = ({ rules }: { readonly rules: ValidationRulesRe
       if (!requiresEmploymentDuration(data.employmentStatus)) {
         return;
       }
-      if (data.employmentDuration === undefined || data.employmentDuration < durationMin) {
+      if (data.employmentDuration === undefined) {
         ctx.addIssue({
           code: 'custom',
           message: durationMessage,
@@ -197,4 +201,19 @@ export const buildBudgetSchema = ({ rules }: { readonly rules: ValidationRulesRe
         ? (data.employmentDuration as number)
         : 0,
     }));
+
+  // Blank duration before field validation when status does not require it, so a
+  // leftover value cannot fail the field-level min for unemployed/retired.
+  // Cast preserves the inner schema's input type for zodResolver (preprocess widens to unknown).
+  return z.preprocess((raw) => {
+    if (raw === null || typeof raw !== 'object') {
+      return raw;
+    }
+    const data = raw as Record<string, unknown>;
+    const status = typeof data.employmentStatus === 'string' ? data.employmentStatus : '';
+    if (requiresEmploymentDuration(status)) {
+      return raw;
+    }
+    return { ...data, employmentDuration: '' };
+  }, budgetObjectSchema) as unknown as typeof budgetObjectSchema;
 };

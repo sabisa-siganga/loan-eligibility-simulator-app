@@ -9,6 +9,7 @@ import { server } from '../../mocks/server';
 import { createAppStore, initialJourneyState } from '../../store';
 import { saveJourneyState } from '../../store/journeyPersistence';
 import { renderWithProviders } from '../../test/renderWithProviders';
+import { formatMoney } from '../../utils/formatMoney';
 import { YourDetailsScreen } from './YourDetailsScreen';
 
 const readyCatalog = {
@@ -56,6 +57,29 @@ describe('YourDetailsScreen', () => {
     expect(screen.queryByLabelText(/phone|cellphone/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/repayment estimate/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/^Employment duration/)).not.toBeInTheDocument();
+  });
+
+  it('shows helper captions for personal and financial fields', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+
+    const ageMin = MOCK_VALIDATION_RULES.personalInfo.age.min ?? 18;
+    const ageMax = MOCK_VALIDATION_RULES.personalInfo.age.max ?? 60;
+    const durationMin = MOCK_VALIDATION_RULES.personalInfo.employmentDuration.min ?? 3;
+    const incomeMin = MOCK_VALIDATION_RULES.financialInfo.monthlyIncome.min ?? 5000;
+
+    expect(screen.getByText(`Enter an age between ${ageMin} and ${ageMax}.`)).toBeInTheDocument();
+    expect(
+      screen.getByText('Select the option that best matches your situation.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText(`Enter at least ${formatMoney(incomeMin)}.`)).toBeInTheDocument();
+    expect(screen.getByText('Enter your typical monthly expenses in rand.')).toBeInTheDocument();
+    expect(screen.getByText('Enter your monthly financial details in rand.')).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText(/^Employment status/), 'employed');
+    expect(
+      screen.getByText(`Enter at least ${durationMin} months for your employment status.`),
+    ).toBeInTheDocument();
   });
 
   it('hides employment duration for unemployed and retired statuses', async () => {

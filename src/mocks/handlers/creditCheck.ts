@@ -16,6 +16,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isCreditCheckState = (value: unknown): value is CreditCheckState =>
   typeof value === 'string' && (CREDIT_CHECK_STATES as readonly string[]).includes(value);
 
+/** Kept for test setup teardown compatibility; scoring no longer rotates by call count. */
+export const resetCreditCheckCount = (): void => {};
+
 export const creditCheckHandlers = [
   http.post('*/api/loans/credit-check', async ({ request }) => {
     let body: unknown = null;

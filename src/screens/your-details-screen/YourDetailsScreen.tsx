@@ -33,6 +33,7 @@ import {
   getEmploymentStatusLabel,
   requiresEmploymentDuration,
 } from '../../utils/employmentStatusLabels';
+import { formatMoney } from '../../utils/formatMoney';
 import styles from './YourDetailsScreen.module.scss';
 
 const draftNumberToText = (value: number | null): string => (value === null ? '' : String(value));
@@ -185,8 +186,15 @@ export const YourDetailsScreen = () => {
     })),
   ];
 
+  const ageMin = validationRules.personalInfo.age.min ?? 18;
+  const ageMax = validationRules.personalInfo.age.max ?? 60;
+  const ageHelper = `Enter an age between ${ageMin} and ${ageMax}.`;
+  const statusHelper = 'Select the option that best matches your situation.';
   const durationMin = validationRules.personalInfo.employmentDuration.min ?? 3;
   const durationHelper = `Enter at least ${durationMin} months for your employment status.`;
+  const incomeMin = validationRules.financialInfo.monthlyIncome.min ?? 5000;
+  const incomeHelper = `Enter at least ${formatMoney(incomeMin)}.`;
+  const expensesHelper = 'Enter your typical monthly expenses in rand.';
 
   const showFieldError = (field: keyof BudgetFormValues): string | undefined => {
     if (!(isSubmitted || touchedFields[field])) {
@@ -359,6 +367,7 @@ export const YourDetailsScreen = () => {
                     label="Age"
                     required
                     placeholder="Enter age"
+                    helperText={ageHelper}
                     value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
@@ -376,6 +385,7 @@ export const YourDetailsScreen = () => {
                     label="Employment status"
                     required
                     options={employmentOptions}
+                    helperText={statusHelper}
                     value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
@@ -429,6 +439,7 @@ export const YourDetailsScreen = () => {
                     label="Monthly income"
                     required
                     placeholder="Enter income"
+                    helperText={incomeHelper}
                     value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
@@ -446,6 +457,7 @@ export const YourDetailsScreen = () => {
                     label="Monthly expenses"
                     required
                     placeholder="Enter expenses"
+                    helperText={expensesHelper}
                     value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}

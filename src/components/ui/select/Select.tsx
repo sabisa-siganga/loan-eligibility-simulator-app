@@ -32,10 +32,14 @@ export const Select = ({
 }: SelectProps) => {
   const generatedId = useId();
   const selectId = id ?? generatedId;
-  const helperId = helperText ? `${selectId}-helper` : undefined;
-  const errorId = errorText ? `${selectId}-error` : undefined;
-  const describedBy = [helperId, errorId].filter(Boolean).join(' ') || undefined;
-  const isInvalid = Boolean(errorText);
+  const helperId = `${selectId}-helper`;
+  const errorId = `${selectId}-error`;
+  const showError = Boolean(errorText);
+  const showHelper = Boolean(helperText) && !showError;
+  const describedBy =
+    [showHelper ? helperId : null, showError ? errorId : null].filter(Boolean).join(' ') ||
+    undefined;
+  const isInvalid = showError;
 
   return (
     <div className={[styles.field, className].filter(Boolean).join(' ')}>
@@ -59,8 +63,8 @@ export const Select = ({
           </option>
         ))}
       </select>
-      {helperText ? <HelperText id={helperId}>{helperText}</HelperText> : null}
-      {errorText ? <ErrorText id={errorId}>{errorText}</ErrorText> : null}
+      {showHelper ? <HelperText id={helperId}>{helperText}</HelperText> : null}
+      {showError ? <ErrorText id={errorId}>{errorText}</ErrorText> : null}
     </div>
   );
 };

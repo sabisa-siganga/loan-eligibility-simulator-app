@@ -11,7 +11,7 @@ const options = [
 ] as const;
 
 describe('Select', () => {
-  it('wires label, helper, and error descriptions to the control', () => {
+  it('hides helper and wires error description when both are provided', () => {
     render(
       <Select
         label="Loan purpose"
@@ -23,13 +23,12 @@ describe('Select', () => {
     );
 
     const select = screen.getByLabelText(/Loan purpose/);
+    const error = screen.getByRole('alert');
 
     expect(select).toHaveAttribute('aria-invalid', 'true');
     expect(select).toHaveAttribute('aria-required', 'true');
-    expect(select.getAttribute('aria-describedby')).toContain(
-      screen.getByText('Choose the closest match').id,
-    );
-    expect(select.getAttribute('aria-describedby')).toContain(screen.getByRole('alert').id);
+    expect(screen.queryByText('Choose the closest match')).not.toBeInTheDocument();
+    expect(select.getAttribute('aria-describedby')).toBe(error.id);
   });
 
   it('notifies callers when the value changes', async () => {

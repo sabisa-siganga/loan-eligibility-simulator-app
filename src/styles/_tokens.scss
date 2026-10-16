@@ -1,7 +1,10 @@
 // Colours — source of truth; emit-css-variables mirrors these on :root
-$color-primary: #2f70ef;
+// Primary fill meets ≥4.5:1 with white button label text (WCAG AA)
+$color-primary: #2b67e0;
 $color-primary-hover: #245fd1;
 $color-primary-pressed: #1d4fb5;
+// Darker primary for text/icons on light surfaces (WCAG AA ≥ 4.5:1)
+$color-primary-text: #1d4fb5;
 $color-page-bg: #f3f7fb;
 $color-surface: #ffffff;
 $color-text: #121a33;

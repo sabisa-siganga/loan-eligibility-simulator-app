@@ -23,6 +23,20 @@
   min-height: $touch-min;
 }
 
+.stepButton {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  min-height: $touch-min;
+}
+
 .connector {
   width: 48px;
   height: 1px;
@@ -62,7 +76,7 @@
   }
 
   .label {
-    color: $color-primary;
+    color: $color-primary-text;
   }
 }
 

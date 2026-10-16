@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import type { LoanProduct, ValidationRulesResponse } from '../types/api';
+import type {
+  LoanProduct,
+  LoanProductValidationRules,
+  ValidationRulesResponse,
+} from '../types/api';
 import { requiresEmploymentDuration } from './employmentStatusLabels';
 import { formatMoney } from './formatMoney';
 
@@ -38,21 +42,70 @@ const toNumberOrUndefined = (value: unknown): unknown => {
   return normalized;
 };
 
+const fallbackProductLoanRules = (product: LoanProduct): LoanProductValidationRules => ({
+  requestedAmount: {
+    min: product.minAmount,
+    max: product.maxAmount,
+    required: true,
+    errorMessage: `Loan amount must be between ${formatMoney(product.minAmount)} and ${formatMoney(product.maxAmount)}`,
+  },
+  loanTerm: {
+    min: product.minTerm,
+    max: product.maxTerm,
+    required: true,
+    errorMessage: `Loan term must be between ${product.minTerm} and ${product.maxTerm} months`,
+  },
+});
+
+const resolveProductLoanRules = (
+  rules: ValidationRulesResponse,
+  product: LoanProduct,
+): LoanProductValidationRules => {
+  const fromEndpoint = rules.loanDetails[product.id];
+  return fromEndpoint ?? fallbackProductLoanRules(product);
+};
+
+export const getProductAmountBounds = (
+  rules: ValidationRulesResponse,
+  product: LoanProduct,
+): { readonly min: number; readonly max: number } => {
+  const productRules = resolveProductLoanRules(rules, product);
+  return {
+    min: productRules.requestedAmount.min ?? product.minAmount,
+    max: productRules.requestedAmount.max ?? product.maxAmount,
+  };
+};
+
+export const getProductTermBounds = (
+  rules: ValidationRulesResponse,
+  product: LoanProduct,
+): { readonly min: number; readonly max: number } => {
+  const productRules = resolveProductLoanRules(rules, product);
+  return {
+    min: productRules.loanTerm.min ?? product.minTerm,
+    max: productRules.loanTerm.max ?? product.maxTerm,
+  };
+};
+
 export const buildLoanDetailsSchema = ({
+  rules,
   product,
 }: {
   readonly rules: ValidationRulesResponse;
   readonly product: LoanProduct;
 }) => {
-  // Product bounds are the source of truth for amount/term so Vehicle Finance
-  // is never constrained by Personal Loan validation-rules defaults.
-  const amountMin = product.minAmount;
-  const amountMax = product.maxAmount;
-  const termMin = product.minTerm;
-  const termMax = product.maxTerm;
+  // Validation-rules endpoint owns amount/term bounds per product id.
+  // Fall back to catalog product bounds only when that product entry is missing.
+  const productRules = resolveProductLoanRules(rules, product);
+  const amountBounds = getProductAmountBounds(rules, product);
+  const termBounds = getProductTermBounds(rules, product);
 
-  const amountMessage = `Loan amount must be between ${formatMoney(amountMin)} and ${formatMoney(amountMax)}`;
-  const termMessage = `Loan term must be between ${termMin} and ${termMax} months`;
+  const amountMessage =
+    productRules.requestedAmount.errorMessage ??
+    `Loan amount must be between ${formatMoney(amountBounds.min)} and ${formatMoney(amountBounds.max)}`;
+  const termMessage =
+    productRules.loanTerm.errorMessage ??
+    `Loan term must be between ${termBounds.min} and ${termBounds.max} months`;
   const purposeValues = product.purposes as [string, ...string[]];
 
   return z.object({
@@ -72,8 +125,8 @@ export const buildLoanDetailsSchema = ({
           error: 'Enter the required amount.',
         })
         .finite()
-        .min(amountMin, amountMessage)
-        .max(amountMax, amountMessage),
+        .min(amountBounds.min, amountMessage)
+        .max(amountBounds.max, amountMessage),
     ),
     termMonths: z.preprocess(
       toNumberOrUndefined,
@@ -82,28 +135,11 @@ export const buildLoanDetailsSchema = ({
           error: 'Enter the repayment term in months.',
         })
         .int({ message: 'Enter a whole number of months.' })
-        .min(termMin, termMessage)
-        .max(termMax, termMessage),
+        .min(termBounds.min, termMessage)
+        .max(termBounds.max, termMessage),
     ),
   });
 };
-
-export const getProductAmountBounds = (
-  _rules: ValidationRulesResponse,
-  product: LoanProduct,
-): { readonly min: number; readonly max: number } => ({
-  min: product.minAmount,
-  max: product.maxAmount,
-});
-
-export const getProductTermBounds = (
-  _rules: ValidationRulesResponse,
-  product: LoanProduct,
-): { readonly min: number; readonly max: number } => ({
-  min: product.minTerm,
-  max: product.maxTerm,
-});
-
 export type BudgetFormValues = {
   age: string;
   employmentStatus: string;

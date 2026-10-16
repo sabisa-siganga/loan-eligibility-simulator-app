@@ -1,0 +1,51 @@
+@use '../../styles/mixins' as *;
+@use '../../styles/tokens' as *;
+
+.list {
+  margin: 0;
+  display: grid;
+  gap: $space-3;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: $space-4;
+  font-size: $font-size-base;
+}
+
+.label {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  color: $color-text-secondary;
+}
+
+.swatch {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+
+.value {
+  margin: 0;
+  min-width: 0;
+  color: $color-text;
+  overflow-wrap: anywhere;
+  @include tabular-nums;
+}
+
+.alignEnd {
+  text-align: right;
+}
+
+.muted {
+  color: $color-text-secondary;
+}
+
+.emphasis {
+  font-weight: $font-weight-semibold;
+  color: $color-success;
+}

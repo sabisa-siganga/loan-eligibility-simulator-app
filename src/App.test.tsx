@@ -55,8 +55,10 @@ describe('App', () => {
               creditScore: { min: 300, max: 850, required: false },
             },
             loanDetails: {
-              requestedAmount: { min: 5000, max: 300000, required: true },
-              loanTerm: { min: 6, max: 60, required: true },
+              personal_loan: {
+                requestedAmount: { min: 5000, max: 300000, required: true },
+                loanTerm: { min: 6, max: 60, required: true },
+              },
             },
           },
           errorMessage: null,

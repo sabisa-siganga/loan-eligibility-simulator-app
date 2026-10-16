@@ -41,7 +41,7 @@ describe('PurposeCard', () => {
       />,
     );
 
-    await user.click(screen.getByLabelText('Home improvement'));
+    await user.click(screen.getByRole('radio', { name: 'Home improvement' }));
     expect(onChange).toHaveBeenCalledWith('home_improvement');
 
     rerender(
@@ -54,7 +54,24 @@ describe('PurposeCard', () => {
       />,
     );
 
-    expect(screen.getByLabelText('Home improvement')).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'Home improvement' })).toBeDisabled();
+  });
+
+  it('marks the radio required when requested and hides decorative chrome from AT', () => {
+    const { container } = render(
+      <PurposeCard
+        purposeId="new_vehicle"
+        name="purpose"
+        checked={false}
+        required
+        onChange={() => undefined}
+      />,
+    );
+
+    const radio = screen.getByRole('radio', { name: 'New vehicle' });
+    expect(radio).toBeRequired();
+    expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    expect(container.querySelector(`.${styles.indicator}`)).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('applies the selected class so hover cannot restyle an active card via CSS', () => {
@@ -71,18 +88,23 @@ describe('PurposeCard', () => {
     expect(card).toHaveClass(styles.selected);
   });
 
-  it('supports keyboard focus and arrow-key selection within a radio group', async () => {
+  it('makes the card label a tab stop and supports arrow-key selection within a radio group', async () => {
     const user = userEvent.setup();
     render(<PurposeGroup />);
 
     const home = screen.getByLabelText('Home improvement');
     const education = screen.getByLabelText('Education');
+    const homeCard = home.closest('label');
+    const educationCard = education.closest('label');
+
+    expect(homeCard).toHaveAttribute('tabIndex', '0');
+    expect(home).toHaveAttribute('tabIndex', '-1');
 
     await user.tab();
-    expect(home).toHaveFocus();
+    expect(homeCard).toHaveFocus();
 
     await user.keyboard('{ArrowDown}');
     expect(education).toBeChecked();
-    expect(education).toHaveFocus();
+    expect(educationCard).toHaveFocus();
   });
 });

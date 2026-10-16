@@ -10,25 +10,27 @@ Already partly in place: labelled inputs with `aria-invalid` / `aria-describedby
 
 - [ ] **Audit every form control** (`Input`, `InputGroup`, `Select`, `Checkbox`, `Slider`, `MoneyInput`, `WholeNumberInput`) for visible label, programmatic required state, helper + error association, and keyboard operability.
 - [ ] **Standardise error announcement**: decide when `ErrorText` uses `role="alert"` vs `role="status"`; avoid noisy multi-alert spam on submit; prefer one form-level summary + field-level associations.
-- [ ] **Button / link targets**: ensure primary actions meet ~44px touch targets (`$touch-min`); fix any undersized link-variant controls (e.g. dialog close).
-- [ ] **Dialog corrections**: restore focus to the opener on close; keep focus trapped while open; ensure backdrop does not leave background interactive to assistive tech (`inert` / equivalent); cover with tests.
+- [x] **Button / link targets**: ensure primary actions meet ~44px touch targets (`$touch-min`); fix any undersized link-variant controls (e.g. dialog close). *(skip link + product accordion headers; link buttons already ≥44px)*
+- [x] **Dialog corrections**: restore focus to the opener on close; keep focus trapped while open; ensure backdrop does not leave background interactive to assistive tech (`inert` / equivalent); cover with tests. *(body portal + inert + backdrop click)*
 - [ ] **Slider + paired number inputs**: keyboard support end-to-end; do not announce every tick to screen readers; announce meaningful estimate updates politely and sparsely.
 - [ ] **Unify visually hidden utilities**: one shared pattern (`visually-hidden` vs screen `srOnly`) used consistently.
 
 ## 2. Journey shell and navigation
 
-- [ ] **Landmarks**: ensure a single `main`, labelled progress `nav`, and coherent heading order (`h1` per step, then `h2` sections).
-- [ ] **Skip link** to main content (keyboard-first entry).
+- [x] **Landmarks**: ensure a single `main`, labelled progress `nav`, and coherent heading order (`h1` per step, then `h2` sections). *(Loan details shell)*
+- [x] **Skip link** to main content (keyboard-first entry).
 - [ ] **Progress stepper**: keep current/upcoming/completed announcements accurate when steps change; verify with a screen reader.
-- [ ] **Step changes**: move focus sensibly on Continue / Back (e.g. to the new step `h1`), without trapping or losing context.
-- [ ] **“How it works” help** (requirements): add an accessible, keyboard-operable help control in the header that opens the agreed content (reuse `Dialog`); do not leave it as decorative text.
+- [x] **Step changes**: move focus sensibly on Continue / Back (e.g. to the new step `h1`), without trapping or losing context. *(Loan details / Your details / Your result `h1` focus on arrival)*
+- [x] **“How it works” help** (requirements): add an accessible, keyboard-operable help control in the header that opens the agreed content (reuse `Dialog`); do not leave it as decorative text.
 
 ## 3. Loan details screen
 
-- [ ] **Product accordion**: correct `aria-expanded` / `aria-controls` behaviour; ensure collapsed panels are not in the tab order incorrectly.
-- [ ] **Purpose radiogroup**: label from the purpose prompt (not only the product heading); wire purpose errors via `aria-describedby`.
-- [ ] **Validation focus**: on Continue failure, focus the first invalid control (purpose / amount / term) and expose a clear error summary if needed.
-- [ ] **Empty / error banners**: use the right live-region role (`alert` vs `status`) for “no products” and summary errors.
+- [x] **Product accordion**: correct `aria-expanded` / `aria-controls` behaviour; ensure collapsed panels are not in the tab order incorrectly. *(plus `aria-describedby` for description)*
+- [x] **Purpose radiogroup**: label from the purpose prompt (not only the product heading); wire purpose errors via `aria-describedby`.
+- [x] **Validation focus**: on Continue failure, focus the first invalid control (purpose / amount / term) and expose a clear error summary if needed. *(field focus + alerts; form-level summary still optional)*
+- [x] **Empty / error banners**: use the right live-region role (`alert` vs `status`) for “no products” and summary errors.
+
+See also: [2026-10-16-loan-details-accessibility.md](./2026-10-16-loan-details-accessibility.md) for the screen-1 pass.
 
 ## 4. Your details (budget) screen
 
@@ -44,7 +46,7 @@ Already partly in place: labelled inputs with `aria-invalid` / `aria-describedby
 
 ## 6. Visual / interaction accessibility
 
-- [ ] **Contrast audit** of tokens (text, borders, error, disabled, focus ring) against WCAG 2.2 AA; fix failing pairs at the token layer.
+- [ ] **Contrast audit** of tokens (text, borders, error, disabled, focus ring) against WCAG 2.2 AA; fix failing pairs at the token layer. *(partial: primary fill + `$color-primary-text` for text-on-light; full sweep still open)*
 - [ ] **Focus visibility**: every interactive control has a visible non-colour-only focus indicator.
 - [ ] **200% zoom / reflow**: Loan details, Your details, and Result remain usable without horizontal scrolling of essential content.
 - [ ] **Motion**: keep reduced-motion respect; no shake/flash validation; no money count-up animation; state must be clear without motion.

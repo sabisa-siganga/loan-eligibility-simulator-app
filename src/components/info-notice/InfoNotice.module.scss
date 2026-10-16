@@ -1,0 +1,25 @@
+@use '../../styles/mixins' as *;
+@use '../../styles/tokens' as *;
+
+.notice {
+  @include message-banner;
+  align-items: center;
+  gap: $space-3;
+  border-color: transparent;
+  background-color: rgba($color-primary, 0.1);
+  padding: $space-3 $space-4;
+}
+
+.icon {
+  flex: 0 0 auto;
+  color: $color-primary;
+  fill: $color-primary;
+}
+
+.text {
+  margin: 0;
+  color: $color-text;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
+  opacity: 0.85;
+}

@@ -28,6 +28,15 @@
 .title {
   @include screen-title;
   margin: 0;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+    border-radius: $radius-input;
+  }
 }
 
 .description {

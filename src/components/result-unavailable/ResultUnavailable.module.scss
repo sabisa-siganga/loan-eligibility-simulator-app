@@ -1,0 +1,58 @@
+@use '../../styles/mixins' as *;
+@use '../../styles/tokens' as *;
+
+.panel {
+  @include card-surface;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $space-4;
+  padding: $space-6;
+
+  @include respond-above($bp-fields) {
+    flex-direction: row;
+    padding: $space-7 $space-8;
+  }
+}
+
+.iconWrap {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background-color: rgba($color-primary, 0.12);
+  color: $color-primary;
+}
+
+.icon {
+  display: block;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $space-2;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.title {
+  margin: 0;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text;
+}
+
+.body {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
+}
+
+.action {
+  margin-top: $space-2;
+}

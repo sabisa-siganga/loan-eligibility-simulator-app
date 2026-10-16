@@ -1,26 +1,114 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ValidationRulesResponse } from '../types/api';
 import { MOCK_PRODUCTS } from '../mocks/data/products';
 import { MOCK_VALIDATION_RULES } from '../mocks/data/validationRules';
-import { buildBudgetSchema, buildLoanDetailsSchema } from './buildFormSchemas';
+import {
+  buildBudgetSchema,
+  buildLoanDetailsSchema,
+  getProductAmountBounds,
+  getProductTermBounds,
+} from './buildFormSchemas';
 
 describe('buildLoanDetailsSchema', () => {
   const personalLoan = MOCK_PRODUCTS[0];
   const vehicleLoan = MOCK_PRODUCTS[1];
 
-  it('rejects amount below the selected product minAmount even if validation-rules min is lower', () => {
+  const stricterPersonalRules: ValidationRulesResponse = {
+    ...MOCK_VALIDATION_RULES,
+    loanDetails: {
+      ...MOCK_VALIDATION_RULES.loanDetails,
+      personal_loan: {
+        requestedAmount: {
+          min: 5000,
+          max: 100000,
+          required: true,
+          errorMessage: 'Loan amount must be between R5 000 and R100 000',
+        },
+        loanTerm: {
+          min: 6,
+          max: 36,
+          required: true,
+          errorMessage: 'Loan term must be between 6 and 36 months',
+        },
+      },
+    },
+  };
+
+  it('rejects amounts outside the validation-rules bounds even when the product max is higher', () => {
     const schema = buildLoanDetailsSchema({
-      rules: MOCK_VALIDATION_RULES,
-      product: vehicleLoan,
+      rules: stricterPersonalRules,
+      product: personalLoan,
     });
 
     const result = schema.safeParse({
-      purpose: 'new_vehicle',
-      amount: '10000',
+      purpose: 'home_improvement',
+      amount: '150000',
       termMonths: '24',
     });
 
     expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(
+        'Loan amount must be between R5 000 and R100 000',
+      );
+    }
+  });
+
+  it('rejects terms outside the validation-rules bounds even when the product max is higher', () => {
+    const schema = buildLoanDetailsSchema({
+      rules: stricterPersonalRules,
+      product: personalLoan,
+    });
+
+    const result = schema.safeParse({
+      purpose: 'home_improvement',
+      amount: '50000',
+      termMonths: '48',
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe('Loan term must be between 6 and 36 months');
+    }
+  });
+
+  it('falls back to product catalog bounds when loanDetails has no entry for the product', () => {
+    const rulesWithoutVehicle: ValidationRulesResponse = {
+      ...MOCK_VALIDATION_RULES,
+      loanDetails: {
+        personal_loan: MOCK_VALIDATION_RULES.loanDetails.personal_loan,
+      },
+    };
+
+    expect(getProductAmountBounds(rulesWithoutVehicle, vehicleLoan)).toEqual({
+      min: vehicleLoan.minAmount,
+      max: vehicleLoan.maxAmount,
+    });
+    expect(getProductTermBounds(rulesWithoutVehicle, vehicleLoan)).toEqual({
+      min: vehicleLoan.minTerm,
+      max: vehicleLoan.maxTerm,
+    });
+
+    const schema = buildLoanDetailsSchema({
+      rules: rulesWithoutVehicle,
+      product: vehicleLoan,
+    });
+
+    expect(
+      schema.safeParse({
+        purpose: 'new_vehicle',
+        amount: '10000',
+        termMonths: '24',
+      }).success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({
+        purpose: 'new_vehicle',
+        amount: '80000',
+        termMonths: '24',
+      }).success,
+    ).toBe(true);
   });
 
   it('accepts a valid personal loan submission from string drafts', () => {
@@ -64,7 +152,7 @@ describe('buildLoanDetailsSchema', () => {
     ).toBe(false);
   });
 
-  it('rejects a fractional term and an amount above the product max', () => {
+  it('rejects a fractional term and an amount above the validation-rules max', () => {
     const schema = buildLoanDetailsSchema({
       rules: MOCK_VALIDATION_RULES,
       product: personalLoan,

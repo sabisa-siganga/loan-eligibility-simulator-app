@@ -1,5 +1,8 @@
 import '@testing-library/jest-dom/vitest';
-import { afterAll, afterEach, beforeAll } from 'vitest';
+import * as axeMatchers from 'vitest-axe/matchers';
+import { afterAll, afterEach, beforeAll, expect } from 'vitest';
+
+expect.extend(axeMatchers);
 
 import { resetCreditCheckCount } from '../mocks/handlers/creditCheck';
 import { server } from '../mocks/server';

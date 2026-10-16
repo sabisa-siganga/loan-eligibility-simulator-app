@@ -1,7 +1,8 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
+import { axe } from 'vitest-axe';
 
 import { MOCK_PRODUCTS } from '../../mocks/data/products';
 import { MOCK_VALIDATION_RULES } from '../../mocks/data/validationRules';
@@ -34,6 +35,50 @@ const expandProduct = async (user: ReturnType<typeof userEvent.setup>, productNa
 };
 
 describe('LoanDetailsScreen', () => {
+  it('has no serious automated accessibility violations in the default state', async () => {
+    const { container } = renderScreen();
+
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('exposes a skip link to main content and focuses the screen heading on arrival', () => {
+    renderScreen();
+
+    expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute(
+      'href',
+      '#main-content',
+    );
+    expect(document.getElementById('main-content')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Choose your loan' })).toHaveFocus();
+  });
+
+  it('opens How it works help from the journey shell', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+
+    await user.click(screen.getByRole('button', { name: 'How it works' }));
+
+    expect(screen.getByRole('dialog', { name: 'How it works' })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Select Start again to clear your entered details and return to the first step/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('submits the loan details form with Enter from an amount field', async () => {
+    const user = userEvent.setup();
+    const { store } = renderScreen();
+
+    await user.click(screen.getByLabelText('Education'));
+    await user.type(activeAmount(), '25000');
+    await user.type(activeTerm(), '18{Enter}');
+
+    await waitFor(() => {
+      expect(store.getState().journey.currentScreen).toBe('yourBudget');
+    });
+  });
+
   it('opens the first loan product by default and keeps others collapsed', () => {
     renderScreen();
 
@@ -292,5 +337,33 @@ describe('LoanDetailsScreen', () => {
     expect(activeTerm()).toHaveValue('12');
     expect(screen.getByText('R20 000')).toBeInTheDocument();
     expect(screen.getByText('12 months')).toBeInTheDocument();
+  });
+
+  it('shows soft prompts in the loan summary when the draft is empty', () => {
+    renderScreen();
+
+    const summary = screen.getByRole('complementary', { name: 'Your loan summary' });
+    expect(within(summary).getByText('Choose a product')).toBeInTheDocument();
+    expect(within(summary).getByText('Choose a purpose')).toBeInTheDocument();
+    expect(within(summary).getByText('Enter amount')).toBeInTheDocument();
+    expect(within(summary).getByText('Enter term')).toBeInTheDocument();
+  });
+
+  it('shows zero amount and term in the summary instead of empty prompts', () => {
+    renderScreen({
+      ...initialJourneyState,
+      selectedProductId: 'personal_loan',
+      selectedPurpose: 'education',
+      loanAmount: 0,
+      loanTerm: 0,
+    });
+
+    const summary = screen.getByRole('complementary', { name: 'Your loan summary' });
+    expect(within(summary).getByText('Personal Loan')).toBeInTheDocument();
+    expect(within(summary).getByText('Education')).toBeInTheDocument();
+    expect(within(summary).getByText('R0')).toBeInTheDocument();
+    expect(within(summary).getByText('0 months')).toBeInTheDocument();
+    expect(within(summary).queryByText('Enter amount')).not.toBeInTheDocument();
+    expect(within(summary).queryByText('Enter term')).not.toBeInTheDocument();
   });
 });

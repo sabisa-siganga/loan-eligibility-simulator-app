@@ -1,0 +1,114 @@
+@use '../../styles/mixins' as *;
+@use '../../styles/tokens' as *;
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: $space-4;
+  min-width: 0;
+}
+
+.ringWrap,
+.statusWrap {
+  position: relative;
+  flex: 0 0 auto;
+  width: 76px;
+  height: 76px;
+}
+
+.statusWrap {
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.svg {
+  display: block;
+  transform: rotate(-90deg);
+}
+
+.track {
+  stroke: $color-slider-track;
+}
+
+.progress,
+.progressAnimated {
+  stroke: $color-primary;
+}
+
+.progressAnimated {
+  transition: stroke-dashoffset 600ms ease-out;
+}
+
+.value,
+.statusValue {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: $space-1;
+  font-size: 15px;
+  font-weight: $font-weight-semibold;
+  color: $color-text;
+  text-align: center;
+  line-height: 1.1;
+  @include tabular-nums;
+}
+
+.statusOutline {
+  position: absolute;
+  inset: 0;
+  border: 3px solid $color-slider-track;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.toneNeutral {
+  background-color: transparent;
+}
+
+.toneGood {
+  background-color: $color-success-surface;
+
+  .statusOutline {
+    border-color: $color-success;
+  }
+}
+
+.toneFair {
+  background-color: $color-warning-surface;
+
+  .statusOutline {
+    border-color: $color-warning;
+  }
+}
+
+.tonePoor {
+  background-color: $color-error-surface;
+
+  .statusOutline {
+    border-color: $color-error-border;
+  }
+}
+
+.statusValue {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text;
+  word-break: break-word;
+}
+
+.label {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  line-height: 1.35;
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressAnimated {
+    transition: none;
+  }
+}

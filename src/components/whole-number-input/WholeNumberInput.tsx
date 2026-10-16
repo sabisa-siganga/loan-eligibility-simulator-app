@@ -94,7 +94,7 @@ export const WholeNumberInput = ({
         />
         {suffix ? (
           <InputGroupAddon align="inline-end">
-            <InputGroupText aria-hidden="true">{suffix}</InputGroupText>
+            <InputGroupText>{suffix}</InputGroupText>
           </InputGroupAddon>
         ) : null}
       </InputGroup>

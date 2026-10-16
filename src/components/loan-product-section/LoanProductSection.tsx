@@ -57,28 +57,31 @@ export const LoanProductSection = ({
   onTermBlur,
 }: LoanProductSectionProps) => {
   const headingId = `product-${product.id}-heading`;
+  const descriptionId = `product-${product.id}-description`;
   const panelId = `product-${product.id}-panel`;
+  const purposeLegendId = `product-${product.id}-purpose-legend`;
   const purposeErrorId = `product-${product.id}-purpose-error`;
   const showFields = isExpanded && isSelected;
   const ProductIcon = getProductIcon(product.id);
 
   return (
     <section className={styles.section} aria-labelledby={headingId}>
-      <button
-        type="button"
-        className={styles.headerButton}
-        aria-labelledby={headingId}
-        aria-expanded={isExpanded}
-        aria-controls={panelId}
-        onClick={onHeaderClick}
-      >
-        <ProductIcon
-          className={styles.productIcon}
-          aria-hidden="true"
-          size={30}
-          strokeWidth={1.75}
-        />
-        <span className={styles.headerContent}>
+      <div className={styles.headerBlock}>
+        <button
+          type="button"
+          className={styles.headerButton}
+          aria-labelledby={headingId}
+          aria-describedby={descriptionId}
+          aria-expanded={isExpanded}
+          aria-controls={panelId}
+          onClick={onHeaderClick}
+        >
+          <ProductIcon
+            className={styles.productIcon}
+            aria-hidden="true"
+            size={30}
+            strokeWidth={1.75}
+          />
           <span className={styles.headerTop}>
             <h2 id={headingId} className={styles.heading}>
               {product.name}
@@ -93,21 +96,25 @@ export const LoanProductSection = ({
               strokeWidth={1.75}
             />
           </span>
-          <span className={styles.description}>{product.description}</span>
-        </span>
-      </button>
+        </button>
+        <p id={descriptionId} className={styles.description}>
+          {product.description}
+        </p>
+      </div>
 
       <div id={panelId} className={styles.panel} hidden={!isExpanded}>
         {isExpanded ? (
           <>
-            <fieldset className={styles.purposeFieldset}>
-              <legend className={styles.purposeLegend}>
+            <div className={styles.purposeFieldset}>
+              <p id={purposeLegendId} className={styles.purposeLegend}>
                 {getPurposePrompt(product)} <span aria-hidden="true">*</span>
-              </legend>
+              </p>
               <div
                 className={styles.purposeGrid}
                 role="radiogroup"
-                aria-labelledby={headingId}
+                aria-labelledby={purposeLegendId}
+                aria-required="true"
+                aria-invalid={purposeError ? 'true' : undefined}
                 aria-describedby={purposeError ? purposeErrorId : undefined}
               >
                 {product.purposes.map((purposeId) => (
@@ -116,11 +123,12 @@ export const LoanProductSection = ({
                     purposeId={purposeId}
                     name={purposeGroupName}
                     checked={selectedPurposeId === purposeId}
+                    required
                     onChange={onPurposeChange}
                   />
                 ))}
               </div>
-            </fieldset>
+            </div>
 
             {purposeError ? <ErrorText id={purposeErrorId}>{purposeError}</ErrorText> : null}
 

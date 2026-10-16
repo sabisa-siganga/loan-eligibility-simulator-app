@@ -35,9 +35,16 @@
     background-color $duration-color ease,
     border-color $duration-color ease;
 
-  &:hover:not(.disabled):not(.selected) {
+  &:hover:not(.disabled):not(.selected):not(:focus-visible) {
     border-color: $color-primary;
     color: $color-primary;
+  }
+
+  // Label is the tab stop; ring the whole chip on keyboard focus.
+  &:focus-visible {
+    border-color: $color-primary;
+    @include focus-ring;
+    box-shadow: 0 0 0 $focus-ring-width $focus-ring-color;
   }
 }
 
@@ -46,10 +53,16 @@
   background-color: $color-primary;
   color: $color-surface;
 
-  &:hover:not(.disabled) {
+  &:hover:not(.disabled):not(:focus-visible) {
     border-color: $color-primary-hover;
     background-color: $color-primary-hover;
     color: $color-surface;
+  }
+
+  &:focus-visible {
+    border-color: $color-primary-pressed;
+    outline-color: $color-primary-pressed;
+    box-shadow: 0 0 0 $focus-ring-width $focus-ring-color;
   }
 }
 
@@ -77,16 +90,11 @@
   &:focus {
     outline: none;
   }
-
-  &:focus-visible + .label {
-    @include focus-ring;
-  }
 }
 
 .label {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: $radius-control;
   pointer-events: none;
 }

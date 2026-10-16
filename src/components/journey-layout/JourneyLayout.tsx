@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import { AppHeader } from '../app-header';
 import { ProgressStepper, type ProgressStep } from '../progress-stepper';
+import { JOURNEY_SCREENS, setCurrentScreen, useAppDispatch, type JourneyScreen } from '../../store';
 import styles from './JourneyLayout.module.scss';
 
 export const JOURNEY_STEPS: readonly ProgressStep[] = [
@@ -16,22 +17,41 @@ export type JourneyLayoutProps = {
   readonly children: ReactNode;
 };
 
+const isJourneyScreen = (value: string): value is JourneyScreen =>
+  (JOURNEY_SCREENS as readonly string[]).includes(value);
+
 export const JourneyLayout = ({
   currentStepId,
   completedStepIds,
   children,
-}: JourneyLayoutProps) => (
-  <div className={styles.shell}>
-    <AppHeader />
-    <div className={styles.stepperWrap}>
-      <ProgressStepper
-        steps={JOURNEY_STEPS}
-        currentStepId={currentStepId}
-        completedStepIds={completedStepIds}
-      />
+}: JourneyLayoutProps) => {
+  const dispatch = useAppDispatch();
+
+  const handleStepClick = (stepId: string) => {
+    if (isJourneyScreen(stepId)) {
+      dispatch(setCurrentScreen(stepId));
+    }
+  };
+
+  return (
+    <div className={styles.shell}>
+      <a className={styles.skipLink} href="#main-content">
+        Skip to main content
+      </a>
+      <AppHeader />
+      <div className={styles.stepperWrap}>
+        <ProgressStepper
+          steps={JOURNEY_STEPS}
+          currentStepId={currentStepId}
+          completedStepIds={completedStepIds}
+          onStepClick={handleStepClick}
+        />
+      </div>
+      <main id="main-content" className={styles.main} tabIndex={-1}>
+        {children}
+      </main>
     </div>
-    <main className={styles.main}>{children}</main>
-  </div>
-);
+  );
+};
 
 export default JourneyLayout;

@@ -46,7 +46,10 @@ export const LoanDetailsScreen = () => {
   const validationRules = useAppSelector((state) => state.catalog.validationRules);
   const journey = useAppSelector((state) => state.journey);
   const purposeErrorId = useId();
+  const titleId = useId();
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const pendingPurposeFocusRef = useRef(false);
+  const hasFocusedTitleRef = useRef(false);
 
   const [expandedProductId, setExpandedProductId] = useState<string | null>(
     () => journey.selectedProductId ?? products[0]?.id ?? null,
@@ -143,6 +146,14 @@ export const LoanDetailsScreen = () => {
     firstPurpose?.focus();
   }, [expandedProductId, errors.purpose, isSubmitted]);
 
+  useEffect(() => {
+    if (hasFocusedTitleRef.current) {
+      return;
+    }
+    hasFocusedTitleRef.current = true;
+    titleRef.current?.focus();
+  }, []);
+
   if (!validationRules) {
     return null;
   }
@@ -220,20 +231,30 @@ export const LoanDetailsScreen = () => {
 
   const handlePrimaryAction = handleSubmit(onValidSubmit, onInvalidSubmit);
 
-  const productLabel = selectedProduct?.name ?? 'Not selected';
+  const productLabel = selectedProduct?.name ?? 'Choose a product';
   const purposeLabel = journey.selectedPurpose
     ? getPurposeLabel(journey.selectedPurpose)
-    : 'Not selected';
-  const amountLabel = journey.loanAmount === null ? 'Not entered' : formatMoney(journey.loanAmount);
-  const termLabel = journey.loanTerm === null ? 'Not entered' : `${journey.loanTerm} months`;
+    : 'Choose a purpose';
+  const amountLabel =
+    journey.loanAmount === null ? 'Enter amount' : formatMoney(journey.loanAmount);
+  const termLabel = journey.loanTerm === null ? 'Enter term' : `${journey.loanTerm} months`;
   const purposeError = showFieldError('purpose');
 
   return (
     <JourneyLayout currentStepId="loanDetails">
-      <div className={styles.layout}>
+      <form
+        className={styles.layout}
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void handlePrimaryAction();
+        }}
+      >
         <div className={[styles.main, styles.formColumn].join(' ')}>
           <div className={styles.intro}>
-            <h1 className={styles.title}>Choose your loan</h1>
+            <h1 ref={titleRef} id={titleId} className={styles.title} tabIndex={-1}>
+              Choose your loan
+            </h1>
             <p className={styles.description}>
               Select a loan type, tell us what it&apos;s for and enter your amount and term.
             </p>
@@ -315,11 +336,11 @@ export const LoanDetailsScreen = () => {
             purposeLabel={purposeLabel}
             amountLabel={amountLabel}
             termLabel={termLabel}
-            onAction={handlePrimaryAction}
+            actionType="submit"
             disabled={products.length === 0}
           />
         </div>
-      </div>
+      </form>
     </JourneyLayout>
   );
 };

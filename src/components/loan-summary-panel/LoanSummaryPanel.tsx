@@ -10,9 +10,10 @@ export type LoanSummaryPanelProps = {
   readonly termLabel: string;
   readonly isSubmitting?: boolean;
   readonly error?: string;
-  readonly onAction: () => void;
+  readonly onAction?: () => void;
   readonly disabled?: boolean;
   readonly notice?: ReactNode;
+  readonly actionType?: 'button' | 'submit';
 };
 
 export const LoanSummaryPanel = ({
@@ -25,6 +26,7 @@ export const LoanSummaryPanel = ({
   onAction,
   disabled = false,
   notice,
+  actionType = 'button',
 }: LoanSummaryPanelProps) => {
   return (
     <aside className={styles.panel} aria-labelledby="loan-summary-heading">
@@ -53,8 +55,8 @@ export const LoanSummaryPanel = ({
       {error ? <ErrorText id="loan-summary-error">{error}</ErrorText> : null}
       <Button
         className={styles.action}
-        type="button"
-        onClick={onAction}
+        type={actionType}
+        onClick={actionType === 'button' ? onAction : undefined}
         disabled={disabled || isSubmitting}
         aria-describedby={error ? 'loan-summary-error' : undefined}
       >

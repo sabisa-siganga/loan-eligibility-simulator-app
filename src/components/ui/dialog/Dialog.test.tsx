@@ -13,7 +13,7 @@ describe('Dialog', () => {
     );
 
     expect(screen.getByRole('dialog', { name: 'Confirm reset' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Close dialog' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
   });
 
   it('closes when Escape is pressed', async () => {
@@ -50,7 +50,7 @@ describe('Dialog', () => {
       </Dialog>,
     );
 
-    const closeButton = screen.getByRole('button', { name: 'Close dialog' });
+    const closeButton = screen.getByRole('button', { name: 'Close' });
     const secondaryButton = screen.getByRole('button', { name: 'Secondary action' });
 
     secondaryButton.focus();
@@ -68,7 +68,7 @@ describe('Dialog', () => {
       </Dialog>,
     );
 
-    const closeButton = screen.getByRole('button', { name: 'Close dialog' });
+    const closeButton = screen.getByRole('button', { name: 'Close' });
     const secondaryButton = screen.getByRole('button', { name: 'Secondary action' });
 
     expect(closeButton).toHaveFocus();
@@ -93,5 +93,51 @@ describe('Dialog', () => {
     );
 
     expect(document.body.style.overflow).not.toBe('hidden');
+  });
+
+  it('renders in a body portal and closes when the backdrop is clicked', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+
+    render(
+      <Dialog open title="Confirm reset" onClose={onClose}>
+        <p>Open</p>
+      </Dialog>,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Confirm reset' });
+    expect(dialog.parentElement?.parentElement).toBe(document.body);
+    expect(dialog.parentElement).toHaveAttribute('data-dialog-portal');
+
+    await user.click(dialog.parentElement as HTMLElement);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('restores focus to the previously focused element when closed', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+
+    const Harness = ({ open }: { readonly open: boolean }) => (
+      <>
+        <button type="button">Opener</button>
+        <Dialog open={open} title="Confirm reset" onClose={onClose}>
+          <p>Open</p>
+        </Dialog>
+      </>
+    );
+
+    const { rerender } = render(<Harness open={false} />);
+    const opener = screen.getByRole('button', { name: 'Opener' });
+    opener.focus();
+    expect(opener).toHaveFocus();
+
+    rerender(<Harness open />);
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    rerender(<Harness open={false} />);
+    expect(opener).toHaveFocus();
   });
 });

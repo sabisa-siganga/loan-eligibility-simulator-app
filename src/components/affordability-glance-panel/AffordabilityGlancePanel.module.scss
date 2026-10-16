@@ -1,0 +1,131 @@
+@use '../../styles/mixins' as *;
+@use '../../styles/tokens' as *;
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  min-width: 0;
+}
+
+.sectionTitle {
+  @include section-heading;
+  margin: 0;
+}
+
+.incomeRow {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: $space-2 $space-4;
+  padding-bottom: $space-3;
+  border-bottom: 1px solid rgba($color-input-border, 0.35);
+}
+
+.incomeLabel {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+}
+
+.incomeValue,
+.incomeMissing {
+  margin: 0;
+  font-size: $font-size-figure;
+  font-weight: $font-weight-semibold;
+  @include tabular-nums;
+}
+
+.incomeValue {
+  color: $color-text;
+}
+
+.incomeMissing {
+  color: $color-text-secondary;
+}
+
+.breakdown {
+  margin: 0;
+}
+
+.indicators {
+  border-top: 1px solid rgba($color-input-border, 0.35);
+  padding-top: $space-5;
+}
+
+.indicatorsHeading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.indicatorGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-5 $space-6;
+
+  @include respond-above(440px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.riskBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $space-2;
+  margin-top: $space-1;
+  border-top: 1px solid rgba($color-input-border, 0.35);
+  padding-top: $space-4;
+}
+
+.riskLabel {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+}
+
+.riskBadge {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding: $space-1 $space-4;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  line-height: 1.2;
+}
+
+.riskToneLow {
+  background-color: $color-success-surface;
+  border-color: rgba($color-success, 0.35);
+  color: $color-success;
+}
+
+.riskToneMedium {
+  background-color: $color-warning-surface;
+  border-color: rgba($color-warning, 0.35);
+  color: $color-warning;
+}
+
+.riskToneHigh {
+  background-color: $color-error-surface;
+  border-color: rgba($color-error, 0.35);
+  color: $color-error;
+}
+
+.riskToneUnknown {
+  background-color: $color-disabled-surface;
+  border-color: rgba($color-input-border, 0.45);
+  color: $color-text;
+}

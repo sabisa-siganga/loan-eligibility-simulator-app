@@ -9,12 +9,14 @@ export type ProgressStepperProps = {
   readonly steps: readonly ProgressStep[];
   readonly currentStepId: string;
   readonly completedStepIds?: readonly string[];
+  readonly onStepClick?: (stepId: string) => void;
 };
 
 export const ProgressStepper = ({
   steps,
   currentStepId,
   completedStepIds = [],
+  onStepClick,
 }: ProgressStepperProps) => {
   const currentIndex = steps.findIndex((step) => step.id === currentStepId);
 
@@ -25,24 +27,52 @@ export const ProgressStepper = ({
           const isCurrent = step.id === currentStepId;
           const isCompleted = completedStepIds.includes(step.id) && !isCurrent;
           const isUpcoming = index > currentIndex && !isCompleted;
+          const isClickable = isCompleted && onStepClick !== undefined;
           const statusClass = isCurrent
             ? styles.current
             : isCompleted
               ? styles.completed
               : styles.upcoming;
 
+          const marker = (
+            <span className={styles.marker} aria-hidden="true">
+              {isCompleted ? '✓' : index + 1}
+            </span>
+          );
+
+          const label = (
+            <span className={styles.label}>
+              {isCurrent ? <span className="visually-hidden">Current step: </span> : null}
+              {isUpcoming ? <span className="visually-hidden">Upcoming step: </span> : null}
+              {isCompleted ? <span className="visually-hidden">Completed step: </span> : null}
+              {step.label}
+            </span>
+          );
+
           return (
-            <li key={step.id} className={[styles.item, statusClass].join(' ')}>
+            <li
+              key={step.id}
+              className={[styles.item, statusClass].join(' ')}
+              aria-current={isCurrent ? 'step' : undefined}
+            >
               {index > 0 ? <span className={styles.connector} aria-hidden="true" /> : null}
-              <span className={styles.marker} aria-hidden="true">
-                {isCompleted ? '✓' : index + 1}
-              </span>
-              <span className={styles.label}>
-                {isCurrent ? <span className="visually-hidden">Current step: </span> : null}
-                {isUpcoming ? <span className="visually-hidden">Upcoming step: </span> : null}
-                {isCompleted ? <span className="visually-hidden">Completed step: </span> : null}
-                {step.label}
-              </span>
+              {isClickable ? (
+                <button
+                  type="button"
+                  className={styles.stepButton}
+                  onClick={() => {
+                    onStepClick(step.id);
+                  }}
+                >
+                  {marker}
+                  {label}
+                </button>
+              ) : (
+                <>
+                  {marker}
+                  {label}
+                </>
+              )}
             </li>
           );
         })}

@@ -70,6 +70,61 @@ describe('SegmentedRadio', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('lets Tab move between every option chip', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <SegmentedRadio
+        name="creditCheckState"
+        aria-label="Simulated credit check scenario"
+        options={options}
+        value="good"
+        onChange={() => {}}
+      />,
+    );
+
+    const poorChip = screen.getByText('Poor credit').closest('label');
+    const goodChip = screen.getByText('Good credit').closest('label');
+    const overLimitChip = screen.getByText('Over limit').closest('label');
+
+    expect(poorChip).toHaveAttribute('tabIndex', '0');
+    expect(goodChip).toHaveAttribute('tabIndex', '0');
+    expect(overLimitChip).toHaveAttribute('tabIndex', '0');
+
+    poorChip?.focus();
+    expect(poorChip).toHaveFocus();
+
+    await user.tab();
+    expect(goodChip).toHaveFocus();
+
+    await user.tab();
+    expect(overLimitChip).toHaveFocus();
+  });
+
+  it('moves selection and focus with arrow keys', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <SegmentedRadio
+        name="creditCheckState"
+        aria-label="Simulated credit check scenario"
+        options={options}
+        value="good"
+        onChange={onChange}
+      />,
+    );
+
+    const goodChip = screen.getByText('Good credit').closest('label');
+    goodChip?.focus();
+    expect(goodChip).toHaveFocus();
+
+    await user.keyboard('{ArrowRight}');
+
+    expect(screen.getByText('Over limit').closest('label')).toHaveFocus();
+    expect(onChange).toHaveBeenCalledWith('over_limit');
+  });
+
   it('renders helper text and wires it to the radiogroup', () => {
     render(
       <SegmentedRadio

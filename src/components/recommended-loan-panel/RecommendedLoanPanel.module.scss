@@ -1,0 +1,73 @@
+@use '../../styles/mixins' as *;
+@use '../../styles/tokens' as *;
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  min-width: 0;
+}
+
+.sectionTitle {
+  @include section-heading;
+  margin: 0;
+}
+
+.repaymentBlock {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.repaymentLabel {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+}
+
+.repaymentValue {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: $space-2;
+}
+
+.repaymentAmount {
+  color: $color-primary;
+  font-size: 2.5rem;
+  font-weight: $font-weight-bold;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  @include tabular-nums;
+
+  @include respond-above($bp-fields) {
+    font-size: 2.75rem;
+  }
+}
+
+.repaymentUnit {
+  color: $color-text-secondary;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-regular;
+}
+
+.repaymentUnavailable {
+  color: $color-text-secondary;
+  font-size: $font-size-lg;
+}
+
+.noOffer {
+  margin: 0;
+  padding: $space-3 $space-4;
+  border-radius: $radius-control;
+  background-color: $color-disabled-surface;
+  color: $color-text-secondary;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
+}
+
+.group {
+  border-top: 1px solid rgba($color-input-border, 0.35);
+  padding-top: $space-4;
+}

@@ -1,0 +1,94 @@
+@use '../../styles/mixins' as *;
+@use '../../styles/tokens' as *;
+
+.success,
+.unsuccessful {
+  @include message-banner;
+  align-items: flex-start;
+  gap: $space-4;
+  padding: $space-4 $space-5;
+
+  @include respond-above($bp-fields) {
+    align-items: center;
+  }
+}
+
+.success {
+  border-color: rgba($color-success, 0.35);
+  background-color: $color-success-surface;
+}
+
+.unsuccessful {
+  border-color: rgba($color-error, 0.35);
+  background-color: $color-error-surface;
+}
+
+.iconSuccess,
+.iconUnsuccessful {
+  flex: 0 0 auto;
+  color: $color-surface;
+}
+
+.iconSuccess {
+  fill: $color-success;
+}
+
+.iconUnsuccessful {
+  fill: $color-error;
+}
+
+.dividerSuccess,
+.dividerUnsuccessful {
+  display: none;
+  flex: 0 0 auto;
+  width: 1px;
+  align-self: stretch;
+  min-height: 2.5rem;
+
+  @include respond-above($bp-fields) {
+    display: block;
+  }
+}
+
+.dividerSuccess {
+  background-color: rgba($color-success, 0.35);
+}
+
+.dividerUnsuccessful {
+  background-color: rgba($color-error, 0.35);
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  min-width: 0;
+}
+
+.heading {
+  margin: 0;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  line-height: $line-height-base;
+
+  @include respond-above($bp-fields) {
+    font-size: $font-size-lg;
+  }
+}
+
+.success .heading {
+  color: $color-success;
+}
+
+.unsuccessful .heading {
+  color: $color-error;
+}
+
+.reason {
+  margin: 0;
+  color: $color-text;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
+  overflow-wrap: anywhere;
+  opacity: 0.85;
+}

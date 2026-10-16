@@ -6,6 +6,7 @@
     --color-primary: #{$color-primary};
     --color-primary-hover: #{$color-primary-hover};
     --color-primary-pressed: #{$color-primary-pressed};
+    --color-primary-text: #{$color-primary-text};
     --color-background: #{$color-page-bg};
     --color-page-bg: #{$color-page-bg};
     --color-surface: #{$color-surface};
@@ -165,8 +166,8 @@
   color: $color-text;
 
   &:hover:not(:disabled) {
-    border-color: $color-primary;
-    color: $color-primary;
+    border-color: $color-primary-text;
+    color: $color-primary-text;
   }
 
   &:active:not(:disabled) {
@@ -177,7 +178,7 @@
 @mixin button-soft {
   @include button-base;
   background-color: color.change($color-primary, $alpha: 0.1);
-  color: $color-primary-pressed;
+  color: $color-primary-text;
 
   &:hover:not(:disabled) {
     background-color: color.change($color-primary, $alpha: 0.16);
@@ -191,17 +192,17 @@
 @mixin button-text {
   @include button-base;
   background-color: transparent;
-  color: $color-primary;
+  color: $color-primary-text;
   min-height: $touch-min;
   padding-inline: $space-2;
 
   &:hover:not(:disabled) {
-    color: $color-primary-hover;
+    color: $color-primary-pressed;
     text-decoration: underline;
   }
 
   &:active:not(:disabled) {
-    color: $color-primary-pressed;
+    color: color.adjust($color-primary-pressed, $lightness: -6%);
   }
 }
 

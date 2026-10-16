@@ -5,6 +5,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 
 import { Button } from '../button';
 import styles from './Dialog.module.scss';
@@ -30,19 +31,36 @@ export const Dialog = ({ open, title, children, onClose, className }: DialogProp
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!open) {
       return undefined;
     }
 
+    previouslyFocusedRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
+    const inertTargets = Array.from(document.body.children).filter(
+      (node): node is HTMLElement =>
+        node instanceof HTMLElement && !node.hasAttribute('data-dialog-portal'),
+    );
+    inertTargets.forEach((node) => {
+      node.setAttribute('inert', '');
+    });
 
     closeButtonRef.current?.focus();
 
     return () => {
       document.body.style.overflow = previousOverflow;
+      inertTargets.forEach((node) => {
+        node.removeAttribute('inert');
+      });
+      previouslyFocusedRef.current?.focus();
+      previouslyFocusedRef.current = null;
     };
   }, [open]);
 
@@ -99,8 +117,17 @@ export const Dialog = ({ open, title, children, onClose, className }: DialogProp
     return null;
   }
 
-  return (
-    <div className={styles.backdrop} role="presentation">
+  return createPortal(
+    <div
+      className={styles.backdrop}
+      role="presentation"
+      data-dialog-portal
+      onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div
         ref={dialogRef}
         role="dialog"
@@ -108,6 +135,9 @@ export const Dialog = ({ open, title, children, onClose, className }: DialogProp
         aria-labelledby={titleId}
         className={[styles.dialog, className].filter(Boolean).join(' ')}
         onKeyDown={handleDialogKeyDown}
+        onClick={(event) => {
+          event.stopPropagation();
+        }}
       >
         <div className={styles.header}>
           <h2 id={titleId} className={styles.title}>
@@ -117,7 +147,7 @@ export const Dialog = ({ open, title, children, onClose, className }: DialogProp
             ref={closeButtonRef}
             variant="link"
             className={styles.close}
-            aria-label="Close dialog"
+            aria-label="Close"
             onClick={onClose}
           >
             Close
@@ -125,6 +155,7 @@ export const Dialog = ({ open, title, children, onClose, className }: DialogProp
         </div>
         <div className={styles.body}>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };

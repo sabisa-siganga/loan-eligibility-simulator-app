@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, User, Wallet } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, type Resolver } from 'react-hook-form';
+import { useStore } from 'react-redux';
 
 import { FormSectionCard } from '../../components/form-section-card';
 import { JourneyLayout } from '../../components/journey-layout';
@@ -10,6 +11,7 @@ import { WholeNumberInput } from '../../components/whole-number-input';
 import { Button, Checkbox, ErrorText, SegmentedRadio, Select } from '../../components/ui';
 import { runCreditCheck } from '../../services/creditCheck';
 import { checkEligibility } from '../../services/eligibility';
+import { isAbortError } from '../../services/httpResult';
 import {
   selectDetailsPrimaryActionMode,
   selectEffectiveCreditScoreValue,
@@ -24,6 +26,7 @@ import {
   useAppDispatch,
   useAppSelector,
   type EligibilityInputs,
+  type RootState,
 } from '../../store';
 import type { CreditCheckState } from '../../types/api';
 import {
@@ -68,15 +71,26 @@ const FIELD_ORDER: (keyof BudgetFormValues)[] = [
 
 export const YourDetailsScreen = () => {
   const dispatch = useAppDispatch();
+  const store = useStore<RootState>();
   const journey = useAppSelector(selectJourney);
   const validationRules = useAppSelector((state) => state.catalog.validationRules);
   const detailsActionMode = useAppSelector(selectDetailsPrimaryActionMode);
-  const effectiveCreditScore = useAppSelector(selectEffectiveCreditScoreValue);
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const requestGenerationRef = useRef(0);
+  const isSubmittingRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
+  const hasFocusedFirstFieldRef = useRef(false);
+
+  useEffect(() => {
+    if (hasFocusedFirstFieldRef.current) {
+      return;
+    }
+    hasFocusedFirstFieldRef.current = true;
+    // Land on the first interactive control so titles stay out of the tab/focus path.
+    document.getElementById('age')?.focus();
+  }, []);
 
   const hasLoanContext = [
     journey.selectedProductId,
@@ -221,33 +235,37 @@ export const YourDetailsScreen = () => {
     document.getElementById(firstInvalid)?.focus();
   };
 
-  const buildEligibilityInputs = (values: BudgetFormParsedValues): EligibilityInputs => ({
-    age: values.age,
-    employmentStatus: values.employmentStatus,
-    employmentDuration: values.employmentDuration,
-    monthlyIncome: values.monthlyIncome,
-    monthlyExpenses: values.monthlyExpenses,
-    existingDebt: values.existingDebt,
-    creditScore: effectiveCreditScore ?? null,
-    requestedAmount: journey.loanAmount as number,
-    loanTerm: journey.loanTerm as number,
-    loanPurpose: journey.selectedPurpose as string,
-    productId: journey.selectedProductId as string,
-  });
-
   const onValidSubmit = async (values: BudgetFormParsedValues) => {
-    if (!hasLoanContext) {
+    // Read journey at submit time so a credit-check change cannot leave a stale
+    // "View result" shortcut navigating to a cleared result.
+    const stateAtSubmit = store.getState();
+    const journeyAtSubmit = stateAtSubmit.journey;
+    const actionModeAtSubmit = selectDetailsPrimaryActionMode(stateAtSubmit);
+
+    const hasLoanContextAtSubmit = [
+      journeyAtSubmit.selectedProductId,
+      journeyAtSubmit.selectedPurpose,
+      journeyAtSubmit.loanAmount,
+      journeyAtSubmit.loanTerm,
+    ].every((value) => value !== null);
+
+    if (!hasLoanContextAtSubmit) {
       setSubmitError('Return to your loan and complete your loan selection first.');
       return;
     }
 
-    if (detailsActionMode === 'view') {
+    if (actionModeAtSubmit === 'view') {
       dispatch(setCurrentScreen('yourResult'));
+      return;
+    }
+
+    if (isSubmittingRef.current) {
       return;
     }
 
     setSubmitError(null);
     setIsSubmitting(true);
+    isSubmittingRef.current = true;
 
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -256,25 +274,25 @@ export const YourDetailsScreen = () => {
     requestGenerationRef.current = generation;
 
     try {
-      let creditScore = effectiveCreditScore;
+      let creditScore = selectEffectiveCreditScoreValue(stateAtSubmit);
 
-      if (journey.creditCheckOptIn) {
+      if (journeyAtSubmit.creditCheckOptIn) {
         const checkResult = await runCreditCheck({
           signal: controller.signal,
-          state: journey.creditCheckState,
+          state: store.getState().journey.creditCheckState,
         });
         if (generation !== requestGenerationRef.current) {
           return;
         }
         if (!checkResult.ok) {
           setSubmitError(checkResult.message);
-          setIsSubmitting(false);
           return;
         }
         dispatch(setCreditCheckScore(checkResult.creditScore));
         creditScore = checkResult.creditScore;
       }
 
+      const latestJourney = store.getState().journey;
       const result = await checkEligibility(
         {
           personalInfo: {
@@ -289,9 +307,9 @@ export const YourDetailsScreen = () => {
             ...(creditScore === undefined ? {} : { creditScore }),
           },
           loanDetails: {
-            requestedAmount: journey.loanAmount as number,
-            loanTerm: journey.loanTerm as number,
-            loanPurpose: journey.selectedPurpose as string,
+            requestedAmount: latestJourney.loanAmount as number,
+            loanTerm: latestJourney.loanTerm as number,
+            loanPurpose: latestJourney.selectedPurpose as string,
           },
         },
         { signal: controller.signal },
@@ -303,23 +321,31 @@ export const YourDetailsScreen = () => {
 
       if (!result.ok) {
         setSubmitError(result.message);
-        setIsSubmitting(false);
         return;
       }
 
-      const inputs = buildEligibilityInputs(values);
+      const inputs: EligibilityInputs = {
+        age: values.age,
+        employmentStatus: values.employmentStatus,
+        employmentDuration: values.employmentDuration,
+        monthlyIncome: values.monthlyIncome,
+        monthlyExpenses: values.monthlyExpenses,
+        existingDebt: values.existingDebt,
+        creditScore: creditScore ?? null,
+        requestedAmount: latestJourney.loanAmount as number,
+        loanTerm: latestJourney.loanTerm as number,
+        loanPurpose: latestJourney.selectedPurpose as string,
+        productId: latestJourney.selectedProductId as string,
+      };
       dispatch(
         setEligibilityResult({
           result: result.data,
-          inputs: {
-            ...inputs,
-            creditScore: creditScore ?? null,
-          },
+          inputs,
         }),
       );
       dispatch(setCurrentScreen('yourResult'));
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
+      if (isAbortError(error)) {
         return;
       }
       if (generation !== requestGenerationRef.current) {
@@ -328,6 +354,7 @@ export const YourDetailsScreen = () => {
       setSubmitError('Unable to check eligibility. Please try again.');
     } finally {
       if (generation === requestGenerationRef.current) {
+        isSubmittingRef.current = false;
         setIsSubmitting(false);
       }
     }
@@ -512,7 +539,6 @@ export const YourDetailsScreen = () => {
               name="creditCheckState"
               aria-label="Simulated credit check scenario"
               value={journey.creditCheckState}
-              disabled={!journey.creditCheckOptIn}
               options={CREDIT_CHECK_SCENARIO_OPTIONS}
               helperText="Demo scenarios only. No real credit check is performed."
               onChange={(next) => {

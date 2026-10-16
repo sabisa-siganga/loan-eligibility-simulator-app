@@ -8,6 +8,30 @@
   background-color: $color-page-bg;
 }
 
+.skipLink {
+  position: absolute;
+  left: $space-4;
+  top: $space-4;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  min-height: $touch-min;
+  padding: $space-3 $space-4;
+  border-radius: $radius-control;
+  background-color: $color-surface;
+  color: $color-text;
+  font-weight: $font-weight-semibold;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform $duration-reveal ease;
+
+  &:focus,
+  &:focus-visible {
+    transform: translateY(0);
+    @include focus-ring;
+  }
+}
+
 .stepperWrap {
   @include content-shell;
   padding-block: $space-5;

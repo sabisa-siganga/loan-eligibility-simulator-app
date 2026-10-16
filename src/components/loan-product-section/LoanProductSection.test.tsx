@@ -6,6 +6,7 @@ import { MOCK_PRODUCTS } from '../../mocks/data/products';
 import { LoanProductSection } from './LoanProductSection';
 
 const personalLoan = MOCK_PRODUCTS[0];
+const vehicleLoan = MOCK_PRODUCTS[1];
 
 const baseProps = {
   product: personalLoan,
@@ -45,14 +46,13 @@ describe('LoanProductSection', () => {
     expect(onHeaderClick).toHaveBeenCalledTimes(1);
   });
 
-  it('notifies when the description inside the header is clicked', async () => {
-    const user = userEvent.setup();
-    const onHeaderClick = vi.fn();
+  it('keeps the product description outside the accordion control name', () => {
+    render(<LoanProductSection {...baseProps} />);
 
-    render(<LoanProductSection {...baseProps} onHeaderClick={onHeaderClick} />);
-
-    await user.click(screen.getByText(personalLoan.description));
-    expect(onHeaderClick).toHaveBeenCalledTimes(1);
+    const header = screen.getByRole('button', { name: 'Personal Loan' });
+    expect(header).toHaveAccessibleDescription(personalLoan.description);
+    expect(header).not.toHaveTextContent(personalLoan.description);
+    expect(screen.getByText(personalLoan.description)).toBeInTheDocument();
   });
 
   it('exposes expanded state on the header button', () => {
@@ -77,6 +77,70 @@ describe('LoanProductSection', () => {
     expect(screen.getByLabelText('Education')).toBeInTheDocument();
     expect(screen.queryByLabelText(/Required amount/)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/^Term/)).not.toBeInTheDocument();
+  });
+
+  it('names the purpose radiogroup from the purpose prompt and marks it required', () => {
+    render(<LoanProductSection {...baseProps} isExpanded />);
+
+    const purposeGroup = screen.getByRole('radiogroup', { name: /What's the loan for\?/ });
+    expect(purposeGroup).toHaveAttribute('aria-required', 'true');
+    expect(purposeGroup).not.toHaveAttribute('aria-invalid');
+    expect(screen.getByRole('radio', { name: 'Debt consolidation' })).toBeRequired();
+    expect(screen.getByRole('radio', { name: 'Home improvement' })).toBeRequired();
+  });
+
+  it('names the vehicle purpose radiogroup from the vehicle prompt', () => {
+    render(
+      <LoanProductSection
+        {...baseProps}
+        product={vehicleLoan}
+        purposeGroupName="vehicle-purpose"
+        isExpanded
+      />,
+    );
+
+    expect(screen.getByRole('radiogroup', { name: /What type of vehicle\?/ })).toHaveAttribute(
+      'aria-required',
+      'true',
+    );
+    expect(screen.getByRole('radio', { name: 'New vehicle' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Used vehicle' })).toBeInTheDocument();
+  });
+
+  it('exposes a single purpose radiogroup without a nested fieldset group', () => {
+    render(<LoanProductSection {...baseProps} isExpanded />);
+
+    expect(screen.getAllByRole('radiogroup')).toHaveLength(1);
+    expect(screen.queryByRole('group', { name: /What's the loan for\?/ })).not.toBeInTheDocument();
+  });
+
+  it('associates purpose errors with the radiogroup and marks it invalid', () => {
+    render(
+      <LoanProductSection
+        {...baseProps}
+        isExpanded
+        purposeError="Select a loan purpose to continue."
+      />,
+    );
+
+    const purposeGroup = screen.getByRole('radiogroup', { name: /What's the loan for\?/ });
+    expect(purposeGroup).toHaveAttribute('aria-invalid', 'true');
+    expect(purposeGroup.getAttribute('aria-describedby')).toBe(
+      'product-personal_loan-purpose-error',
+    );
+    expect(screen.getByText('Select a loan purpose to continue.')).toHaveAttribute(
+      'id',
+      'product-personal_loan-purpose-error',
+    );
+  });
+
+  it('describes the accordion header with the product description', () => {
+    render(<LoanProductSection {...baseProps} />);
+
+    expect(screen.getByRole('button', { name: 'Personal Loan' })).toHaveAttribute(
+      'aria-describedby',
+      'product-personal_loan-description',
+    );
   });
 
   it('shows amount and term when expanded and selected', () => {

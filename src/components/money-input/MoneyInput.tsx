@@ -62,7 +62,7 @@ export const MoneyInput = ({
       </Label>
       <InputGroup>
         <InputGroupAddon align="inline-start">
-          <InputGroupText aria-hidden="true">{CURRENCY_SYMBOL}</InputGroupText>
+          <InputGroupText>{CURRENCY_SYMBOL}</InputGroupText>
         </InputGroupAddon>
         <InputGroupInput
           id={inputId}

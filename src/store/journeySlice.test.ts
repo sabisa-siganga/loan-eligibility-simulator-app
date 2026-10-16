@@ -56,7 +56,9 @@ const sampleEligibilityResult = {
   },
 };
 
-const sampleEligibilityInputs = (): EligibilityInputs => ({
+const sampleEligibilityInputs = (
+  overrides: Partial<EligibilityInputs> = {},
+): EligibilityInputs => ({
   age: 35,
   employmentStatus: 'employed',
   employmentDuration: 24,
@@ -68,6 +70,7 @@ const sampleEligibilityInputs = (): EligibilityInputs => ({
   loanTerm: 24,
   loanPurpose: 'education',
   productId: 'personal_loan',
+  ...overrides,
 });
 
 describe('journeySlice', () => {
@@ -344,6 +347,46 @@ describe('journeySlice', () => {
     state = journeyReducer(state, setCreditCheckState('bad'));
     expect(state.creditCheckState).toBe('bad');
     expect(state.creditCheckScore).toBeNull();
+  });
+
+  it('clears a stored eligibility result when the credit-check scenario changes', () => {
+    let state = journeyReducer(
+      undefined,
+      selectPurpose({ productId: 'personal_loan', purposeId: 'education' }),
+    );
+    state = journeyReducer(state, setLoanAmount(150000));
+    state = journeyReducer(state, setLoanTerm(24));
+    state = journeyReducer(
+      state,
+      setPersonalDetails({
+        age: 35,
+        employmentStatus: 'employed',
+        employmentDuration: 24,
+      }),
+    );
+    state = journeyReducer(
+      state,
+      setFinancialDetails({
+        monthlyIncome: 25000,
+        monthlyExpenses: 10000,
+        existingDebt: 1000,
+      }),
+    );
+    state = journeyReducer(state, setCreditCheckOptIn(true));
+    state = journeyReducer(state, setCreditCheckScore(720));
+    state = journeyReducer(
+      state,
+      setEligibilityResult({
+        result: sampleEligibilityResult,
+        inputs: sampleEligibilityInputs({ creditScore: 720 }),
+      }),
+    );
+
+    state = journeyReducer(state, setCreditCheckState('bad'));
+
+    expect(state.eligibilityResult).toBeNull();
+    expect(state.eligibilityInputs).toBeNull();
+    expect(selectDetailsPrimaryActionMode({ journey: state })).toBe('check');
   });
 
   it('keeps creditCheckState when opt-in is turned off', () => {

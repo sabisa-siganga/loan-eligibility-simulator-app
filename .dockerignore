@@ -1,0 +1,53 @@
+# Dependencies and generated output
+node_modules
+dist
+dist-ssr
+coverage
+playwright-report
+test-results
+
+# Git and editor metadata
+.git
+.gitattributes
+.github
+.cursor
+.gstack
+.worktrees
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# Logs and scratch
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+tmp
+
+# Secrets and local env (build args supply Vite config)
+.env
+.env.*
+!.env.e2e
+
+# Tests and docs not required for the production image
+e2e
+docs
+documents
+*.md
+!README.md
+
+# Tooling caches
+*.tsbuildinfo
+.eslintcache
+eslint.config.js
+.prettierignore
+.prettierrc.json
+playwright.config.ts

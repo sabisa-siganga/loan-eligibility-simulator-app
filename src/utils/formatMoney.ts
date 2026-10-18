@@ -22,3 +22,25 @@ export const formatMoneyExact = (amount: number): string => formatRandAmount(amo
 
 export const formatMoneyRange = (min: number, max: number): string =>
   `${formatMoney(min)} to ${formatMoney(max)}`;
+
+/**
+ * Display-only money input value: space-grouped integer with two decimals,
+ * without the currency symbol (the input addon already shows it).
+ * Empty or non-digit strings return ''.
+ */
+export const formatMoneyInputDisplay = (digits: string): string => {
+  if (digits.trim() === '') {
+    return '';
+  }
+
+  if (!/^\d+$/.test(digits)) {
+    return '';
+  }
+
+  const amount = Number(digits);
+  if (!Number.isFinite(amount)) {
+    return '';
+  }
+
+  return formatMoneyExact(amount).slice(CURRENCY_SYMBOL.length);
+};

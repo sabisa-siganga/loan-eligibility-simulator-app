@@ -1,0 +1,11 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_ENABLE_MOCK_API: "true"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped

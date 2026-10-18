@@ -333,7 +333,7 @@ describe('LoanDetailsScreen', () => {
     renderWithProviders(<LoanDetailsScreen />, { store });
 
     expect(screen.getByLabelText('Education')).toBeChecked();
-    expect(activeAmount()).toHaveValue('20000');
+    expect(activeAmount()).toHaveValue('20 000.00');
     expect(activeTerm()).toHaveValue('12');
     expect(screen.getByText('R20 000')).toBeInTheDocument();
     expect(screen.getByText('12 months')).toBeInTheDocument();

@@ -573,9 +573,9 @@ describe('YourDetailsScreen', () => {
     expect(screen.getByLabelText(/^Age/)).toHaveValue('42');
     expect(screen.getByLabelText(/^Employment status/)).toHaveValue('self_employed');
     expect(screen.getByLabelText(/^Employment duration/)).toHaveValue('36');
-    expect(screen.getByLabelText(/^Monthly income/)).toHaveValue('30000');
-    expect(screen.getByLabelText(/^Monthly expenses/)).toHaveValue('9000');
-    expect(screen.getByLabelText(/^Existing debt/)).toHaveValue('1500');
+    expect(screen.getByLabelText(/^Monthly income/)).toHaveValue('30 000.00');
+    expect(screen.getByLabelText(/^Monthly expenses/)).toHaveValue('9 000.00');
+    expect(screen.getByLabelText(/^Existing debt/)).toHaveValue('1 500.00');
     expect(screen.getByLabelText('I consent to a credit bureau check')).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Over limit' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Over limit' })).toBeEnabled();

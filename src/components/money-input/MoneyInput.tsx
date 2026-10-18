@@ -1,4 +1,4 @@
-import { useId, type ChangeEvent, type FocusEventHandler } from 'react';
+import { useId, useState, type ChangeEvent, type FocusEventHandler } from 'react';
 
 import {
   ErrorText,
@@ -9,7 +9,7 @@ import {
   InputGroupText,
   Label,
 } from '../ui';
-import { CURRENCY_SYMBOL } from '../../utils/formatMoney';
+import { CURRENCY_SYMBOL, formatMoneyInputDisplay } from '../../utils/formatMoney';
 import styles from './MoneyInput.module.scss';
 
 export type MoneyInputProps = {
@@ -50,10 +50,22 @@ export const MoneyInput = ({
   const describedBy =
     [showHelper ? helperId : null, showError ? errorId : null].filter(Boolean).join(' ') ||
     undefined;
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(sanitizeMoneyInput(event.target.value));
   };
+
+  const handleFocus: FocusEventHandler<HTMLInputElement> = () => {
+    setIsFocused(true);
+  };
+
+  const handleBlur: FocusEventHandler<HTMLInputElement> = (event) => {
+    setIsFocused(false);
+    onBlur?.(event);
+  };
+
+  const displayValue = isFocused || value === '' ? value : formatMoneyInputDisplay(value);
 
   return (
     <div className={styles.field}>
@@ -70,9 +82,10 @@ export const MoneyInput = ({
           inputMode="numeric"
           autoComplete="off"
           placeholder={placeholder}
-          value={value}
+          value={displayValue}
           onChange={handleChange}
-          onBlur={onBlur}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           disabled={disabled}
           aria-invalid={error ? 'true' : undefined}
           aria-required={required && !disabled ? true : undefined}

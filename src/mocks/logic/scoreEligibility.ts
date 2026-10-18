@@ -1,6 +1,13 @@
 import type { EligibilityRequest, EligibilityResponse } from '../../types/api';
 import { MOCK_PRODUCTS } from '../data/products';
+import { MOCK_VALIDATION_RULES } from '../data/validationRules';
 import { amortiseLoan, pickRatePercent } from './amortise';
+
+const creditScoreRules = MOCK_VALIDATION_RULES.financialInfo.creditScore;
+const creditScoreMin = creditScoreRules.min ?? 300;
+const creditScoreMax = creditScoreRules.max ?? 850;
+const creditScoreOutOfBoundsMessage =
+  creditScoreRules.errorMessage ?? 'Credit score must be between 300 and 850';
 
 const roundMoney = (value: number): number => Math.round(value * 100) / 100;
 
@@ -54,6 +61,12 @@ export const scoreEligibility = (request: EligibilityRequest): EligibilityRespon
 
   const failureReasons: string[] = [];
 
+  if (
+    creditScore !== undefined &&
+    (creditScore < creditScoreMin || creditScore > creditScoreMax)
+  ) {
+    failureReasons.push(creditScoreOutOfBoundsMessage);
+  }
   if (age < 18 || age > 65) {
     failureReasons.push('Age must be between 18 and 65');
   }

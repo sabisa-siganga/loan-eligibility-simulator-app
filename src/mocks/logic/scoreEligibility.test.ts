@@ -50,6 +50,50 @@ describe('scoreEligibility', () => {
     );
   });
 
+  it('marks eligible when creditScore is within validation bounds', () => {
+    const result = scoreEligibility({
+      ...baseRequest(),
+      financialInfo: {
+        ...baseRequest().financialInfo,
+        creditScore: 550,
+      },
+    });
+
+    expect(result.eligibilityResult.isEligible).toBe(true);
+  });
+
+  it('marks ineligible when creditScore is below validation min even if affordability passes', () => {
+    const result = scoreEligibility({
+      ...baseRequest(),
+      financialInfo: {
+        ...baseRequest().financialInfo,
+        creditScore: 200,
+      },
+    });
+
+    expect(result.eligibilityResult.isEligible).toBe(false);
+    expect(result.eligibilityResult.decisionReason).toBe(
+      'Credit score must be between 300 and 850',
+    );
+    expect(result.recommendedLoan.monthlyPayment).toBe(0);
+  });
+
+  it('marks ineligible when creditScore is above validation max even if affordability passes', () => {
+    const result = scoreEligibility({
+      ...baseRequest(),
+      financialInfo: {
+        ...baseRequest().financialInfo,
+        creditScore: 900,
+      },
+    });
+
+    expect(result.eligibilityResult.isEligible).toBe(false);
+    expect(result.eligibilityResult.decisionReason).toBe(
+      'Credit score must be between 300 and 850',
+    );
+    expect(result.recommendedLoan.monthlyPayment).toBe(0);
+  });
+
   it('includes recommendedLoan.monthlyPayment greater than 0 when eligible', () => {
     const result = scoreEligibility(baseRequest());
 

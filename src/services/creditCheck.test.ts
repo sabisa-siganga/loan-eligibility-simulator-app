@@ -7,12 +7,11 @@ describe('runCreditCheck', () => {
     vi.unstubAllGlobals();
   });
 
-  it('returns a numeric credit score on success', async () => {
+  it('returns the good-scenario credit score on success by default', async () => {
     const result = await runCreditCheck();
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.creditScore).toBeGreaterThanOrEqual(300);
-      expect(result.creditScore).toBeLessThanOrEqual(850);
+      expect(result.creditScore).toBe(550);
     }
   });
 

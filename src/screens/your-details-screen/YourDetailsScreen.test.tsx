@@ -57,16 +57,16 @@ describe('YourDetailsScreen', () => {
       screen.getByRole('radiogroup', { name: 'Simulated credit check scenario' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Good credit' })).toBeChecked();
-    expect(screen.getByRole('radio', { name: 'Poor credit' })).toBeEnabled();
-    expect(screen.getByRole('radio', { name: 'Good credit' })).toBeEnabled();
-    expect(screen.getByRole('radio', { name: 'Over limit' })).toBeEnabled();
+    expect(screen.getByRole('radio', { name: 'Poor credit' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'Good credit' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'Over limit' })).toBeDisabled();
     expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/phone|cellphone/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/repayment estimate/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/^Employment duration/)).not.toBeInTheDocument();
   });
 
-  it('keeps demo scenario radios tabbable before credit consent', async () => {
+  it('skips demo scenario radios in tab order until credit consent is checked', async () => {
     const user = userEvent.setup();
     renderScreen();
 
@@ -74,18 +74,31 @@ describe('YourDetailsScreen', () => {
       expect(screen.getByLabelText(/^Age/)).toHaveFocus();
     });
 
-    // Age → employment → income → expenses → debt → consent → first scenario chip
+    // Age → employment → income → expenses → debt → consent → Back (radios disabled)
     await user.tab();
     await user.tab();
     await user.tab();
     await user.tab();
     await user.tab();
     await user.tab();
+
+    expect(screen.getByRole('button', { name: 'Back' })).toHaveFocus();
+    expect(screen.getByText('Poor credit').closest('label')).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByText('Good credit').closest('label')).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByText('Over limit').closest('label')).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('makes demo scenario radios tabbable after credit consent is checked', async () => {
+    const user = userEvent.setup();
+    renderScreen();
+
+    await user.click(screen.getByLabelText('I consent to a credit bureau check'));
 
     const poorChip = screen.getByText('Poor credit').closest('label');
     const goodChip = screen.getByText('Good credit').closest('label');
     const overLimitChip = screen.getByText('Over limit').closest('label');
 
+    poorChip?.focus();
     expect(poorChip).toHaveFocus();
 
     await user.tab();
@@ -118,16 +131,22 @@ describe('YourDetailsScreen', () => {
     expect(financesTitle).not.toHaveAttribute('tabindex');
   });
 
-  it('keeps Good credit selected by default and allows changing scenario before consent', async () => {
+  it('keeps Good credit selected by default and blocks scenario changes until consent', async () => {
     const user = userEvent.setup();
     renderScreen();
 
     expect(screen.getByRole('radio', { name: 'Good credit' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Poor credit' })).toBeDisabled();
 
     await user.click(screen.getByRole('radio', { name: 'Poor credit' }));
 
-    expect(screen.getByRole('radio', { name: 'Poor credit' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Good credit' })).toBeChecked();
     expect(screen.getByLabelText('I consent to a credit bureau check')).not.toBeChecked();
+
+    await user.click(screen.getByLabelText('I consent to a credit bureau check'));
+    await user.click(screen.getByRole('radio', { name: 'Poor credit' }));
+
+    expect(screen.getByRole('radio', { name: 'Poor credit' })).toBeChecked();
   });
 
   it('shows helper captions for personal and financial fields', async () => {

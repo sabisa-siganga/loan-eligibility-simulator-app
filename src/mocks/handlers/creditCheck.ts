@@ -4,11 +4,14 @@ import type { CreditCheckState } from '../../types/api';
 
 const CREDIT_CHECK_STATES: readonly CreditCheckState[] = ['bad', 'good', 'over_limit'];
 
-/** Scores stay inside validation-rules creditScore bounds (300–850). */
+/**
+ * `good` stays inside validation-rules creditScore bounds (300–850).
+ * `bad` is below min; `over_limit` exceeds max so eligibility can hard-fail.
+ */
 const FIXED_SCORES: Record<CreditCheckState, number> = {
-  bad: 520,
-  good: 720,
-  over_limit: 820,
+  bad: 200,
+  good: 550,
+  over_limit: 900,
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

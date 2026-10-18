@@ -49,14 +49,33 @@ describe('catalog and rate handlers', () => {
     });
   });
 
-  it('returns a credit score in range from POST /api/loans/credit-check', async () => {
+  it('returns fixed credit scores for each credit-check state', async () => {
     resetCreditCheckCount();
-    const response = await fetch('/api/loans/credit-check', { method: 'POST' });
-    const body = (await response.json()) as { creditScore: number };
 
-    expect(response.status).toBe(200);
-    expect(body.creditScore).toBeGreaterThanOrEqual(300);
-    expect(body.creditScore).toBeLessThanOrEqual(850);
+    const goodResponse = await fetch('/api/loans/credit-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state: 'good' }),
+    });
+    const badResponse = await fetch('/api/loans/credit-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state: 'bad' }),
+    });
+    const overLimitResponse = await fetch('/api/loans/credit-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state: 'over_limit' }),
+    });
+
+    expect(goodResponse.status).toBe(200);
+    expect(badResponse.status).toBe(200);
+    expect(overLimitResponse.status).toBe(200);
+    expect((await goodResponse.json()) as { creditScore: number }).toEqual({ creditScore: 550 });
+    expect((await badResponse.json()) as { creditScore: number }).toEqual({ creditScore: 200 });
+    expect((await overLimitResponse.json()) as { creditScore: number }).toEqual({
+      creditScore: 900,
+    });
   });
 
   it('calculates a rate without creditScore and improves rate when score is high', async () => {

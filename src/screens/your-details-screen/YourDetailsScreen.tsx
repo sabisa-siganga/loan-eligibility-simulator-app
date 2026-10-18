@@ -540,6 +540,7 @@ export const YourDetailsScreen = () => {
               aria-label="Simulated credit check scenario"
               value={journey.creditCheckState}
               options={CREDIT_CHECK_SCENARIO_OPTIONS}
+              disabled={!journey.creditCheckOptIn}
               helperText="Demo scenarios only. No real credit check is performed."
               onChange={(next) => {
                 setSubmitError(null);

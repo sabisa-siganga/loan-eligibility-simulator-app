@@ -13,7 +13,7 @@
   align-items: center;
   justify-content: center;
   gap: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .item {
@@ -21,12 +21,19 @@
   align-items: center;
   gap: $space-2;
   min-height: $touch-min;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
 }
 
 .stepButton {
   display: inline-flex;
   align-items: center;
-  gap: $space-2;
   margin: 0;
   padding: 0;
   border: none;
@@ -38,19 +45,24 @@
 }
 
 .connector {
-  width: 48px;
+  flex: 1 1 24px;
+  min-width: 12px;
+  max-width: 48px;
   height: 1px;
   background-color: $color-input-border;
   margin-inline: $space-2;
+  align-self: center;
 
   @include respond-below($bp-fields) {
-    width: 24px;
+    flex-basis: 16px;
+    margin-inline: $space-1;
   }
 }
 
 .marker {
   width: 28px;
   height: 28px;
+  flex-shrink: 0;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -66,6 +78,10 @@
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   color: $color-text-secondary;
+}
+
+.labelCompact {
+  display: none;
 }
 
 .current {
@@ -99,5 +115,41 @@
 .upcoming {
   .connector {
     background-color: $color-input-border;
+  }
+}
+
+// Compact: markers + connectors; only the current step label stays visible.
+// Labels stay in the DOM (clipped) so screen readers still announce step names.
+@include respond-below($bp-fields) {
+  .item:not(.current) .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .label:has(.labelCompact) .labelFull {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .labelCompact {
+    display: inline;
+  }
+
+  .step {
+    gap: $space-1;
   }
 }

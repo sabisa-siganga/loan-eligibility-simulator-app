@@ -3,6 +3,8 @@ import styles from './ProgressStepper.module.scss';
 export type ProgressStep = {
   readonly id: string;
   readonly label: string;
+  /** Shorter label shown on narrow viewports when set. */
+  readonly compactLabel?: string;
 };
 
 export type ProgressStepperProps = {
@@ -45,7 +47,12 @@ export const ProgressStepper = ({
               {isCurrent ? <span className="visually-hidden">Current step: </span> : null}
               {isUpcoming ? <span className="visually-hidden">Upcoming step: </span> : null}
               {isCompleted ? <span className="visually-hidden">Completed step: </span> : null}
-              {step.label}
+              <span className={styles.labelFull}>{step.label}</span>
+              {step.compactLabel !== undefined ? (
+                <span className={styles.labelCompact} aria-hidden="true">
+                  {step.compactLabel}
+                </span>
+              ) : null}
             </span>
           );
 
@@ -64,14 +71,16 @@ export const ProgressStepper = ({
                     onStepClick(step.id);
                   }}
                 >
-                  {marker}
-                  {label}
+                  <span className={styles.step}>
+                    {marker}
+                    {label}
+                  </span>
                 </button>
               ) : (
-                <>
+                <span className={styles.step}>
                   {marker}
                   {label}
-                </>
+                </span>
               )}
             </li>
           );

@@ -7,7 +7,7 @@ import styles from './JourneyLayout.module.scss';
 
 export const JOURNEY_STEPS: readonly ProgressStep[] = [
   { id: 'loanDetails', label: 'Your loan' },
-  { id: 'yourBudget', label: 'Your details' },
+  { id: 'yourBudget', label: 'Your details', compactLabel: 'Details' },
   { id: 'yourResult', label: 'Eligibility' },
 ] as const;
 

@@ -11,6 +11,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: $space-2;
+
+  @include respond-below($bp-fields) {
+    flex-direction: column;
+  }
 }
 
 .option {

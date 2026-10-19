@@ -50,7 +50,7 @@ None required on the host. Compose passes build-time Vite variables as Docker bu
 ### Build and run
 
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
 Open **http://localhost:8080**.
@@ -60,7 +60,7 @@ Open **http://localhost:8080**.
 ```bash
 docker compose logs -f
 docker compose down
-docker compose up --build
+docker compose up --build -d
 ```
 
 ### What runs in the container

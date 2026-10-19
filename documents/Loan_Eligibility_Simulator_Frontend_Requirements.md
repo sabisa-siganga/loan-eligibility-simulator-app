@@ -1,10 +1,5 @@
 # Loan Eligibility Simulator: Frontend Requirements
 
-Version: 2.3, confirmed requirements and selected designs
-Date: 8 October 2026
-Scope: Frontend only
-
-This document replaces the earlier discussion draft. It records the decisions agreed during screen-by-screen review. Bank examples inform the experience, but these are demo rules, not a bank's lending policy.
 
 ## 1. Goal and scope
 

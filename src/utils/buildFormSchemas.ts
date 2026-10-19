@@ -8,6 +8,12 @@ import type {
 import { requiresEmploymentDuration } from './employmentStatusLabels';
 import { formatMoney } from './formatMoney';
 
+/**
+ * Zod schemas for journey forms, driven by the validation-rules API payload.
+ * Forms keep string field values; preprocess coerces empties/numbers before
+ * bounds checks so RHF + zodResolver see a consistent input type.
+ */
+
 export type LoanDetailsFormValues = {
   purpose: string;
   amount: string;
@@ -20,6 +26,7 @@ export type LoanDetailsFormParsedValues = {
   termMonths: number;
 };
 
+/** Treat blank optional fields as missing so Zod `required`/`min` can fire. */
 const emptyStringToUndefined = (value: unknown): unknown => {
   if (value === '' || value === undefined || value === null) {
     return undefined;
@@ -27,6 +34,10 @@ const emptyStringToUndefined = (value: unknown): unknown => {
   return value;
 };
 
+/**
+ * Coerce form strings to numbers when finite; leave non-numeric strings intact
+ * so Zod can emit a typed number error instead of a silent NaN.
+ */
 const toNumberOrUndefined = (value: unknown): unknown => {
   const normalized = emptyStringToUndefined(value);
   if (normalized === undefined) {
@@ -158,6 +169,10 @@ export type BudgetFormParsedValues = {
   existingDebt: number;
 };
 
+/**
+ * Budget/details schema. Employment duration is required only for employed /
+ * self-employed statuses — see the preprocess + transform pair at the end.
+ */
 export const buildBudgetSchema = ({ rules }: { readonly rules: ValidationRulesResponse }) => {
   const ageRule = rules.personalInfo.age;
   const employmentRule = rules.personalInfo.employmentStatus;
@@ -176,7 +191,7 @@ export const buildBudgetSchema = ({ rules }: { readonly rules: ValidationRulesRe
   const incomeMessage = incomeRule.errorMessage ?? 'Minimum monthly income of R5 000 required';
   const expensesMin = expensesRule.min ?? 0;
   const expensesMessage = expensesRule.errorMessage ?? 'Please enter your monthly expenses';
-  const existingDebtMessage = 'Enter a non-negative amount for existing debt';
+  const existingDebtMessage = 'Enter a non-negative amount for existing monthly debt repayments';
 
   const employmentOptions = employmentRule.options ?? [];
   const employmentEnum =

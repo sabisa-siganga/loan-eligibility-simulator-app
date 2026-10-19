@@ -24,6 +24,10 @@ const toNonNegative = (amount: number): number => {
   return amount;
 };
 
+/**
+ * Segment widths use flexGrow proportional to amount so the bar always fills
+ * the track without manual percentage math (zero amounts are omitted).
+ */
 const buildSegments = ({
   monthlyExpenses,
   existingDebt,
@@ -39,7 +43,7 @@ const buildSegments = ({
     },
     {
       key: 'existingDebt',
-      label: 'Existing debt',
+      label: 'Existing monthly debt repayments',
       amount: toNonNegative(existingDebt),
       toneClassName: tones.toneDebt,
     },

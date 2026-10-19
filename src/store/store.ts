@@ -11,6 +11,7 @@ const rootReducer = combineReducers({
 
 export type RootState = ReturnType<typeof rootReducer>;
 
+/** Factory used by the app and tests; hydrates journey from sessionStorage. */
 export const createAppStore = (preloadedState?: Partial<RootState>) => {
   const journey = preloadedState?.journey ?? loadJourneyState();
   const store = configureStore({
@@ -22,6 +23,7 @@ export const createAppStore = (preloadedState?: Partial<RootState>) => {
     devTools: import.meta.env.DEV,
   });
 
+  // Persist every change so a refresh resumes mid-journey.
   store.subscribe(() => {
     saveJourneyState(store.getState().journey);
   });

@@ -3,6 +3,14 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { CalculateRateResponse, CreditCheckState, EligibilityResponse } from '../types/api';
 import { resolveEffectiveCreditScore } from '../utils/resolveEffectiveCreditScore';
 
+/**
+ * Journey slice owns the multi-step loan application draft.
+ *
+ * Downstream API results (rate quote, eligibility) are stored with the inputs
+ * that produced them. Selectors compare those fingerprints to current drafts so
+ * the UI can distinguish "fresh result" vs "stale — recalculate / re-check".
+ */
+
 export const CREDIT_CHECK_STATES = ['bad', 'good', 'over_limit'] as const;
 
 export const DEFAULT_CREDIT_CHECK_STATE: CreditCheckState = 'good';
@@ -94,9 +102,12 @@ export const initialJourneyState: JourneyState = {
   financialDetails: emptyFinancialDetails,
 };
 
+/**
+ * Clears eligibility when upstream drafts change.
+ * Rate quotes are left in place so selectors can still detect a mismatch and
+ * surface recalculate/continue modes without forcing an immediate refetch.
+ */
 const invalidateDownstreamResults = (state: JourneyState): void => {
-  // Keep rateQuote + rateQuoteInputs so Screen 1 can show Recalculate when
-  // the stored quote no longer matches the current draft inputs.
   state.eligibilityResult = null;
   state.eligibilityInputs = null;
 };
@@ -137,6 +148,7 @@ const journeySlice = createSlice({
       state.loanTerm = action.payload;
       invalidateDownstreamResults(state);
     },
+    // Manual score and bureau opt-in are mutually exclusive sources of credit.
     setManualCreditScore(state, action: PayloadAction<number | null>) {
       state.manualCreditScore = action.payload;
       if (action.payload !== null) {
@@ -155,6 +167,7 @@ const journeySlice = createSlice({
       }
       invalidateDownstreamResults(state);
     },
+    // Scenario change invalidates any prior bureau score so a new check must run.
     setCreditCheckState(state, action: PayloadAction<CreditCheckState>) {
       state.creditCheckState = action.payload;
       state.creditCheckScore = null;
@@ -273,6 +286,7 @@ export const selectCurrentRateInputs = (state: {
   };
 };
 
+/** True when the cached rate quote was computed from the current draft inputs. */
 export const selectRateQuoteMatchesCurrentInputs = (state: { journey: JourneyState }): boolean => {
   const current = selectCurrentRateInputs(state);
   const stored = state.journey.rateQuoteInputs;
@@ -290,6 +304,10 @@ export const selectRateQuoteMatchesCurrentInputs = (state: { journey: JourneySta
 
 export type PrimaryActionMode = 'calculate' | 'recalculate' | 'continue';
 
+/**
+ * Primary CTA on the loan step when rate quoting is enabled:
+ * continue (quote still valid) → recalculate (stale quote) → calculate (none).
+ */
 export const selectPrimaryActionMode = (state: { journey: JourneyState }): PrimaryActionMode => {
   if (selectRateQuoteMatchesCurrentInputs(state)) {
     return 'continue';
@@ -302,6 +320,10 @@ export const selectPrimaryActionMode = (state: { journey: JourneyState }): Prima
   return 'calculate';
 };
 
+/**
+ * Builds the eligibility fingerprint from the live draft, or null when required
+ * fields are still missing. `existingDebt` defaults to 0 when left blank.
+ */
 export const selectCurrentEligibilityInputs = (state: {
   journey: JourneyState;
 }): EligibilityInputs | null => {
@@ -343,6 +365,7 @@ export const selectCurrentEligibilityInputs = (state: {
   };
 };
 
+/** True when the stored eligibility result still matches every current draft field. */
 export const selectEligibilityMatchesCurrentInputs = (state: {
   journey: JourneyState;
 }): boolean => {
@@ -369,6 +392,7 @@ export const selectEligibilityMatchesCurrentInputs = (state: {
 
 export type DetailsPrimaryActionMode = 'check' | 'view';
 
+/** Details-step CTA: skip the API when the cached result is still current. */
 export const selectDetailsPrimaryActionMode = (state: {
   journey: JourneyState;
 }): DetailsPrimaryActionMode => (selectEligibilityMatchesCurrentInputs(state) ? 'view' : 'check');

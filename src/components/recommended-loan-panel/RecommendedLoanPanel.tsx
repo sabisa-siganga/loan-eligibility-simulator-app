@@ -61,7 +61,7 @@ export const RecommendedLoanPanel = ({
     ...(offer
       ? [
           { label: 'Recommended amount', value: toDisplayMoney(offer.recommendedAmount) },
-          { label: 'Maximum amount', value: toDisplayMoney(offer.maxAmount) },
+          { label: 'Maximum affordable amount', value: toDisplayMoney(offer.maxAmount) },
         ]
       : []),
     { label: 'Term', value: formatTermMonths(loanTermMonths) },

@@ -91,7 +91,7 @@ export const AffordabilityGlancePanel = ({
               swatchKey: 'monthlyExpenses',
             },
             {
-              label: 'Existing debt',
+              label: 'Existing monthly debt repayments',
               value: toDisplayMoney(existingDebt),
               swatchClassName: tones.toneDebt,
               swatchKey: 'existingDebt',
@@ -124,7 +124,7 @@ export const AffordabilityGlancePanel = ({
           />
           <CircularProgressRing
             value={loanToIncomeRatio}
-            label="Loan-to-income ratio"
+            label="Loan-to-annual-income"
             displayValue={formatPercent(loanToIncomeRatio)}
             animationDelayMs={80}
           />

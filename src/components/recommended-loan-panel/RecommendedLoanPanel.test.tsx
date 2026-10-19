@@ -32,6 +32,7 @@ describe('RecommendedLoanPanel', () => {
     expect(screen.getByText('Personal Loan')).toBeInTheDocument();
     expect(screen.getByText('Home improvement')).toBeInTheDocument();
     expect(screen.getByText('Recommended amount')).toBeInTheDocument();
+    expect(screen.getByText('Maximum affordable amount')).toBeInTheDocument();
     expect(screen.getByText('12.5%')).toBeInTheDocument();
   });
 

@@ -69,6 +69,11 @@ const FIELD_ORDER: (keyof BudgetFormValues)[] = [
   'existingDebt',
 ];
 
+/**
+ * Step 2: personal + financial details, optional simulated credit check, then
+ * eligibility. Draft fields sync to Redux continuously; submit uses store
+ * snapshots so concurrent credit-scenario changes cannot race the CTA mode.
+ */
 export const YourDetailsScreen = () => {
   const dispatch = useAppDispatch();
   const store = useStore<RootState>();
@@ -78,6 +83,7 @@ export const YourDetailsScreen = () => {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Generation + AbortController discard stale responses when the user re-submits.
   const requestGenerationRef = useRef(0);
   const isSubmittingRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -136,6 +142,8 @@ export const YourDetailsScreen = () => {
   const employmentStatus = watchedValues.employmentStatus;
   const showEmploymentDuration = requiresEmploymentDuration(employmentStatus);
 
+  // Hide duration for unemployed/retired and clear leftover values so they
+  // cannot fail validation or persist into the eligibility fingerprint.
   useEffect(() => {
     if (requiresEmploymentDuration(employmentStatus)) {
       return;
@@ -147,6 +155,7 @@ export const YourDetailsScreen = () => {
     clearErrors('employmentDuration');
   }, [clearErrors, employmentStatus, setValue, watchedValues.employmentDuration]);
 
+  // Mirror form → Redux draft (same persistence pattern as the loan step).
   useEffect(() => {
     const status =
       watchedValues.employmentStatus.trim() === '' ? null : watchedValues.employmentStatus;
@@ -510,8 +519,8 @@ export const YourDetailsScreen = () => {
                 <MoneyInput
                   id="existingDebt"
                   name={field.name}
-                  label="Existing debt"
-                  placeholder="Enter debt"
+                  label="Existing monthly debt repayments"
+                  placeholder="Enter monthly repayments"
                   helperText="Optional. Enter monthly debt repayments in rand, or leave blank."
                   value={field.value}
                   onChange={field.onChange}

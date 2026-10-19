@@ -7,6 +7,12 @@ import {
   type JourneyState,
 } from './journeySlice';
 
+/**
+ * Session persistence for the journey draft (survives refresh within the tab).
+ * Corrupt, incomplete, or inaccessible storage always falls back to a clean
+ * initial state — never throw into the app boot path.
+ */
+
 export const JOURNEY_STORAGE_KEY = 'loanEligibility.journey.v1';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -46,6 +52,10 @@ const isFinancialDetails = (value: unknown): boolean => {
   );
 };
 
+/**
+ * Structural guard for sessionStorage payloads. Nested API result shapes are
+ * only checked for presence — they were written by this app in the same session.
+ */
 export const isJourneyState = (value: unknown): value is JourneyState => {
   if (!isRecord(value)) {
     return false;

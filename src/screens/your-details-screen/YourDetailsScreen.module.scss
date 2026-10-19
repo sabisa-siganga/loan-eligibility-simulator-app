@@ -76,7 +76,7 @@
   justify-content: stretch;
 
   @include respond-above($bp-fields) {
-    justify-content: flex-end;
+    justify-content: space-between;
   }
 
   > * {

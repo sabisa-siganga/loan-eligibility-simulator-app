@@ -37,6 +37,7 @@ export type CalculateRateResult =
   | { readonly ok: true; readonly data: CalculateRateResponse }
   | { readonly ok: false; readonly message: string };
 
+/** POST amortised repayment quote; validates the response shape before returning. */
 export const calculateRate = async (
   body: CalculateRateRequest,
   options?: { readonly signal?: AbortSignal },

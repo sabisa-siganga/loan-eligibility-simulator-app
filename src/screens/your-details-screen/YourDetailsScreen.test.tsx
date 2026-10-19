@@ -42,7 +42,7 @@ const fillValidForm = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText(/^Employment duration/), '24');
   await user.type(screen.getByLabelText(/^Monthly income/), '25000');
   await user.type(screen.getByLabelText(/^Monthly expenses/), '8000');
-  await user.type(screen.getByLabelText(/^Existing debt/), '0');
+  await user.type(screen.getByLabelText(/^Existing monthly debt repayments/), '0');
 };
 
 describe('YourDetailsScreen', () => {
@@ -167,7 +167,7 @@ describe('YourDetailsScreen', () => {
     expect(
       screen.getByText('Optional. Enter monthly debt repayments in rand, or leave blank.'),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(/^Existing debt/)).not.toBeRequired();
+    expect(screen.getByLabelText(/^Existing monthly debt repayments/)).not.toBeRequired();
 
     await user.selectOptions(screen.getByLabelText(/^Employment status/), 'employed');
     expect(
@@ -241,7 +241,7 @@ describe('YourDetailsScreen', () => {
     await user.type(screen.getByLabelText(/^Employment duration/), '2');
     await user.type(screen.getByLabelText(/^Monthly income/), '25000');
     await user.type(screen.getByLabelText(/^Monthly expenses/), '8000');
-    await user.type(screen.getByLabelText(/^Existing debt/), '0');
+    await user.type(screen.getByLabelText(/^Existing monthly debt repayments/), '0');
     await user.click(screen.getByRole('button', { name: /Check eligibility/i }));
 
     expect(await screen.findByText('Minimum 3 months employment required')).toBeInTheDocument();
@@ -594,7 +594,7 @@ describe('YourDetailsScreen', () => {
     expect(screen.getByLabelText(/^Employment duration/)).toHaveValue('36');
     expect(screen.getByLabelText(/^Monthly income/)).toHaveValue('30 000.00');
     expect(screen.getByLabelText(/^Monthly expenses/)).toHaveValue('9 000.00');
-    expect(screen.getByLabelText(/^Existing debt/)).toHaveValue('1 500.00');
+    expect(screen.getByLabelText(/^Existing monthly debt repayments/)).toHaveValue('1 500.00');
     expect(screen.getByLabelText('I consent to a credit bureau check')).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Over limit' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Over limit' })).toBeEnabled();

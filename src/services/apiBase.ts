@@ -1,3 +1,4 @@
+/** API root from env, defaulting to same-origin `/api` (MSW in local/dev). */
 export const getApiBaseUrl = (): string => {
   const base = import.meta.env.VITE_API_BASE_URL;
   if (typeof base === 'string' && base.length > 0) {

@@ -6,6 +6,7 @@ import { MOCK_PRODUCTS } from '../data/products';
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
+/** Mock repayment quote: validate body → pick rate from credit → amortise. */
 export const calculateRateHandlers = [
   http.post('*/api/loans/calculate-rate', async ({ request }) => {
     let body: unknown;

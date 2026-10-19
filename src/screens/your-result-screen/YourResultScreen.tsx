@@ -19,6 +19,7 @@ import {
 import { getPurposeLabel } from '../../utils/purposeLabels';
 import styles from './YourResultScreen.module.scss';
 
+/** Declined offers zero out recommendation fields — treat those as "no offer". */
 const hasUsableRecommendation = (isEligible: boolean, amount: number): boolean => {
   if (!isEligible && amount === 0) {
     return false;
@@ -26,6 +27,10 @@ const hasUsableRecommendation = (isEligible: boolean, amount: number): boolean =
   return Number.isFinite(amount);
 };
 
+/**
+ * Step 3: show eligibility only when the stored result still matches the live
+ * draft fingerprint; otherwise prompt to re-check (outdated) or return (none).
+ */
 export const YourResultScreen = () => {
   const dispatch = useAppDispatch();
   const journey = useAppSelector(selectJourney);
@@ -51,6 +56,7 @@ export const YourResultScreen = () => {
   };
 
   const hasStoredResult = journey.eligibilityResult !== null && journey.eligibilityInputs !== null;
+  // Prefer "outdated" over "none" when a previous result exists but inputs moved.
   const unavailableKind = hasStoredResult && !isCurrentResult ? 'outdated' : 'none';
   const showResult = hasStoredResult && isCurrentResult;
 

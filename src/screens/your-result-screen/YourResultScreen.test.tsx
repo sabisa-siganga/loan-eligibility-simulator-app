@@ -108,17 +108,18 @@ describe('YourResultScreen', () => {
 
     expect(screen.getByText('Monthly income')).toBeInTheDocument();
     expect(screen.getByText(formatMoneyExact(25000))).toBeInTheDocument();
-    expect(screen.getByText('Existing debt')).toBeInTheDocument();
+    expect(screen.getByText('Existing monthly debt repayments')).toBeInTheDocument();
     expect(screen.getByText('Disposable income')).toBeInTheDocument();
     expect(screen.getByText(formatMoneyExact(10000))).toBeInTheDocument();
     expect(
       screen.getByRole('img', {
-        name: `Budget composition: Monthly expenses ${formatMoneyExact(15000)}, Existing debt ${formatMoneyExact(5000)}, New repayment ${formatMoneyExact(7089.5)}, Disposable income ${formatMoneyExact(10000)}`,
+        name: `Budget composition: Monthly expenses ${formatMoneyExact(15000)}, Existing monthly debt repayments ${formatMoneyExact(5000)}, New repayment ${formatMoneyExact(7089.5)}, Disposable income ${formatMoneyExact(10000)}`,
       }),
     ).toBeInTheDocument();
 
     expect(screen.getByRole('img', { name: 'Debt-to-income ratio: 20%' })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Loan-to-income ratio: 60%' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Loan-to-annual-income: 60%' })).toBeInTheDocument();
+    expect(screen.getByText('Maximum affordable amount')).toBeInTheDocument();
     expect(screen.getByRole('status', { name: 'Affordability rating: Good' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Approval likelihood: 85%' })).toBeInTheDocument();
     expect(screen.getByText('Risk category')).toBeInTheDocument();
@@ -220,7 +221,7 @@ describe('YourResultScreen', () => {
     });
 
     expect(screen.getByRole('img', { name: 'Debt-to-income ratio: 120%' })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Loan-to-income ratio: 105%' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Loan-to-annual-income: 105%' })).toBeInTheDocument();
   });
 
   it('returns to your details on Back without clearing the current result', async () => {

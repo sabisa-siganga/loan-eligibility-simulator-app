@@ -27,11 +27,13 @@ describe('AffordabilityGlancePanel', () => {
     expect(screen.getByText(formatMoneyExact(25000))).toBeInTheDocument();
     expect(
       screen.getByRole('img', {
-        name: `Budget composition: Monthly expenses ${formatMoneyExact(15000)}, Existing debt ${formatMoneyExact(5000)}, New repayment ${formatMoneyExact(7089.5)}, Disposable income ${formatMoneyExact(10000)}`,
+        name: `Budget composition: Monthly expenses ${formatMoneyExact(15000)}, Existing monthly debt repayments ${formatMoneyExact(5000)}, New repayment ${formatMoneyExact(7089.5)}, Disposable income ${formatMoneyExact(10000)}`,
       }),
     ).toBeInTheDocument();
     expect(screen.getByText('Disposable income')).toBeInTheDocument();
+    expect(screen.getByText('Existing monthly debt repayments')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Debt-to-income ratio: 20%' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Loan-to-annual-income: 60%' })).toBeInTheDocument();
     expect(screen.getByRole('status', { name: 'Affordability rating: Good' })).toBeInTheDocument();
     expect(screen.getByText('Risk category')).toBeInTheDocument();
     expect(screen.getByText('Low')).toBeInTheDocument();

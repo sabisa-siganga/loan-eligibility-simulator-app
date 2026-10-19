@@ -6,6 +6,7 @@ import { scoreEligibility } from '../logic/scoreEligibility';
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
+/** Narrow untrusted JSON to the shape `scoreEligibility` expects. */
 const isEligibilityRequest = (value: unknown): value is Parameters<typeof scoreEligibility>[0] => {
   if (!isRecord(value)) {
     return false;
@@ -35,6 +36,7 @@ const isEligibilityRequest = (value: unknown): value is Parameters<typeof scoreE
 
 export const eligibilityHandlers = [
   http.post('*/api/loans/eligibility', async ({ request }) => {
+    // Test/demo hook: force a 500 without changing scoring logic.
     if (
       typeof sessionStorage !== 'undefined' &&
       sessionStorage.getItem(MOCK_ELIGIBILITY_FAIL_STORAGE_KEY) === '1'

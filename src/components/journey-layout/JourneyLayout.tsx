@@ -5,6 +5,7 @@ import { ProgressStepper, type ProgressStep } from '../progress-stepper';
 import { JOURNEY_SCREENS, setCurrentScreen, useAppDispatch, type JourneyScreen } from '../../store';
 import styles from './JourneyLayout.module.scss';
 
+/** Step ids must stay aligned with `JOURNEY_SCREENS` in the journey slice. */
 export const JOURNEY_STEPS: readonly ProgressStep[] = [
   { id: 'loanDetails', label: 'Your loan' },
   { id: 'yourBudget', label: 'Your details', compactLabel: 'Details' },

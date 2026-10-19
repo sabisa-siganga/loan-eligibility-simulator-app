@@ -15,6 +15,10 @@ export type RunCreditCheckResult =
   | { readonly ok: true; readonly creditScore: number }
   | { readonly ok: false; readonly message: string };
 
+/**
+ * Simulated bureau check. `state` selects a fixed mock score (bad/good/over_limit);
+ * omitted body defaults to the mock's "good" path.
+ */
 export const runCreditCheck = async (options?: {
   readonly signal?: AbortSignal;
   readonly state?: CreditCheckState;

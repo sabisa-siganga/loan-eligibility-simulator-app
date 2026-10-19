@@ -16,6 +16,10 @@ if (!rootElement) {
   throw new Error('Root element #root was not found.');
 }
 
+/**
+ * Start MSW before React mounts so the first catalog/eligibility fetches are
+ * intercepted. Skipped under Vitest (node MSW server covers that path).
+ */
 const enableMocking = async (): Promise<void> => {
   if (import.meta.env.MODE === 'test') {
     return;

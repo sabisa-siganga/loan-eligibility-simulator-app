@@ -351,13 +351,13 @@ There is **no** separate backend container.
 
 ### Credit-check scenarios
 
-| `state`      | Fixed demo score           |
-| ------------ | -------------------------- |
-| `bad`        | 520                        |
-| `good`       | 720 (default UI selection) |
-| `over_limit` | 820                        |
+| `state`      | Fixed demo score           | Notes                                         |
+| ------------ | -------------------------- | --------------------------------------------- |
+| `bad`        | 200                        | Below validation min → eligibility ineligible |
+| `good`       | 550 (default UI selection) | Inside 300–850 → scored normally              |
+| `over_limit` | 900                        | Above validation max → eligibility ineligible |
 
-Scores are chosen to stay within validation credit-score bounds (300–850). Consent off → eligibility is sent without `creditScore`.
+Validation rules require credit score **300–850**. When a score is present and outside that range, eligibility returns `isEligible: false` with `decisionReason` from the rules (`Credit score must be between 300 and 850`), regardless of affordability. Consent off → eligibility is sent without `creditScore`.
 
 ### Triggering request failures
 
@@ -456,9 +456,9 @@ npm run test:e2e
 3. Enter age, employment (and duration if employed/self-employed), income, expenses; optionally consent + scenario; **Check eligibility**.
 4. Review eligible or ineligible result; **Back** or **Start again**.
 
-**Eligible demo path (typical):** employed, duration ≥ 3, income well above expenses + debt, moderate loan amount.
+**Eligible demo path (typical):** employed, duration ≥ 3, income well above expenses + debt, moderate loan amount; credit consent off, or consent on with **Good** scenario.
 
-**Ineligible demo path:** e.g. disposable income negative after estimated repayment (very high expenses/debt relative to income), or age outside the scoring band used by the mock.
+**Ineligible demo path:** e.g. disposable income negative after estimated repayment (very high expenses/debt relative to income); age outside the scoring band used by the mock; or credit consent on with **Poor** / **Over limit** (out-of-bounds score → decision reason “Credit score must be between 300 and 850”).
 
 **Request failure:** in DevTools console on the app origin:
 

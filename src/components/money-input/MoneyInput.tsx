@@ -26,6 +26,7 @@ export type MoneyInputProps = {
   readonly name?: string;
 };
 
+/** Digits-only storage; grouping/currency are display-only (see formatMoneyInputDisplay). */
 const sanitizeMoneyInput = (raw: string): string => raw.replace(/[^\d]/g, '');
 
 export const MoneyInput = ({
@@ -65,6 +66,7 @@ export const MoneyInput = ({
     onBlur?.(event);
   };
 
+  // While focused show raw digits for easy editing; blur applies grouping.
   const displayValue = isFocused || value === '' ? value : formatMoneyInputDisplay(value);
 
   return (

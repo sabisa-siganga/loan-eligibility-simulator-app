@@ -21,6 +21,10 @@ export type CircularProgressRingProps = {
   readonly animationDelayMs?: number;
 };
 
+/**
+ * SVG ring fill via stroke-dashoffset. Animation starts from a full offset
+ * (empty ring) and eases to the target; reduced-motion skips the transition.
+ */
 export const CircularProgressRing = ({
   value,
   label,

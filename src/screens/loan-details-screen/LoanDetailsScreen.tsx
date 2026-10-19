@@ -28,6 +28,7 @@ import styles from './LoanDetailsScreen.module.scss';
 
 const PURPOSE_GROUP_NAME = 'loan-purpose';
 
+/** Focus order used after failed submit — purpose radios share one group name. */
 const FIELD_ORDER: (keyof LoanDetailsFormValues)[] = ['purpose', 'amount', 'termMonths'];
 
 const draftNumberToText = (value: number | null): string => (value === null ? '' : String(value));
@@ -40,6 +41,11 @@ const textToDraftNumber = (value: string): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+/**
+ * Step 1: pick product/purpose and amount/term.
+ * Form strings stay local to RHF; amount/term are mirrored into Redux so the
+ * summary panel and later steps read from the journey draft.
+ */
 export const LoanDetailsScreen = () => {
   const dispatch = useAppDispatch();
   const products = useAppSelector((state) => state.catalog.products);
@@ -60,6 +66,8 @@ export const LoanDetailsScreen = () => {
     [products, journey.selectedProductId],
   );
 
+  // Schema needs a product even before a purpose is chosen — use the expanded
+  // accordion (or first catalog entry) so amount/term bounds still validate.
   const schemaProduct = useMemo(() => {
     if (selectedProduct) {
       return selectedProduct;
@@ -116,6 +124,8 @@ export const LoanDetailsScreen = () => {
     }
   }, [expandedProductId, journey.selectedProductId, products]);
 
+  // Keep Redux draft in sync on every keystroke so navigation away does not
+  // lose partial amount/term values (session persistence reads journey state).
   useEffect(() => {
     const nextAmount = textToDraftNumber(watchedValues.amount);
     const nextTerm = textToDraftNumber(watchedValues.termMonths);
@@ -134,6 +144,7 @@ export const LoanDetailsScreen = () => {
     watchedValues.termMonths,
   ]);
 
+  // After expanding a product to fix a purpose error, move focus once the radios mount.
   useEffect(() => {
     if (!pendingPurposeFocusRef.current || !expandedProductId) {
       return;
@@ -185,6 +196,7 @@ export const LoanDetailsScreen = () => {
     }
   };
 
+  // Switching product clears selection — amount/term bounds belong to one product.
   const handleProductExpand = (productId: string) => {
     if (expandedProductId === productId) {
       return;
@@ -218,6 +230,7 @@ export const LoanDetailsScreen = () => {
   };
 
   const onInvalidSubmit = (fieldErrors: Partial<Record<keyof LoanDetailsFormValues, unknown>>) => {
+    // Purpose radios only exist inside an expanded section — expand first, then focus.
     if (fieldErrors.purpose) {
       const nextExpanded = expandedProductId ?? products[0]?.id ?? null;
       if (nextExpanded !== null && nextExpanded !== expandedProductId) {

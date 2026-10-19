@@ -2,6 +2,10 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import type { LoanProduct, ValidationRulesResponse } from '../types/api';
 
+/**
+ * Boot-time catalog: products + validation rules loaded once before the journey.
+ * Journey screens render only when status is `ready`.
+ */
 export type CatalogStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 export type CatalogState = {

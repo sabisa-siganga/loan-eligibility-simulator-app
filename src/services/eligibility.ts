@@ -43,6 +43,10 @@ export type CheckEligibilityResult =
   | { readonly ok: true; readonly data: EligibilityResponse }
   | { readonly ok: false; readonly message: string };
 
+/**
+ * POST eligibility. Returns a discriminated result for expected failures;
+ * rethrows AbortError so callers can ignore cancelled in-flight requests.
+ */
 export const checkEligibility = async (
   body: EligibilityRequest,
   options?: { readonly signal?: AbortSignal },

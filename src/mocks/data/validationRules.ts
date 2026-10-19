@@ -7,9 +7,8 @@ import { formatMoney } from '../../utils/formatMoney';
 import { MOCK_PRODUCTS } from './products';
 
 /**
- * Creates validation rules for a given array of products
- * @param products - The products to create validation rules for
- * @returns A record of validation rules for each product
+ * Derives per-product amount/term bounds from the catalog so the mock
+ * validation-rules endpoint stays aligned with product min/max values.
  */
 export const createValidationRules = (
   products: readonly LoanProduct[],

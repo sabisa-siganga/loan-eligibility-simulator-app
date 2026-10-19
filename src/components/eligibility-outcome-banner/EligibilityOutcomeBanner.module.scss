@@ -2,6 +2,7 @@
 @use '../../styles/tokens' as *;
 
 .success,
+.neutral,
 .unsuccessful {
   @include message-banner;
   align-items: flex-start;
@@ -18,12 +19,18 @@
   background-color: $color-success-surface;
 }
 
+.neutral {
+  border-color: rgba($color-primary, 0.3);
+  background-color: rgba($color-primary, 0.1);
+}
+
 .unsuccessful {
   border-color: rgba($color-error, 0.35);
   background-color: $color-error-surface;
 }
 
 .iconSuccess,
+.iconNeutral,
 .iconUnsuccessful {
   flex: 0 0 auto;
   color: $color-surface;
@@ -33,11 +40,17 @@
   fill: $color-success;
 }
 
+.iconNeutral {
+  color: $color-primary;
+  fill: $color-primary;
+}
+
 .iconUnsuccessful {
   fill: $color-error;
 }
 
 .dividerSuccess,
+.dividerNeutral,
 .dividerUnsuccessful {
   display: none;
   flex: 0 0 auto;
@@ -52,6 +65,10 @@
 
 .dividerSuccess {
   background-color: rgba($color-success, 0.35);
+}
+
+.dividerNeutral {
+  background-color: rgba($color-primary, 0.3);
 }
 
 .dividerUnsuccessful {
@@ -76,11 +93,15 @@
   }
 }
 
-.success .heading {
+.headingSuccess {
   color: $color-success;
 }
 
-.unsuccessful .heading {
+.headingNeutral {
+  color: $color-primary-text;
+}
+
+.headingUnsuccessful {
   color: $color-error;
 }
 

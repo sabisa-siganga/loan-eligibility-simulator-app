@@ -71,8 +71,8 @@ describe('catalog and rate handlers', () => {
     expect(goodResponse.status).toBe(200);
     expect(badResponse.status).toBe(200);
     expect(overLimitResponse.status).toBe(200);
-    expect((await goodResponse.json()) as { creditScore: number }).toEqual({ creditScore: 550 });
-    expect((await badResponse.json()) as { creditScore: number }).toEqual({ creditScore: 200 });
+    expect((await goodResponse.json()) as { creditScore: number }).toEqual({ creditScore: 780 });
+    expect((await badResponse.json()) as { creditScore: number }).toEqual({ creditScore: 520 });
     expect((await overLimitResponse.json()) as { creditScore: number }).toEqual({
       creditScore: 900,
     });

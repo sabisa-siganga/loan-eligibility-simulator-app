@@ -45,7 +45,7 @@ describe('BudgetCompositionBar', () => {
     expect(container.querySelector('[data-segment="disposableIncome"]')).toBeInTheDocument();
     expect(
       screen.getByRole('img', {
-        name: `Budget composition: Monthly expenses ${formatMoneyExact(15000)}, Existing monthly debt repayments ${formatMoneyExact(5000)}, Disposable income ${formatMoneyExact(10000)}`,
+        name: `Budget composition: Monthly expenses ${formatMoneyExact(15000)}, Existing monthly debt repayments ${formatMoneyExact(5000)}, Remaining monthly income ${formatMoneyExact(10000)}`,
       }),
     ).toBeInTheDocument();
   });
@@ -76,7 +76,7 @@ describe('BudgetCompositionBar', () => {
 
     expect(
       screen.getByRole('img', {
-        name: `Budget composition: Monthly expenses ${formatMoneyExact(15000)}, Existing monthly debt repayments ${formatMoneyExact(5000)}, New repayment ${formatMoneyExact(7089.5)}, Disposable income ${formatMoneyExact(10000)}`,
+        name: `Budget composition: Monthly expenses ${formatMoneyExact(15000)}, Existing monthly debt repayments ${formatMoneyExact(5000)}, New repayment ${formatMoneyExact(7089.5)}, Remaining monthly income ${formatMoneyExact(10000)}`,
       }),
     ).toBeInTheDocument();
   });

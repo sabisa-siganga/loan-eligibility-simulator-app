@@ -166,10 +166,11 @@ Stepper labels: **Your loan** → **Your details** → **Eligibility** ([`Journe
 - Requires a complete loan selection; otherwise shows an alert and **Return to your loan**.
 - **Personal:** age, employment status; employment duration only for `employed` / `self_employed`.
 - **Financial:** monthly income, monthly expenses (required); existing debt (optional; blank treated as `0` on submit).
-- **Credit:** consent checkbox (“I consent to a credit bureau check”) plus demo scenario radios (Poor / Good / Over limit). Helper text states no real credit check is performed. Default scenario is `good`.
+- **Credit:** consent checkbox (“I consent to a credit bureau check”) plus demo scenario radios (**Poor credit** / **Good credit** / **Score above supported range.**). Helper text states no real credit check is performed. Default scenario is `good`.
 - Manual numeric credit-score entry is **not** exposed in the UI (Redux still has `manualCreditScore` for the effective-score helper).
 - Primary action: **Check eligibility** (or **View result** when a stored eligibility result still matches current inputs — no re-fetch).
-- When consent is on, the app calls credit-check then eligibility (with `AbortController` + request generation guards). Failures stay on the screen with an error; success navigates to Screen 3.
+- When consent is on, the app calls credit-check then eligibility (with `AbortController` + request generation guards). A failed credit check still continues to eligibility without a score (`creditCheckFailed`); eligibility HTTP failures stay on the screen with an error; success navigates to Screen 3. Changing the credit scenario clears any stored eligibility result.
+- Income is labelled **Monthly take-home income**; budget calculations use take-home income.
 - Loading: button shows “Checking eligibility…”, `aria-busy`, and a polite live status for assistive tech.
 - **Back** returns to Screen 1 without clearing drafts.
 
@@ -177,9 +178,9 @@ There is **no** repayment estimate panel or payment-schedule table on this scree
 
 ### Screen 3: Eligibility result (`YourResultScreen`)
 
-- **Eligible / ineligible** banner with API `decisionReason`.
-- **Recommended loan** panel: product, purpose, requested amount, and when usable, recommended/max amounts, interest, monthly payment, total repayment from `recommendedLoan`.
-- **Affordability at a glance:** income, budget composition bar (expenses / debt / new repayment / disposable), ratios, categorical `affordabilityScore` (e.g. Good / Fair / Poor — not a numeric score invented by the UI), approval likelihood ring, risk category.
+- **Eligible / ineligible** banner with API `decisionReason`. Green success only when eligible with Low overall risk and Good affordability; other eligible outcomes (including incomplete credit assessment) use a neutral banner; mandatory ineligible keeps the unsuccessful style. Eligible heading: **You meet the initial eligibility criteria**. Invalid credit responses use an assessment-error heading (**We could not complete your assessment**) and hide the loan/affordability panels.
+- **Recommended loan** panel: product, purpose, requested amount; **Estimated repayment for your requested loan** when calculated (including some ineligible outcomes); recommended amount and **Maximum amount based on your budget** only when an offer exists.
+- **Affordability at a glance:** take-home income, budget composition bar (expenses / existing monthly debt repayments / new repayment / remaining monthly income), DTI, **Requested loan-to-annual-income ratio** (or **Not available**), categorical `affordabilityScore` (Good / Fair / Poor), **Simulated approval estimate** (credit-score-only mock rule, or **Not available**), overall risk (Low / Medium / High / Not fully assessed).
 - Disclaimer notice: eligibility is an estimate; final approval is subject to verification.
 - If the stored result no longer matches current inputs, or is missing: **Result unavailable** with return to details.
 - **Back** → Your details. **Start again** → `resetJourney()` (clears journey state and, via store subscription, session storage), returning to Screen 1 empty.
@@ -351,13 +352,29 @@ There is **no** separate backend container.
 
 ### Credit-check scenarios
 
-| `state`      | Fixed demo score           | Notes                                         |
-| ------------ | -------------------------- | --------------------------------------------- |
-| `bad`        | 200                        | Below validation min → eligibility ineligible |
-| `good`       | 550 (default UI selection) | Inside 300–850 → scored normally              |
-| `over_limit` | 900                        | Above validation max → eligibility ineligible |
+| `state`      | UI label                     | Fixed demo score | Credit risk / outcome                                      |
+| ------------ | ---------------------------- | ---------------- | ---------------------------------------------------------- |
+| `bad`        | Poor credit                  | **520**          | High credit risk (&lt; 650), still a valid in-bounds score |
+| `good`       | Good credit (default)        | **780**          | Low credit risk (≥ 750)                                    |
+| `over_limit` | Score above supported range. | **900**          | Invalid credit response (above 850)                        |
 
-Validation rules require credit score **300–850**. When a score is present and outside that range, eligibility returns `isEligible: false` with `decisionReason` from the rules (`Credit score must be between 300 and 850`), regardless of affordability. Consent off → eligibility is sent without `creditScore`.
+Validation rules require credit score **300–850**. When a score is present and outside that range, eligibility returns `riskAssessmentStatus: invalid_credit_response` (assessment error — not a completed eligibility result). Consent off → eligibility is sent without `creditScore` (`missing_credit_data`). If the applicant consents and the credit-check request fails, Screen 2 **continues** to eligibility with `creditCheckFailed: true` (no score); overall risk is **Not fully assessed**.
+
+### Eligibility, affordability, and overall risk (simulator application rules)
+
+These are demo rules for this app — **not** a proprietary or institutional lending model.
+
+| Concern                         | Meaning                                                                                                                                                                                                                                                                                                     |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Eligibility**                 | Mandatory hard gates (age, income floor, employment duration when employed/self-employed, remaining income ≥ 0 after the estimated repayment). Poor affordability or High overall risk alone does **not** decline. Out-of-range scores are an assessment error, not a normal decline.                       |
+| **Affordability**               | Comfort managing the proposed repayment from DTI (existing monthly debt repayments + new repayment) ÷ take-home income. Living expenses are excluded from DTI. **Good** ≤ 30%, **Fair** ≤ 45%, else **Poor**.                                                                                               |
+| **Overall risk**                | When a usable in-bounds credit score exists: combine **credit risk** with affordability. Credit risk on the mock 300–850 scale: **Low** ≥ 750, **Medium** ≥ 650, else **High**. Overall risk table: Low×Good→Low; Low×Fair→Medium; Low×Poor→High; Medium×Good/Fair→Medium; Medium×Poor→High; High×any→High. |
+| **Missing / failed credit**     | `riskCategory: null`, `riskAssessmentStatus: missing_credit_data` or `credit_check_failed` (distinct copy). UI shows **Not fully assessed**. Affordability is still calculated.                                                                                                                             |
+| **Invalid credit response**     | `riskAssessmentStatus: invalid_credit_response`. UI shows an assessment error and does not render the completed loan/affordability panels.                                                                                                                                                                  |
+| **Simulated approval estimate** | Credit-score-only mock rule when assessed and eligible: score &lt; 650 → **55%**; 650–749 → **70%**; ≥ 750 → **95%**. Missing, failed, invalid, or mandatory ineligible → `null` (**Not available**). Does **not** include affordability. A genuine `0` remains displayable.                                |
+| **Requested loan-to-income**    | Requested principal ÷ annual take-home income × 100. `null` / **Not available** when income cannot support the ratio — not fabricated as 0% merely because there is no recommendation.                                                                                                                      |
+
+Maximum recommended principal remains the budget-based amortised amount (available income before the new repayment, term, rate, product cap) — labelled **Maximum amount based on your budget**, not a comfortable borrowing suggestion. The estimated repayment for the requested loan is retained on completed assessments (including some ineligible outcomes) and is separate from whether a recommended offer exists.
 
 ### Triggering request failures
 
@@ -456,9 +473,11 @@ npm run test:e2e
 3. Enter age, employment (and duration if employed/self-employed), income, expenses; optionally consent + scenario; **Check eligibility**.
 4. Review eligible or ineligible result; **Back** or **Start again**.
 
-**Eligible demo path (typical):** employed, duration ≥ 3, income well above expenses + debt, moderate loan amount; credit consent off, or consent on with **Good** scenario.
+**Eligible demo path (typical):** employed, duration ≥ 3, income well above expenses + debt, moderate loan amount; credit consent off, or consent on with **Good credit** (Low overall risk when affordability is also Good) or **Poor credit** (High credit risk — still eligible if hard gates pass).
 
-**Ineligible demo path:** e.g. disposable income negative after estimated repayment (very high expenses/debt relative to income); age outside the scoring band used by the mock; or credit consent on with **Poor** / **Over limit** (out-of-bounds score → decision reason “Credit score must be between 300 and 850”).
+**Ineligible demo path:** e.g. disposable income negative after estimated repayment (very high expenses/debt relative to income); age outside the scoring band used by the mock.
+
+**Assessment error demo path:** credit consent on with **Score above supported range.** → invalid credit response (not a completed eligibility result).
 
 **Request failure:** in DevTools console on the app origin:
 

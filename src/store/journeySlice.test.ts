@@ -37,8 +37,9 @@ const sampleQuote = {
 const sampleEligibilityResult = {
   eligibilityResult: {
     isEligible: true,
-    approvalLikelihood: 80,
-    riskCategory: 'low',
+    approvalLikelihood: null,
+    riskCategory: 'low' as const,
+    riskAssessmentStatus: 'assessed' as const,
     decisionReason: 'ok',
   },
   recommendedLoan: {

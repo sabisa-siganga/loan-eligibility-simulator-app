@@ -1,41 +1,55 @@
-import type { EligibilityRequest, EligibilityResponse } from '../../types/api';
+import type {
+  EligibilityRequest,
+  EligibilityResponse,
+  RiskAssessmentStatus,
+  RiskCategory,
+} from '../../types/api';
 import { MOCK_PRODUCTS } from '../data/products';
 import { MOCK_VALIDATION_RULES } from '../data/validationRules';
 import { amortiseLoan, pickRatePercent, principalFromPayment } from './amortise';
+import {
+  type AffordabilityRating,
+  affordabilityRatingFromDti,
+  CREDIT_SCORE_MAX,
+  CREDIT_SCORE_MIN,
+  creditRiskFromScore,
+  overallRiskFromCreditAndAffordability,
+  roundMoney,
+  roundRatio,
+  safePercentRatio,
+  simulatedApprovalEstimate,
+} from './eligibilityThresholds';
 
 /**
  * Mock eligibility engine used by MSW.
  *
- * Flow: map purpose → product → interest rate → amortised repayment, then
- * derive affordability metrics and hard-fail gates.
+ * Keeps three concerns separate:
+ * - Eligibility: mandatory hard gates (unchanged).
+ * - Affordability: DTI / remaining income comfort (Good / Fair / Poor).
+ * - Overall risk: credit risk × affordability when a usable score exists.
  *
- * Hard gates (any failure → ineligible): credit score bounds (when provided),
- * age 18–65, monthly income ≥ R5,000, employment duration ≥ 3 months when
- * employed/self-employed, and disposable income ≥ 0 after the estimated
- * repayment. Poor affordability alone does not decline the application.
+ * Hard gates (any failure → ineligible): age 18–65, monthly income ≥ R5,000,
+ * employment duration ≥ 3 months when employed/self-employed, and remaining
+ * income ≥ 0 after the estimated repayment. Out-of-range credit scores are an
+ * assessment error (`invalid_credit_response`), not a normal eligibility
+ * decline. Poor affordability or High overall risk alone does not decline.
  *
- * Soft approvalLikelihood heuristic (not underwriting):
- * - Base 55 when no credit score is supplied.
- * - With a score: +25 if ≥ 750, +15 if ≥ 650, otherwise +5; capped at 95.
- * - Any hard fail forces likelihood ≤ 40 so the UI never shows high confidence
- *   alongside a decline.
- * Risk category is derived from likelihood: ≥ 80 low, ≥ 60 medium, else high.
+ * Simulated approval estimate (credit-score-only): below 650 → 55%, 650–749 → 70%,
+ * 750+ → 95%. Null when missing, failed, invalid, or mandatory checks fail.
  *
  * Debt-to-income is debt repayments only (existing monthly debt + new payment)
  * over monthly income — living expenses are excluded from DTI but remain in
- * disposable income and the budget composition.
+ * remaining income and the budget composition.
  *
  * maxAmount when eligible is the largest principal whose amortised payment
- * fits remaining budget (income − expenses − existing debt), capped by the
- * catalog product max; declined → 0.
+ * fits available income before the new repayment (income − expenses − existing
+ * debt), capped by the catalog product max; declined → 0.
  */
-const creditScoreRules = MOCK_VALIDATION_RULES.financialInfo.creditScore;
-const creditScoreMin = creditScoreRules.min ?? 300;
-const creditScoreMax = creditScoreRules.max ?? 850;
 const creditScoreOutOfBoundsMessage =
-  creditScoreRules.errorMessage ?? 'Credit score must be between 300 and 850';
+  MOCK_VALIDATION_RULES.financialInfo.creditScore.errorMessage ??
+  'Credit score must be between 300 and 850';
 
-const roundMoney = (value: number): number => Math.round(value * 100) / 100;
+const invalidCreditDecisionReason = `${creditScoreOutOfBoundsMessage}. Change the credit scenario or try again to complete your assessment.`;
 
 /** Purpose strings live on products; fall back to the first catalog product. */
 const resolveLoanType = (loanPurpose: string): string => {
@@ -48,40 +62,104 @@ const resolveProductMaxAmount = (loanType: string): number => {
   return product?.maxAmount ?? 300000;
 };
 
-const riskCategoryFromLikelihood = (approvalLikelihood: number): string => {
-  if (approvalLikelihood >= 80) {
-    return 'low';
-  }
-  if (approvalLikelihood >= 60) {
-    return 'medium';
-  }
-  return 'high';
+const emptyRecommendedLoan = (interestRate: number) => ({
+  maxAmount: 0,
+  recommendedAmount: 0,
+  interestRate,
+  monthlyPayment: 0,
+  totalRepayment: 0,
+});
+
+type DecisionReasonInput = {
+  readonly isEligible: boolean;
+  readonly failureReasons: readonly string[];
+  readonly creditRisk: RiskCategory | null;
+  readonly affordabilityScore: AffordabilityRating;
+  readonly riskAssessmentStatus: RiskAssessmentStatus;
+  readonly overallRisk: RiskCategory | null;
 };
 
-/** DTI bands mirror typical affordability labels shown on the result screen. */
-const affordabilityScoreFromRatio = (debtToIncomeRatio: number): string => {
-  if (debtToIncomeRatio <= 30) {
-    return 'good';
+/**
+ * Build decisionReason from the actual assessment outcome.
+ * Positive eligibility wording only when isEligible is true.
+ */
+export const buildDecisionReason = ({
+  isEligible,
+  failureReasons,
+  creditRisk,
+  affordabilityScore,
+  riskAssessmentStatus,
+  overallRisk,
+}: DecisionReasonInput): string => {
+  if (riskAssessmentStatus === 'invalid_credit_response') {
+    return invalidCreditDecisionReason;
   }
-  if (debtToIncomeRatio <= 45) {
-    return 'fair';
-  }
-  return 'poor';
-};
 
-const decisionReasonFromAffordability = (affordabilityScore: string): string => {
-  if (affordabilityScore === 'good') {
-    return 'Strong income-to-expense ratio and manageable existing debt';
+  if (!isEligible) {
+    return failureReasons.join('. ');
   }
-  if (affordabilityScore === 'fair') {
-    return 'You meet the eligibility checks with limited monthly headroom';
+
+  const parts: string[] = [];
+
+  if (riskAssessmentStatus === 'missing_credit_data') {
+    parts.push(
+      'You meet the initial eligibility criteria. Overall risk has not been fully assessed because credit information is unavailable.',
+    );
+    if (affordabilityScore === 'poor') {
+      parts.push('The proposed repayment leaves limited room in your budget.');
+    } else if (affordabilityScore === 'fair') {
+      parts.push('The proposed repayment may put pressure on your budget.');
+    }
+    return parts.join(' ');
   }
-  return 'You meet the minimum eligibility checks, but affordability is stretched with limited disposable income remaining';
+
+  if (riskAssessmentStatus === 'credit_check_failed') {
+    parts.push(
+      'You meet the initial eligibility criteria. Overall risk has not been fully assessed because the credit check failed.',
+    );
+    if (affordabilityScore === 'poor') {
+      parts.push('The proposed repayment leaves limited room in your budget.');
+    } else if (affordabilityScore === 'fair') {
+      parts.push('The proposed repayment may put pressure on your budget.');
+    }
+    return parts.join(' ');
+  }
+
+  if (overallRisk === 'low' && affordabilityScore === 'good') {
+    return 'Your credit profile and available monthly income support the proposed repayment.';
+  }
+
+  if (creditRisk === 'high') {
+    parts.push(
+      'Your credit profile increases repayment risk, even though you meet the initial eligibility criteria.',
+    );
+  }
+
+  if (affordabilityScore === 'poor') {
+    parts.push(
+      parts.length === 0
+        ? 'You meet the initial eligibility criteria, but the proposed repayment leaves limited room in your budget.'
+        : 'The proposed repayment also leaves limited room in your budget.',
+    );
+  } else if (affordabilityScore === 'fair') {
+    parts.push(
+      parts.length === 0
+        ? 'You meet the initial eligibility criteria, but the proposed repayment may put pressure on your budget.'
+        : 'The proposed repayment may also put pressure on your budget.',
+    );
+  } else if (parts.length === 0) {
+    parts.push(
+      'You meet the initial eligibility criteria. Your available monthly income supports the proposed repayment.',
+    );
+  }
+
+  return parts.join(' ');
 };
 
 export const scoreEligibility = (request: EligibilityRequest): EligibilityResponse => {
   const { age, employmentStatus, employmentDuration } = request.personalInfo;
-  const { monthlyIncome, monthlyExpenses, existingDebt, creditScore } = request.financialInfo;
+  const { monthlyIncome, monthlyExpenses, existingDebt, creditScore, creditCheckFailed } =
+    request.financialInfo;
   const { requestedAmount, loanTerm, loanPurpose } = request.loanDetails;
 
   const loanType = resolveLoanType(loanPurpose);
@@ -92,36 +170,45 @@ export const scoreEligibility = (request: EligibilityRequest): EligibilityRespon
     annualRatePercent: interestRate,
   });
 
-  // Disposable income includes the estimated new repayment so affordability
-  // reflects the full monthly burden, not just existing outgoings.
-  const disposableIncome = roundMoney(
-    monthlyIncome - monthlyExpenses - existingDebt - quote.monthlyPayment,
-  );
-  // DTI = debt service only (existing monthly debt repayments + new payment).
-  const debtToIncomeRatio =
-    monthlyIncome > 0
-      ? roundMoney(((existingDebt + quote.monthlyPayment) / monthlyIncome) * 100)
-      : 100;
-  const loanToIncomeRatio =
-    monthlyIncome > 0 ? roundMoney((requestedAmount / (monthlyIncome * 12)) * 100) : 100;
+  const hasScore = creditScore !== undefined;
+  const scoreInBounds =
+    hasScore && creditScore >= CREDIT_SCORE_MIN && creditScore <= CREDIT_SCORE_MAX;
 
-  const affordabilityScore = affordabilityScoreFromRatio(debtToIncomeRatio);
+  if (hasScore && !scoreInBounds) {
+    return {
+      eligibilityResult: {
+        isEligible: false,
+        approvalLikelihood: null,
+        riskCategory: null,
+        riskAssessmentStatus: 'invalid_credit_response',
+        decisionReason: invalidCreditDecisionReason,
+      },
+      recommendedLoan: emptyRecommendedLoan(quote.interestRate),
+      affordabilityAnalysis: {
+        disposableIncome: 0,
+        debtToIncomeRatio: 0,
+        loanToIncomeRatio: null,
+        affordabilityScore: 'poor',
+      },
+    };
+  }
+
+  const availableIncomeBeforeRepayment = monthlyIncome - monthlyExpenses - existingDebt;
+  // Remaining monthly income after the estimated new repayment.
+  const disposableIncome = roundMoney(availableIncomeBeforeRepayment - quote.monthlyPayment);
+
+  const debtToIncomeRatio = roundRatio(
+    safePercentRatio(existingDebt + quote.monthlyPayment, monthlyIncome),
+  );
 
   const failureReasons: string[] = [];
 
-  if (
-    creditScore !== undefined &&
-    (creditScore < creditScoreMin || creditScore > creditScoreMax)
-  ) {
-    failureReasons.push(creditScoreOutOfBoundsMessage);
-  }
   if (age < 18 || age > 65) {
     failureReasons.push('Age must be between 18 and 65');
   }
   if (monthlyIncome < 5000) {
     failureReasons.push('Minimum monthly income of R5,000 required');
   }
-  // Duration is only meaningful for employed / self-employed applicants.
   if (
     (employmentStatus === 'employed' || employmentStatus === 'self_employed') &&
     employmentDuration < 3
@@ -132,31 +219,50 @@ export const scoreEligibility = (request: EligibilityRequest): EligibilityRespon
     failureReasons.push('Disposable income is insufficient after estimated repayments');
   }
 
-  // Soft score starts mid-pack and only climbs with stronger credit; declined
-  // applications are forced ≤ 40 so the banner never contradicts the decision.
-  let approvalLikelihood = 55;
-  if (creditScore !== undefined) {
-    if (creditScore >= 750) {
-      approvalLikelihood += 25;
-    } else if (creditScore >= 650) {
-      approvalLikelihood += 15;
-    } else {
-      approvalLikelihood += 5;
-    }
-  }
-  approvalLikelihood = Math.min(95, approvalLikelihood);
-
   const isEligible = failureReasons.length === 0;
-  if (!isEligible) {
-    approvalLikelihood = Math.min(approvalLikelihood, 40);
+  const recommendedAmount = isEligible ? requestedAmount : 0;
+  // Retain the requested-loan repayment estimate for completed assessments.
+  const monthlyPayment = quote.monthlyPayment;
+  const totalRepayment = quote.totalRepayment;
+
+  const loanToIncomeRatio =
+    monthlyIncome > 0 ? roundRatio(safePercentRatio(requestedAmount, monthlyIncome * 12)) : null;
+
+  const affordabilityScore = affordabilityRatingFromDti(debtToIncomeRatio);
+
+  // Internal credit risk — only when a usable in-bounds score is present.
+  let creditRisk: RiskCategory | null = null;
+  let riskAssessmentStatus: RiskAssessmentStatus;
+
+  if (scoreInBounds && creditScore !== undefined) {
+    creditRisk = creditRiskFromScore(creditScore);
+    riskAssessmentStatus = 'assessed';
+  } else if (creditCheckFailed === true) {
+    riskAssessmentStatus = 'credit_check_failed';
+  } else {
+    riskAssessmentStatus = 'missing_credit_data';
   }
 
-  const riskCategory = riskCategoryFromLikelihood(approvalLikelihood);
-  const decisionReason = isEligible
-    ? decisionReasonFromAffordability(affordabilityScore)
-    : failureReasons.join('. ');
+  const overallRisk: RiskCategory | null =
+    creditRisk !== null
+      ? overallRiskFromCreditAndAffordability(creditRisk, affordabilityScore)
+      : null;
 
-  const maxMonthlyPayment = monthlyIncome - monthlyExpenses - existingDebt;
+  const approvalLikelihood =
+    isEligible && scoreInBounds && creditScore !== undefined
+      ? simulatedApprovalEstimate(creditScore)
+      : null;
+
+  const decisionReason = buildDecisionReason({
+    isEligible,
+    failureReasons,
+    creditRisk,
+    affordabilityScore,
+    riskAssessmentStatus,
+    overallRisk,
+  });
+
+  const maxMonthlyPayment = availableIncomeBeforeRepayment;
   const affordablePrincipal = principalFromPayment({
     monthlyPayment: maxMonthlyPayment,
     termMonths: loanTerm,
@@ -165,21 +271,21 @@ export const scoreEligibility = (request: EligibilityRequest): EligibilityRespon
   const maxAmount = isEligible
     ? roundMoney(Math.min(affordablePrincipal, resolveProductMaxAmount(loanType)))
     : 0;
-  const recommendedAmount = isEligible ? requestedAmount : 0;
 
   return {
     eligibilityResult: {
       isEligible,
       approvalLikelihood,
-      riskCategory,
+      riskCategory: overallRisk,
+      riskAssessmentStatus,
       decisionReason,
     },
     recommendedLoan: {
       maxAmount,
       recommendedAmount,
       interestRate: quote.interestRate,
-      monthlyPayment: isEligible ? quote.monthlyPayment : 0,
-      totalRepayment: isEligible ? quote.totalRepayment : 0,
+      monthlyPayment,
+      totalRepayment,
     },
     affordabilityAnalysis: {
       disposableIncome,

@@ -1,3 +1,4 @@
+import type { RiskCategory } from '../../types/api';
 import { BudgetCompositionBar, budgetCompositionTones as tones } from '../budget-composition-bar';
 import { CircularProgressRing, StatusCircle } from '../circular-progress-ring';
 import { ResultDetailList } from '../result-detail-list';
@@ -17,12 +18,15 @@ export type AffordabilityGlancePanelProps = {
   readonly newRepayment: number | null;
   readonly disposableIncome: number;
   readonly debtToIncomeRatio: number;
-  readonly loanToIncomeRatio: number;
+  readonly loanToIncomeRatio: number | null;
   readonly affordabilityScore: string;
-  readonly approvalLikelihood: number;
-  readonly riskCategory: string;
+  readonly approvalLikelihood: number | null;
+  readonly riskCategory: RiskCategory | null;
   readonly className?: string;
 };
+
+const APPROVAL_ESTIMATE_HELPER =
+  "This estimate uses mock rules for this simulator. It is not a lender's approval probability or a guarantee of approval. It is based on the credit score only and does not include affordability.";
 
 const riskToneClassName: Record<ReturnType<typeof getRiskCategoryTone>, string> = {
   low: styles.riskToneLow,
@@ -56,6 +60,14 @@ export const AffordabilityGlancePanel = ({
   const riskLabel = getRiskCategoryLabel(riskCategory);
   const riskTone = getRiskCategoryTone(riskCategory);
   const incomeDisplay = toDisplayMoney(monthlyIncome);
+  const approvalDisplay =
+    approvalLikelihood === null || !Number.isFinite(approvalLikelihood)
+      ? null
+      : formatPercent(approvalLikelihood);
+  const ltiDisplay =
+    loanToIncomeRatio === null || !Number.isFinite(loanToIncomeRatio)
+      ? null
+      : formatPercent(loanToIncomeRatio);
 
   return (
     <section
@@ -67,7 +79,7 @@ export const AffordabilityGlancePanel = ({
       </h2>
 
       <dl className={styles.incomeRow}>
-        <dt className={styles.incomeLabel}>Monthly income</dt>
+        <dt className={styles.incomeLabel}>Monthly take-home income</dt>
         <dd className={incomeDisplay ? styles.incomeValue : styles.incomeMissing}>
           {incomeDisplay ?? 'Not available'}
         </dd>
@@ -103,7 +115,7 @@ export const AffordabilityGlancePanel = ({
               swatchKey: 'newRepayment',
             },
             {
-              label: 'Disposable income',
+              label: 'Remaining monthly income',
               value: toDisplayMoney(disposableIncome),
               emphasis: true,
               swatchClassName: tones.toneDisposable,
@@ -122,29 +134,54 @@ export const AffordabilityGlancePanel = ({
             displayValue={formatPercent(debtToIncomeRatio)}
             animationDelayMs={0}
           />
-          <CircularProgressRing
-            value={loanToIncomeRatio}
-            label="Loan-to-annual-income"
-            displayValue={formatPercent(loanToIncomeRatio)}
-            animationDelayMs={80}
-          />
+          {ltiDisplay === null ? (
+            <StatusCircle
+              status="Not available"
+              label="Requested loan-to-annual-income ratio"
+              tone="neutral"
+            />
+          ) : (
+            <CircularProgressRing
+              value={loanToIncomeRatio as number}
+              label="Requested loan-to-annual-income ratio"
+              displayValue={ltiDisplay}
+              animationDelayMs={80}
+            />
+          )}
           <StatusCircle
             status={affordabilityLabel}
             label="Affordability rating"
             tone={affordabilityTone}
           />
-          <CircularProgressRing
-            value={approvalLikelihood}
-            label="Approval likelihood"
-            displayValue={formatPercent(approvalLikelihood)}
-            animationDelayMs={160}
-          />
+          {approvalDisplay === null ? (
+            <StatusCircle
+              status="Not available"
+              label="Simulated approval estimate"
+              tone="neutral"
+            />
+          ) : (
+            <CircularProgressRing
+              value={approvalLikelihood as number}
+              label="Simulated approval estimate"
+              displayValue={approvalDisplay}
+              animationDelayMs={160}
+            />
+          )}
         </div>
+        <p className={styles.approvalHelper}>{APPROVAL_ESTIMATE_HELPER}</p>
       </div>
 
       <div className={styles.riskBlock}>
-        <p className={styles.riskLabel}>Risk category</p>
-        <p className={`${styles.riskBadge} ${riskToneClassName[riskTone]}`}>{riskLabel}</p>
+        <p className={styles.riskLabel} id="overall-risk-label">
+          Overall risk
+        </p>
+        <p
+          className={`${styles.riskBadge} ${riskToneClassName[riskTone]}`}
+          role="status"
+          aria-labelledby="overall-risk-label"
+        >
+          {riskLabel}
+        </p>
       </div>
     </section>
   );

@@ -17,7 +17,8 @@ export type RecommendedLoanPanelProps = {
   readonly purposeLabel: string;
   readonly requestedAmount: number;
   readonly loanTermMonths: number;
-  readonly offer: RecommendedLoanValues | null;
+  /** Calculated loan figures; repayment may be present without a recommended offer. */
+  readonly loanFigures: RecommendedLoanValues | null;
   readonly className?: string;
 };
 
@@ -40,16 +41,27 @@ const toDisplayPercent = (value: number | null | undefined): string | null => {
   return formatPercent(value);
 };
 
+const hasUsableRepayment = (figures: RecommendedLoanValues | null): boolean =>
+  figures !== null && Number.isFinite(figures.monthlyPayment);
+
+const hasRecommendedOffer = (
+  isEligible: boolean,
+  figures: RecommendedLoanValues | null,
+): boolean =>
+  isEligible && figures !== null && Number.isFinite(figures.recommendedAmount) && figures.recommendedAmount > 0;
+
 export const RecommendedLoanPanel = ({
   isEligible,
   productLabel,
   purposeLabel,
   requestedAmount,
   loanTermMonths,
-  offer,
+  loanFigures,
   className = '',
 }: RecommendedLoanPanelProps) => {
-  const monthlyDisplay = toDisplayMoney(offer?.monthlyPayment);
+  const showRepayment = hasUsableRepayment(loanFigures);
+  const showOffer = hasRecommendedOffer(isEligible, loanFigures);
+  const monthlyDisplay = toDisplayMoney(loanFigures?.monthlyPayment);
 
   const identityItems: ResultDetailItem[] = [
     { label: 'Product', value: productLabel || null },
@@ -58,17 +70,20 @@ export const RecommendedLoanPanel = ({
 
   const loanItems: ResultDetailItem[] = [
     { label: 'Requested amount', value: toDisplayMoney(requestedAmount) },
-    ...(offer
+    ...(showOffer && loanFigures
       ? [
-          { label: 'Recommended amount', value: toDisplayMoney(offer.recommendedAmount) },
-          { label: 'Maximum affordable amount', value: toDisplayMoney(offer.maxAmount) },
+          { label: 'Recommended amount', value: toDisplayMoney(loanFigures.recommendedAmount) },
+          {
+            label: 'Maximum amount based on your budget',
+            value: toDisplayMoney(loanFigures.maxAmount),
+          },
         ]
       : []),
     { label: 'Term', value: formatTermMonths(loanTermMonths) },
-    ...(offer
+    ...(loanFigures && showRepayment
       ? [
-          { label: 'Annual interest', value: toDisplayPercent(offer.interestRate) },
-          { label: 'Total repayment', value: toDisplayMoney(offer.totalRepayment) },
+          { label: 'Annual interest', value: toDisplayPercent(loanFigures.interestRate) },
+          { label: 'Total repayment', value: toDisplayMoney(loanFigures.totalRepayment) },
         ]
       : []),
   ];
@@ -82,9 +97,9 @@ export const RecommendedLoanPanel = ({
         Recommended loan
       </h2>
 
-      {offer ? (
+      {showRepayment ? (
         <div className={styles.repaymentBlock}>
-          <p className={styles.repaymentLabel}>Estimated monthly repayment</p>
+          <p className={styles.repaymentLabel}>Estimated repayment for your requested loan.</p>
           <p className={styles.repaymentValue}>
             {monthlyDisplay ? (
               <>
@@ -96,19 +111,27 @@ export const RecommendedLoanPanel = ({
             )}
           </p>
         </div>
-      ) : (
+      ) : null}
+
+      {!showOffer ? (
         <p className={styles.noOffer}>
           {isEligible
             ? 'Recommendation details are not available for this result.'
             : 'No loan can be recommended based on this result.'}
         </p>
-      )}
+      ) : null}
 
       <div className={styles.group}>
         <ResultDetailList items={identityItems} />
       </div>
       <div className={styles.group}>
         <ResultDetailList items={loanItems} />
+        {showOffer ? (
+          <p className={styles.maxAmountNote}>
+            This budget maximum may leave little or no remaining monthly income. It is not a
+            comfortable borrowing recommendation.
+          </p>
+        ) : null}
       </div>
     </section>
   );

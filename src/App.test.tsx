@@ -81,7 +81,10 @@ describe('App', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Choose your loan' })).toBeInTheDocument();
     });
-    expect(screen.getByDisplayValue('150000')).toBeInTheDocument();
+    // MoneyInput may show raw digits or a blurred grouped value after navigation.
+    const amountField =
+      screen.queryByDisplayValue('150000') ?? screen.getByDisplayValue('150 000.00');
+    expect(amountField).toBeInTheDocument();
   });
 
   it('shows a retryable error when catalog loading fails', async () => {

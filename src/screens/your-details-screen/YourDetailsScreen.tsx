@@ -49,7 +49,7 @@ const CREDIT_CHECK_SCENARIO_OPTIONS: ReadonlyArray<{
 }> = [
   { value: 'bad', label: 'Poor credit' },
   { value: 'good', label: 'Good credit' },
-  { value: 'over_limit', label: 'Over limit' },
+  { value: 'over_limit', label: 'Score above supported range.' },
 ];
 
 const textToDraftNumber = (value: string): number | null => {
@@ -226,7 +226,7 @@ export const YourDetailsScreen = () => {
   const durationMin = validationRules.personalInfo.employmentDuration.min ?? 3;
   const durationHelper = `Enter at least ${durationMin} months for your employment status.`;
   const incomeMin = validationRules.financialInfo.monthlyIncome.min ?? 5000;
-  const incomeHelper = `Enter at least ${formatMoney(incomeMin)}.`;
+  const incomeHelper = `Take-home (net) income. Enter at least ${formatMoney(incomeMin)}.`;
   const expensesHelper = 'Enter your typical monthly expenses in rand.';
 
   const showFieldError = (field: keyof BudgetFormValues): string | undefined => {
@@ -284,6 +284,7 @@ export const YourDetailsScreen = () => {
 
     try {
       let creditScore = selectEffectiveCreditScoreValue(stateAtSubmit);
+      let creditCheckFailed = false;
 
       if (journeyAtSubmit.creditCheckOptIn) {
         const checkResult = await runCreditCheck({
@@ -294,11 +295,14 @@ export const YourDetailsScreen = () => {
           return;
         }
         if (!checkResult.ok) {
-          setSubmitError(checkResult.message);
-          return;
+          // Continue without a score; overall risk will be not fully assessed.
+          creditCheckFailed = true;
+          creditScore = undefined;
+          dispatch(setCreditCheckScore(null));
+        } else {
+          dispatch(setCreditCheckScore(checkResult.creditScore));
+          creditScore = checkResult.creditScore;
         }
-        dispatch(setCreditCheckScore(checkResult.creditScore));
-        creditScore = checkResult.creditScore;
       }
 
       const latestJourney = store.getState().journey;
@@ -314,6 +318,7 @@ export const YourDetailsScreen = () => {
             monthlyExpenses: values.monthlyExpenses,
             existingDebt: values.existingDebt,
             ...(creditScore === undefined ? {} : { creditScore }),
+            ...(creditCheckFailed ? { creditCheckFailed: true } : {}),
           },
           loanDetails: {
             requestedAmount: latestJourney.loanAmount as number,
@@ -482,9 +487,9 @@ export const YourDetailsScreen = () => {
                   <MoneyInput
                     id="monthlyIncome"
                     name={field.name}
-                    label="Monthly income"
+                    label="Monthly take-home income"
                     required
-                    placeholder="Enter income"
+                    placeholder="Enter take-home income"
                     helperText={incomeHelper}
                     value={field.value}
                     onChange={field.onChange}

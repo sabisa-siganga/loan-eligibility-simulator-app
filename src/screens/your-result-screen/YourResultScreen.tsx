@@ -19,13 +19,7 @@ import {
 import { getPurposeLabel } from '../../utils/purposeLabels';
 import styles from './YourResultScreen.module.scss';
 
-/** Declined offers zero out recommendation fields — treat those as "no offer". */
-const hasUsableRecommendation = (isEligible: boolean, amount: number): boolean => {
-  if (!isEligible && amount === 0) {
-    return false;
-  }
-  return Number.isFinite(amount);
-};
+const hasUsableRepayment = (monthlyPayment: number): boolean => Number.isFinite(monthlyPayment);
 
 /**
  * Step 3: show eligibility only when the stored result still matches the live
@@ -63,6 +57,28 @@ export const YourResultScreen = () => {
   const result = showResult ? journey.eligibilityResult : null;
   const inputs = showResult ? journey.eligibilityInputs : null;
 
+  const isAssessmentError =
+    result?.eligibilityResult.riskAssessmentStatus === 'invalid_credit_response';
+
+  const resolveBannerTone = (): 'success' | 'neutral' | 'unsuccessful' => {
+    if (!result) {
+      return 'unsuccessful';
+    }
+    const { isEligible, riskCategory, riskAssessmentStatus } = result.eligibilityResult;
+    const affordabilityScore = result.affordabilityAnalysis.affordabilityScore;
+
+    if (riskAssessmentStatus === 'invalid_credit_response') {
+      return 'unsuccessful';
+    }
+    if (!isEligible) {
+      return 'unsuccessful';
+    }
+    if (riskCategory === 'low' && affordabilityScore === 'good') {
+      return 'success';
+    }
+    return 'neutral';
+  };
+
   return (
     <JourneyLayout currentStepId="yourResult" completedStepIds={['loanDetails', 'yourBudget']}>
       <div className={styles.page}>
@@ -78,48 +94,46 @@ export const YourResultScreen = () => {
             <EligibilityOutcomeBanner
               isEligible={result.eligibilityResult.isEligible}
               decisionReason={result.eligibilityResult.decisionReason}
+              tone={resolveBannerTone()}
+              outcomeKind={isAssessmentError ? 'assessment_error' : 'eligibility'}
             />
 
-            <div className={styles.resultsCard}>
-              <RecommendedLoanPanel
-                className={styles.recommendedColumn}
-                isEligible={result.eligibilityResult.isEligible}
-                productLabel={
-                  products.find((item) => item.id === inputs.productId)?.name ?? 'Not available'
-                }
-                purposeLabel={getPurposeLabel(inputs.loanPurpose)}
-                requestedAmount={inputs.requestedAmount}
-                loanTermMonths={inputs.loanTerm}
-                offer={
-                  hasUsableRecommendation(
-                    result.eligibilityResult.isEligible,
-                    result.recommendedLoan.recommendedAmount,
-                  )
-                    ? result.recommendedLoan
-                    : null
-                }
-              />
-              <AffordabilityGlancePanel
-                className={styles.affordabilityColumn}
-                monthlyIncome={inputs.monthlyIncome}
-                monthlyExpenses={inputs.monthlyExpenses}
-                existingDebt={inputs.existingDebt}
-                newRepayment={
-                  hasUsableRecommendation(
-                    result.eligibilityResult.isEligible,
-                    result.recommendedLoan.monthlyPayment,
-                  )
-                    ? result.recommendedLoan.monthlyPayment
-                    : null
-                }
-                disposableIncome={result.affordabilityAnalysis.disposableIncome}
-                debtToIncomeRatio={result.affordabilityAnalysis.debtToIncomeRatio}
-                loanToIncomeRatio={result.affordabilityAnalysis.loanToIncomeRatio}
-                affordabilityScore={result.affordabilityAnalysis.affordabilityScore}
-                approvalLikelihood={result.eligibilityResult.approvalLikelihood}
-                riskCategory={result.eligibilityResult.riskCategory}
-              />
-            </div>
+            {!isAssessmentError ? (
+              <div className={styles.resultsCard}>
+                <RecommendedLoanPanel
+                  className={styles.recommendedColumn}
+                  isEligible={result.eligibilityResult.isEligible}
+                  productLabel={
+                    products.find((item) => item.id === inputs.productId)?.name ?? 'Not available'
+                  }
+                  purposeLabel={getPurposeLabel(inputs.loanPurpose)}
+                  requestedAmount={inputs.requestedAmount}
+                  loanTermMonths={inputs.loanTerm}
+                  loanFigures={
+                    hasUsableRepayment(result.recommendedLoan.monthlyPayment)
+                      ? result.recommendedLoan
+                      : null
+                  }
+                />
+                <AffordabilityGlancePanel
+                  className={styles.affordabilityColumn}
+                  monthlyIncome={inputs.monthlyIncome}
+                  monthlyExpenses={inputs.monthlyExpenses}
+                  existingDebt={inputs.existingDebt}
+                  newRepayment={
+                    hasUsableRepayment(result.recommendedLoan.monthlyPayment)
+                      ? result.recommendedLoan.monthlyPayment
+                      : null
+                  }
+                  disposableIncome={result.affordabilityAnalysis.disposableIncome}
+                  debtToIncomeRatio={result.affordabilityAnalysis.debtToIncomeRatio}
+                  loanToIncomeRatio={result.affordabilityAnalysis.loanToIncomeRatio}
+                  affordabilityScore={result.affordabilityAnalysis.affordabilityScore}
+                  approvalLikelihood={result.eligibilityResult.approvalLikelihood}
+                  riskCategory={result.eligibilityResult.riskCategory}
+                />
+              </div>
+            ) : null}
 
             <InfoNotice>
               Eligibility is an estimate. Final approval is subject to verification.

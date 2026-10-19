@@ -9,6 +9,10 @@ describe('getRiskCategoryLabel', () => {
     expect(getRiskCategoryLabel('high')).toBe('High');
   });
 
+  it('returns Not fully assessed when category is null', () => {
+    expect(getRiskCategoryLabel(null)).toBe('Not fully assessed');
+  });
+
   it('humanizes unknown category ids', () => {
     expect(getRiskCategoryLabel('very_high')).toBe('Very High');
   });
@@ -21,7 +25,8 @@ describe('getRiskCategoryTone', () => {
     expect(getRiskCategoryTone('high')).toBe('high');
   });
 
-  it('returns unknown for undocumented categories', () => {
+  it('returns unknown for null or undocumented categories', () => {
+    expect(getRiskCategoryTone(null)).toBe('unknown');
     expect(getRiskCategoryTone('critical')).toBe('unknown');
   });
 });

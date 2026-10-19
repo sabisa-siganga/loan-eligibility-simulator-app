@@ -60,7 +60,7 @@ const buildSegments = ({
 
   segments.push({
     key: 'disposableIncome',
-    label: 'Disposable income',
+    label: 'Remaining monthly income',
     amount: toNonNegative(disposableIncome),
     toneClassName: tones.toneDisposable,
   });

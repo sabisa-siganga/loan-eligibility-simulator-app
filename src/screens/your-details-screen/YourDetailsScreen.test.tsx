@@ -40,7 +40,7 @@ const fillValidForm = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText(/^Age/), '35');
   await user.selectOptions(screen.getByLabelText(/^Employment status/), 'employed');
   await user.type(screen.getByLabelText(/^Employment duration/), '24');
-  await user.type(screen.getByLabelText(/^Monthly income/), '25000');
+  await user.type(screen.getByLabelText(/^Monthly take-home income/), '25000');
   await user.type(screen.getByLabelText(/^Monthly expenses/), '8000');
   await user.type(screen.getByLabelText(/^Existing monthly debt repayments/), '0');
 };
@@ -59,7 +59,7 @@ describe('YourDetailsScreen', () => {
     expect(screen.getByRole('radio', { name: 'Good credit' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Poor credit' })).toBeDisabled();
     expect(screen.getByRole('radio', { name: 'Good credit' })).toBeDisabled();
-    expect(screen.getByRole('radio', { name: 'Over limit' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'Score above supported range.' })).toBeDisabled();
     expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/phone|cellphone/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/repayment estimate/i)).not.toBeInTheDocument();
@@ -85,7 +85,10 @@ describe('YourDetailsScreen', () => {
     expect(screen.getByRole('button', { name: 'Back' })).toHaveFocus();
     expect(screen.getByText('Poor credit').closest('label')).toHaveAttribute('tabindex', '-1');
     expect(screen.getByText('Good credit').closest('label')).toHaveAttribute('tabindex', '-1');
-    expect(screen.getByText('Over limit').closest('label')).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByText('Score above supported range.').closest('label')).toHaveAttribute(
+      'tabindex',
+      '-1',
+    );
   });
 
   it('makes demo scenario radios tabbable after credit consent is checked', async () => {
@@ -96,7 +99,7 @@ describe('YourDetailsScreen', () => {
 
     const poorChip = screen.getByText('Poor credit').closest('label');
     const goodChip = screen.getByText('Good credit').closest('label');
-    const overLimitChip = screen.getByText('Over limit').closest('label');
+    const overLimitChip = screen.getByText('Score above supported range.').closest('label');
 
     poorChip?.focus();
     expect(poorChip).toHaveFocus();
@@ -162,7 +165,9 @@ describe('YourDetailsScreen', () => {
     expect(
       screen.getByText('Select the option that best matches your situation.'),
     ).toBeInTheDocument();
-    expect(screen.getByText(`Enter at least ${formatMoney(incomeMin)}.`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`Take-home (net) income. Enter at least ${formatMoney(incomeMin)}.`),
+    ).toBeInTheDocument();
     expect(screen.getByText('Enter your typical monthly expenses in rand.')).toBeInTheDocument();
     expect(
       screen.getByText('Optional. Enter monthly debt repayments in rand, or leave blank.'),
@@ -239,7 +244,7 @@ describe('YourDetailsScreen', () => {
     await user.type(screen.getByLabelText(/^Age/), '35');
     await user.selectOptions(screen.getByLabelText(/^Employment status/), 'employed');
     await user.type(screen.getByLabelText(/^Employment duration/), '2');
-    await user.type(screen.getByLabelText(/^Monthly income/), '25000');
+    await user.type(screen.getByLabelText(/^Monthly take-home income/), '25000');
     await user.type(screen.getByLabelText(/^Monthly expenses/), '8000');
     await user.type(screen.getByLabelText(/^Existing monthly debt repayments/), '0');
     await user.click(screen.getByRole('button', { name: /Check eligibility/i }));
@@ -289,8 +294,9 @@ describe('YourDetailsScreen', () => {
         return HttpResponse.json({
           eligibilityResult: {
             isEligible: true,
-            approvalLikelihood: 80,
+            approvalLikelihood: null,
             riskCategory: 'low',
+            riskAssessmentStatus: 'assessed',
             decisionReason: 'ok',
           },
           recommendedLoan: {
@@ -315,7 +321,7 @@ describe('YourDetailsScreen', () => {
     await user.type(screen.getByLabelText(/^Age/), '35');
     await user.selectOptions(screen.getByLabelText(/^Employment status/), 'employed');
     await user.type(screen.getByLabelText(/^Employment duration/), '24');
-    await user.type(screen.getByLabelText(/^Monthly income/), '25000');
+    await user.type(screen.getByLabelText(/^Monthly take-home income/), '25000');
     await user.type(screen.getByLabelText(/^Monthly expenses/), '8000');
     await user.click(screen.getByRole('button', { name: /Check eligibility/i }));
 
@@ -335,7 +341,7 @@ describe('YourDetailsScreen', () => {
         creditCheckCalls += 1;
         const body = (await request.json()) as { state?: string };
         requestedState = body.state ?? null;
-        return HttpResponse.json({ creditScore: 720 });
+        return HttpResponse.json({ creditScore: 780 });
       }),
     );
 
@@ -350,7 +356,61 @@ describe('YourDetailsScreen', () => {
     });
     expect(creditCheckCalls).toBe(1);
     expect(requestedState).toBe('good');
-    expect(store.getState().journey.creditCheckScore).toBe(720);
+    expect(store.getState().journey.creditCheckScore).toBe(780);
+  });
+
+  it('continues to eligibility with creditCheckFailed when the credit check fails', async () => {
+    const user = userEvent.setup();
+    type CapturedEligibilityBody = {
+      financialInfo?: { creditScore?: number; creditCheckFailed?: boolean };
+    };
+    const captured: { body: CapturedEligibilityBody | null } = { body: null };
+    server.use(
+      http.post('*/api/loans/credit-check', () =>
+        HttpResponse.json({ message: 'Credit bureau unavailable' }, { status: 503 }),
+      ),
+      http.post('*/api/loans/eligibility', async ({ request }) => {
+        captured.body = (await request.json()) as CapturedEligibilityBody;
+        return HttpResponse.json({
+          eligibilityResult: {
+            isEligible: true,
+            approvalLikelihood: null,
+            riskCategory: null,
+            riskAssessmentStatus: 'credit_check_failed',
+            decisionReason:
+              'You meet the initial eligibility criteria. Overall risk has not been fully assessed because the credit check failed.',
+          },
+          recommendedLoan: {
+            maxAmount: 150000,
+            recommendedAmount: 150000,
+            interestRate: 12.5,
+            monthlyPayment: 5000,
+            totalRepayment: 120000,
+          },
+          affordabilityAnalysis: {
+            disposableIncome: 10000,
+            debtToIncomeRatio: 20,
+            loanToIncomeRatio: 60,
+            affordabilityScore: 'good',
+          },
+        });
+      }),
+    );
+
+    const { store } = renderScreen();
+
+    await fillValidForm(user);
+    await user.click(screen.getByLabelText('I consent to a credit bureau check'));
+    await user.click(screen.getByRole('button', { name: /Check eligibility/i }));
+
+    await waitFor(() => {
+      expect(store.getState().journey.currentScreen).toBe('yourResult');
+    });
+    expect(captured.body?.financialInfo?.creditCheckFailed).toBe(true);
+    expect(captured.body?.financialInfo?.creditScore).toBeUndefined();
+    expect(store.getState().journey.eligibilityResult?.eligibilityResult.riskAssessmentStatus).toBe(
+      'credit_check_failed',
+    );
   });
 
   it('sends the selected poor-credit scenario to the credit check endpoint', async () => {
@@ -416,8 +476,9 @@ describe('YourDetailsScreen', () => {
       eligibilityResult: {
         eligibilityResult: {
           isEligible: true,
-          approvalLikelihood: 80,
+          approvalLikelihood: null,
           riskCategory: 'low',
+          riskAssessmentStatus: 'assessed',
           decisionReason: 'ok',
         },
         recommendedLoan: {
@@ -467,7 +528,7 @@ describe('YourDetailsScreen', () => {
         creditCheckCalls += 1;
         const body = (await request.json()) as { state?: string };
         requestedStates = [...requestedStates, body.state ?? 'missing'];
-        const score = body.state === 'bad' ? 520 : 720;
+        const score = body.state === 'bad' ? 520 : 780;
         return HttpResponse.json({ creditScore: score });
       }),
     );
@@ -476,7 +537,7 @@ describe('YourDetailsScreen', () => {
       ...loanReadyJourney,
       creditCheckOptIn: true,
       creditCheckState: 'good',
-      creditCheckScore: 720,
+      creditCheckScore: 780,
       personalDetails: {
         age: 35,
         employmentStatus: 'employed',
@@ -490,8 +551,9 @@ describe('YourDetailsScreen', () => {
       eligibilityResult: {
         eligibilityResult: {
           isEligible: true,
-          approvalLikelihood: 80,
+          approvalLikelihood: null,
           riskCategory: 'low',
+          riskAssessmentStatus: 'assessed',
           decisionReason: 'ok',
         },
         recommendedLoan: {
@@ -515,7 +577,7 @@ describe('YourDetailsScreen', () => {
         monthlyIncome: 25000,
         monthlyExpenses: 8000,
         existingDebt: 0,
-        creditScore: 720,
+        creditScore: 780,
         requestedAmount: 150000,
         loanTerm: 24,
         loanPurpose: 'home_improvement',
@@ -592,11 +654,11 @@ describe('YourDetailsScreen', () => {
     expect(screen.getByLabelText(/^Age/)).toHaveValue('42');
     expect(screen.getByLabelText(/^Employment status/)).toHaveValue('self_employed');
     expect(screen.getByLabelText(/^Employment duration/)).toHaveValue('36');
-    expect(screen.getByLabelText(/^Monthly income/)).toHaveValue('30 000.00');
+    expect(screen.getByLabelText(/^Monthly take-home income/)).toHaveValue('30 000.00');
     expect(screen.getByLabelText(/^Monthly expenses/)).toHaveValue('9 000.00');
     expect(screen.getByLabelText(/^Existing monthly debt repayments/)).toHaveValue('1 500.00');
     expect(screen.getByLabelText('I consent to a credit bureau check')).toBeChecked();
-    expect(screen.getByRole('radio', { name: 'Over limit' })).toBeChecked();
-    expect(screen.getByRole('radio', { name: 'Over limit' })).toBeEnabled();
+    expect(screen.getByRole('radio', { name: 'Score above supported range.' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Score above supported range.' })).toBeEnabled();
   });
 });

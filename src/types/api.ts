@@ -79,6 +79,11 @@ export type CalculateRateResponse = {
   paymentSchedule: PaymentScheduleEntry[];
 };
 
+export type RiskCategory = 'low' | 'medium' | 'high';
+
+export type RiskAssessmentStatus =
+  'assessed' | 'missing_credit_data' | 'credit_check_failed' | 'invalid_credit_response';
+
 export type EligibilityRequest = {
   readonly personalInfo: {
     readonly age: number;
@@ -90,6 +95,8 @@ export type EligibilityRequest = {
     readonly monthlyExpenses: number;
     readonly existingDebt: number;
     readonly creditScore?: number;
+    /** True when the applicant opted in and the bureau check failed. */
+    readonly creditCheckFailed?: boolean;
   };
   readonly loanDetails: {
     readonly requestedAmount: number;
@@ -101,8 +108,15 @@ export type EligibilityRequest = {
 export type EligibilityResponse = {
   readonly eligibilityResult: {
     readonly isEligible: boolean;
-    readonly approvalLikelihood: number;
-    readonly riskCategory: string;
+    /**
+     * Simulated approval estimate (credit-score-only mock rule) when assessed
+     * and eligible: below 650 → 55, 650–749 → 70, 750+ → 95. Null when missing,
+     * failed, invalid, or mandatory eligibility checks fail.
+     */
+    readonly approvalLikelihood: number | null;
+    /** Null when overall risk cannot be assessed (missing/failed/invalid credit). */
+    readonly riskCategory: RiskCategory | null;
+    readonly riskAssessmentStatus: RiskAssessmentStatus;
     readonly decisionReason: string;
   };
   readonly recommendedLoan: {
@@ -113,9 +127,11 @@ export type EligibilityResponse = {
     readonly totalRepayment: number;
   };
   readonly affordabilityAnalysis: {
+    /** Remaining monthly income after the proposed repayment. */
     readonly disposableIncome: number;
     readonly debtToIncomeRatio: number;
-    readonly loanToIncomeRatio: number;
+    /** Requested loan ÷ annual take-home income × 100; null when uncalculable. */
+    readonly loanToIncomeRatio: number | null;
     readonly affordabilityScore: string;
   };
 };

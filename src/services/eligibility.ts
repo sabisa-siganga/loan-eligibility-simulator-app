@@ -1,9 +1,28 @@
-import type { EligibilityRequest, EligibilityResponse } from '../types/api';
+import type {
+  EligibilityRequest,
+  EligibilityResponse,
+  RiskAssessmentStatus,
+  RiskCategory,
+} from '../types/api';
 import { loansApiPath } from './apiBase';
 import { isAbortError, readJsonBody } from './httpResult';
 
+const RISK_CATEGORIES: readonly RiskCategory[] = ['low', 'medium', 'high'];
+const RISK_ASSESSMENT_STATUSES: readonly RiskAssessmentStatus[] = [
+  'assessed',
+  'missing_credit_data',
+  'credit_check_failed',
+  'invalid_credit_response',
+];
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
+
+const isRiskCategory = (value: unknown): value is RiskCategory =>
+  typeof value === 'string' && (RISK_CATEGORIES as readonly string[]).includes(value);
+
+const isRiskAssessmentStatus = (value: unknown): value is RiskAssessmentStatus =>
+  typeof value === 'string' && (RISK_ASSESSMENT_STATUSES as readonly string[]).includes(value);
 
 const isEligibilityResponse = (value: unknown): value is EligibilityResponse => {
   if (!isRecord(value)) {
@@ -22,10 +41,13 @@ const isEligibilityResponse = (value: unknown): value is EligibilityResponse => 
     return false;
   }
 
+  const { approvalLikelihood, riskCategory } = eligibilityResult;
+
   return (
     typeof eligibilityResult.isEligible === 'boolean' &&
-    typeof eligibilityResult.approvalLikelihood === 'number' &&
-    typeof eligibilityResult.riskCategory === 'string' &&
+    (approvalLikelihood === null || typeof approvalLikelihood === 'number') &&
+    (riskCategory === null || isRiskCategory(riskCategory)) &&
+    isRiskAssessmentStatus(eligibilityResult.riskAssessmentStatus) &&
     typeof eligibilityResult.decisionReason === 'string' &&
     typeof recommendedLoan.maxAmount === 'number' &&
     typeof recommendedLoan.recommendedAmount === 'number' &&
@@ -34,7 +56,8 @@ const isEligibilityResponse = (value: unknown): value is EligibilityResponse => 
     typeof recommendedLoan.totalRepayment === 'number' &&
     typeof affordabilityAnalysis.disposableIncome === 'number' &&
     typeof affordabilityAnalysis.debtToIncomeRatio === 'number' &&
-    typeof affordabilityAnalysis.loanToIncomeRatio === 'number' &&
+    (affordabilityAnalysis.loanToIncomeRatio === null ||
+      typeof affordabilityAnalysis.loanToIncomeRatio === 'number') &&
     typeof affordabilityAnalysis.affordabilityScore === 'string'
   );
 };

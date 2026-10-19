@@ -28,6 +28,8 @@ const isEligibilityRequest = (value: unknown): value is Parameters<typeof scoreE
     typeof financial.monthlyExpenses === 'number' &&
     typeof financial.existingDebt === 'number' &&
     (financial.creditScore === undefined || typeof financial.creditScore === 'number') &&
+    (financial.creditCheckFailed === undefined ||
+      typeof financial.creditCheckFailed === 'boolean') &&
     typeof loan.requestedAmount === 'number' &&
     typeof loan.loanTerm === 'number' &&
     typeof loan.loanPurpose === 'string'

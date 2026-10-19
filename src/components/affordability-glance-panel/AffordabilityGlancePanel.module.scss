@@ -77,6 +77,13 @@
   }
 }
 
+.approvalHelper {
+  margin: $space-3 0 0;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  line-height: 1.45;
+}
+
 .riskBlock {
   display: flex;
   flex-direction: column;

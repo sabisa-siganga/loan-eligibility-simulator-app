@@ -71,3 +71,10 @@
   border-top: 1px solid rgba($color-input-border, 0.35);
   padding-top: $space-4;
 }
+
+.maxAmountNote {
+  margin: $space-3 0 0;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  line-height: $line-height-base;
+}

@@ -21,22 +21,29 @@ describe('RecommendedLoanPanel', () => {
         purposeLabel="Home improvement"
         requestedAmount={150000}
         loanTermMonths={24}
-        offer={offer}
+        loanFigures={offer}
       />,
     );
 
     expect(screen.getByRole('heading', { name: 'Recommended loan' })).toBeInTheDocument();
-    expect(screen.getByText('Estimated monthly repayment')).toBeInTheDocument();
+    expect(
+      screen.getByText('Estimated repayment for your requested loan.'),
+    ).toBeInTheDocument();
     expect(screen.getByText(formatMoneyExact(7089.5))).toBeInTheDocument();
     expect(screen.getByText('/ month')).toBeInTheDocument();
     expect(screen.getByText('Personal Loan')).toBeInTheDocument();
     expect(screen.getByText('Home improvement')).toBeInTheDocument();
     expect(screen.getByText('Recommended amount')).toBeInTheDocument();
-    expect(screen.getByText('Maximum affordable amount')).toBeInTheDocument();
+    expect(screen.getByText('Maximum amount based on your budget')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /This budget maximum may leave little or no remaining monthly income/i,
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText('12.5%')).toBeInTheDocument();
   });
 
-  it('shows a clear message instead of a zero offer when ineligible', () => {
+  it('shows the requested-loan repayment estimate without a recommended offer when ineligible', () => {
     render(
       <RecommendedLoanPanel
         isEligible={false}
@@ -44,16 +51,43 @@ describe('RecommendedLoanPanel', () => {
         purposeLabel="Home improvement"
         requestedAmount={150000}
         loanTermMonths={24}
-        offer={null}
+        loanFigures={{
+          ...offer,
+          recommendedAmount: 0,
+          maxAmount: 0,
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText('Estimated repayment for your requested loan.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText(formatMoneyExact(7089.5))).toBeInTheDocument();
+    expect(
+      screen.getByText('No loan can be recommended based on this result.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Recommended amount')).not.toBeInTheDocument();
+    expect(screen.getByText('Product')).toBeInTheDocument();
+    expect(screen.getByText('Term')).toBeInTheDocument();
+  });
+
+  it('shows a clear message when no loan figures are available', () => {
+    render(
+      <RecommendedLoanPanel
+        isEligible={false}
+        productLabel="Personal Loan"
+        purposeLabel="Home improvement"
+        requestedAmount={150000}
+        loanTermMonths={24}
+        loanFigures={null}
       />,
     );
 
     expect(
       screen.getByText('No loan can be recommended based on this result.'),
     ).toBeInTheDocument();
-    expect(screen.queryByText('Estimated monthly repayment')).not.toBeInTheDocument();
-    expect(screen.queryByText('Recommended amount')).not.toBeInTheDocument();
-    expect(screen.getByText('Product')).toBeInTheDocument();
-    expect(screen.getByText('Term')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Estimated repayment for your requested loan.'),
+    ).not.toBeInTheDocument();
   });
 });

@@ -20,9 +20,11 @@ const readyCatalog = {
 const endpointExampleResult: EligibilityResponse = {
   eligibilityResult: {
     isEligible: true,
-    approvalLikelihood: 85,
+    approvalLikelihood: 95,
     riskCategory: 'low',
-    decisionReason: 'Strong income-to-expense ratio and manageable existing debt',
+    riskAssessmentStatus: 'assessed',
+    decisionReason:
+      'Your credit profile and available monthly income support the proposed repayment.',
   },
   recommendedLoan: {
     maxAmount: 180000,
@@ -46,7 +48,7 @@ const matchingInputs = {
   monthlyIncome: 25000,
   monthlyExpenses: 15000,
   existingDebt: 5000,
-  creditScore: 650,
+  creditScore: 780,
   requestedAmount: 150000,
   loanTerm: 24,
   loanPurpose: 'home_improvement',
@@ -60,7 +62,7 @@ const resultReadyJourney: JourneyState = {
   selectedPurpose: 'home_improvement',
   loanAmount: 150000,
   loanTerm: 24,
-  manualCreditScore: 650,
+  manualCreditScore: 780,
   personalDetails: {
     age: 35,
     employmentStatus: 'employed',
@@ -90,10 +92,12 @@ describe('YourResultScreen', () => {
     expect(screen.getByRole('heading', { name: 'Your eligibility result' })).toBeInTheDocument();
     expect(screen.getByText('Review your outcome and recommended loan.')).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: 'You meet the eligibility criteria' }),
+      screen.getByRole('heading', { name: 'You meet the initial eligibility criteria' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Strong income-to-expense ratio and manageable existing debt'),
+      screen.getByText(
+        'Your credit profile and available monthly income support the proposed repayment.',
+      ),
     ).toBeInTheDocument();
 
     expect(screen.getAllByText(formatMoneyExact(7089.5)).length).toBeGreaterThanOrEqual(2);
@@ -106,46 +110,54 @@ describe('YourResultScreen', () => {
     expect(screen.getByText('12.5%')).toBeInTheDocument();
     expect(screen.getByText(formatMoneyExact(170148))).toBeInTheDocument();
 
-    expect(screen.getByText('Monthly income')).toBeInTheDocument();
+    expect(screen.getByText('Monthly take-home income')).toBeInTheDocument();
     expect(screen.getByText(formatMoneyExact(25000))).toBeInTheDocument();
     expect(screen.getByText('Existing monthly debt repayments')).toBeInTheDocument();
-    expect(screen.getByText('Disposable income')).toBeInTheDocument();
+    expect(screen.getByText('Remaining monthly income')).toBeInTheDocument();
     expect(screen.getByText(formatMoneyExact(10000))).toBeInTheDocument();
     expect(
       screen.getByRole('img', {
-        name: `Budget composition: Monthly expenses ${formatMoneyExact(15000)}, Existing monthly debt repayments ${formatMoneyExact(5000)}, New repayment ${formatMoneyExact(7089.5)}, Disposable income ${formatMoneyExact(10000)}`,
+        name: `Budget composition: Monthly expenses ${formatMoneyExact(15000)}, Existing monthly debt repayments ${formatMoneyExact(5000)}, New repayment ${formatMoneyExact(7089.5)}, Remaining monthly income ${formatMoneyExact(10000)}`,
       }),
     ).toBeInTheDocument();
 
     expect(screen.getByRole('img', { name: 'Debt-to-income ratio: 20%' })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Loan-to-annual-income: 60%' })).toBeInTheDocument();
-    expect(screen.getByText('Maximum affordable amount')).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: 'Requested loan-to-annual-income ratio: 60%' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Maximum amount based on your budget')).toBeInTheDocument();
     expect(screen.getByRole('status', { name: 'Affordability rating: Good' })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Approval likelihood: 85%' })).toBeInTheDocument();
-    expect(screen.getByText('Risk category')).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: 'Simulated approval estimate: 95%' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/This estimate uses mock rules for this simulator/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Overall risk')).toBeInTheDocument();
     expect(screen.getByText('Low')).toBeInTheDocument();
     expect(
       screen.getByText('Eligibility is an estimate. Final approval is subject to verification.'),
     ).toBeInTheDocument();
   });
 
-  it('renders an ineligible outcome without presenting zero recommendation as an offer', () => {
+  it('renders an ineligible outcome and keeps the requested-loan repayment estimate', () => {
     renderScreen({
       ...resultReadyJourney,
       eligibilityResult: {
         ...endpointExampleResult,
         eligibilityResult: {
           isEligible: false,
-          approvalLikelihood: 35,
+          approvalLikelihood: null,
           riskCategory: 'high',
+          riskAssessmentStatus: 'assessed',
           decisionReason: 'Disposable income is insufficient after estimated repayments',
         },
         recommendedLoan: {
           maxAmount: 0,
           recommendedAmount: 0,
           interestRate: 12.5,
-          monthlyPayment: 0,
-          totalRepayment: 0,
+          monthlyPayment: 7089.5,
+          totalRepayment: 170148,
         },
       },
     });
@@ -159,9 +171,75 @@ describe('YourResultScreen', () => {
     expect(
       screen.getByText('No loan can be recommended based on this result.'),
     ).toBeInTheDocument();
-    expect(screen.queryByText('Estimated monthly repayment')).not.toBeInTheDocument();
-    expect(screen.queryByText(formatMoneyExact(0))).not.toBeInTheDocument();
+    expect(screen.getByText('Estimated repayment for your requested loan.')).toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: 'Simulated approval estimate: Not available' }),
+    ).toBeInTheDocument();
     expect(screen.getByText('High')).toBeInTheDocument();
+  });
+
+  it('shows an assessment error without completed eligibility panels for invalid credit', () => {
+    renderScreen({
+      ...resultReadyJourney,
+      eligibilityResult: {
+        ...endpointExampleResult,
+        eligibilityResult: {
+          isEligible: false,
+          approvalLikelihood: null,
+          riskCategory: null,
+          riskAssessmentStatus: 'invalid_credit_response',
+          decisionReason:
+            'Credit score must be between 300 and 850. Change the credit scenario or try again to complete your assessment.',
+        },
+        recommendedLoan: {
+          maxAmount: 0,
+          recommendedAmount: 0,
+          interestRate: 12.5,
+          monthlyPayment: 0,
+          totalRepayment: 0,
+        },
+        affordabilityAnalysis: {
+          disposableIncome: 0,
+          debtToIncomeRatio: 0,
+          loanToIncomeRatio: null,
+          affordabilityScore: 'poor',
+        },
+      },
+    });
+
+    expect(
+      screen.getByRole('heading', { name: 'We could not complete your assessment' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Change the credit scenario or try again/i)).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Recommended loan' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Affordability at a glance' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'You do not meet the eligibility criteria' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows incomplete overall risk wording for missing credit without a misleading approval estimate', () => {
+    renderScreen({
+      ...resultReadyJourney,
+      eligibilityResult: {
+        ...endpointExampleResult,
+        eligibilityResult: {
+          isEligible: true,
+          approvalLikelihood: null,
+          riskCategory: null,
+          riskAssessmentStatus: 'missing_credit_data',
+          decisionReason:
+            'You meet the initial eligibility criteria. Overall risk has not been fully assessed because credit information is unavailable.',
+        },
+      },
+    });
+
+    expect(screen.getByText('Not fully assessed')).toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: 'Simulated approval estimate: Not available' }),
+    ).toBeInTheDocument();
   });
 
   it('shows a clear action when no eligibility result exists', async () => {
@@ -189,7 +267,7 @@ describe('YourResultScreen', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('heading', { name: 'You meet the eligibility criteria' }),
+      screen.queryByRole('heading', { name: 'You meet the initial eligibility criteria' }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'No eligibility result yet' }),
@@ -221,7 +299,28 @@ describe('YourResultScreen', () => {
     });
 
     expect(screen.getByRole('img', { name: 'Debt-to-income ratio: 120%' })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Loan-to-annual-income: 105%' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: 'Requested loan-to-annual-income ratio: 105%' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows Not available when loan-to-income ratio is null', () => {
+    renderScreen({
+      ...resultReadyJourney,
+      eligibilityResult: {
+        ...endpointExampleResult,
+        affordabilityAnalysis: {
+          ...endpointExampleResult.affordabilityAnalysis,
+          loanToIncomeRatio: null,
+        },
+      },
+    });
+
+    expect(
+      screen.getByRole('status', {
+        name: 'Requested loan-to-annual-income ratio: Not available',
+      }),
+    ).toBeInTheDocument();
   });
 
   it('returns to your details on Back without clearing the current result', async () => {

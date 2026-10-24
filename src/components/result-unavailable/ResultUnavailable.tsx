@@ -6,7 +6,7 @@ import styles from './ResultUnavailable.module.scss';
 /** Why the result screen cannot show an eligibility outcome. */
 export type ResultUnavailableKind = 'none' | 'outdated';
 
-/** Properties for the empty / outdated result state. */
+/** Props for the empty / outdated result state. */
 export type ResultUnavailableProps = {
   readonly kind: ResultUnavailableKind;
   readonly onReturn: () => void;
@@ -37,7 +37,7 @@ const content: Record<
 };
 
 /**
- * Empty or outdated result state with a call to action back into the journey.
+ * Empty or outdated result state with a Call To A back into the journey.
  */
 export const ResultUnavailable = ({ kind, onReturn }: ResultUnavailableProps) => {
   const { Icon, title, body, action } = content[kind];

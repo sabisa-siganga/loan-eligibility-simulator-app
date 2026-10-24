@@ -1,8 +1,14 @@
+/**
+ * Minimum/maximum interest rate band advertised for a loan product.
+ */
 export type InterestRateRange = {
   min: number;
   max: number;
 };
 
+/**
+ * Catalog entry for a loan product returned by GET /loans/products.
+ */
 export type LoanProduct = {
   id: string;
   name: string;
@@ -15,10 +21,16 @@ export type LoanProduct = {
   purposes: string[];
 };
 
+/**
+ * Response body for the products catalog endpoint.
+ */
 export type ProductsResponse = {
   products: LoanProduct[];
 };
 
+/**
+ * Optional bounds and messaging for a single form field from validation-rules.
+ */
 export type FieldRule = {
   min?: number;
   max?: number;
@@ -27,11 +39,20 @@ export type FieldRule = {
   errorMessage?: string;
 };
 
+/**
+ * Amount and term field rules for one product under loanDetails.
+ */
 export type LoanProductValidationRules = {
   requestedAmount: FieldRule;
   loanTerm: FieldRule;
 };
 
+/**
+ * Response body for GET /loans/validation-rules.
+ *
+ * personalInfo and financialInfo drive budget/details validation;
+ * loanDetails is keyed by product identifier.
+ */
 export type ValidationRulesResponse = {
   personalInfo: {
     age: FieldRule;
@@ -46,16 +67,30 @@ export type ValidationRulesResponse = {
   loanDetails: Record<string, LoanProductValidationRules>;
 };
 
+/**
+ * Mock bureau path selector for the simulated credit check.
+ */
 export type CreditCheckState = 'bad' | 'good' | 'over_limit';
 
+/**
+ * Optional request body for POST /loans/credit-check.
+ */
 export type CreditCheckRequest = {
   readonly state: CreditCheckState;
 };
 
+/**
+ * Response body for a successful credit check (finite score).
+ */
 export type CreditCheckResponse = {
   readonly creditScore: number;
 };
 
+/**
+ * Request body for POST /loans/calculate-rate.
+ *
+ * creditScore is optional when the applicant continues without a score.
+ */
 export type CalculateRateRequest = {
   readonly loanAmount: number;
   readonly loanTerm: number;
@@ -63,6 +98,9 @@ export type CalculateRateRequest = {
   readonly creditScore?: number;
 };
 
+/**
+ * One month in the amortisation schedule returned with a rate quote.
+ */
 export type PaymentScheduleEntry = {
   month: number;
   payment: number;
@@ -71,6 +109,9 @@ export type PaymentScheduleEntry = {
   balance: number;
 };
 
+/**
+ * Response body for a successful calculate-rate quote.
+ */
 export type CalculateRateResponse = {
   interestRate: number;
   monthlyPayment: number;
@@ -79,11 +120,20 @@ export type CalculateRateResponse = {
   paymentSchedule: PaymentScheduleEntry[];
 };
 
+/**
+ * Overall risk band when credit data is available and assessed.
+ */
 export type RiskCategory = 'low' | 'medium' | 'high';
 
+/**
+ * Why risk was or was not fully assessed on an eligibility response.
+ */
 export type RiskAssessmentStatus =
   'assessed' | 'missing_credit_data' | 'credit_check_failed' | 'invalid_credit_response';
 
+/**
+ * Request body for POST /loans/eligibility.
+ */
 export type EligibilityRequest = {
   readonly personalInfo: {
     readonly age: number;
@@ -105,6 +155,9 @@ export type EligibilityRequest = {
   };
 };
 
+/**
+ * Response body for a successful eligibility check.
+ */
 export type EligibilityResponse = {
   readonly eligibilityResult: {
     readonly isEligible: boolean;

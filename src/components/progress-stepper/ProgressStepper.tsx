@@ -1,5 +1,6 @@
 import styles from './ProgressStepper.module.scss';
 
+/** One step in the journey progress nav. */
 export type ProgressStep = {
   readonly id: string;
   readonly label: string;
@@ -7,6 +8,7 @@ export type ProgressStep = {
   readonly compactLabel?: string;
 };
 
+/** Properties for the horizontal journey progress stepper. */
 export type ProgressStepperProps = {
   readonly steps: readonly ProgressStep[];
   readonly currentStepId: string;
@@ -14,6 +16,9 @@ export type ProgressStepperProps = {
   readonly onStepClick?: (stepId: string) => void;
 };
 
+/**
+ * Accessible progress nav: current, completed (optionally clickable), and upcoming steps.
+ */
 export const ProgressStepper = ({
   steps,
   currentStepId,
@@ -26,6 +31,7 @@ export const ProgressStepper = ({
     <nav className={styles.nav} aria-label="Application progress">
       <ol className={styles.list}>
         {steps.map((step, index) => {
+          /** Per-step status and whether completed steps can be reopened. */
           const isCurrent = step.id === currentStepId;
           const isCompleted = completedStepIds.includes(step.id) && !isCurrent;
           const isUpcoming = index > currentIndex && !isCompleted;
@@ -62,7 +68,9 @@ export const ProgressStepper = ({
               className={[styles.item, statusClass].join(' ')}
               aria-current={isCurrent ? 'step' : undefined}
             >
+              {/* Connector line before every step after the first */}
               {index > 0 ? <span className={styles.connector} aria-hidden="true" /> : null}
+              {/* Completed steps are buttons; others are static */}
               {isClickable ? (
                 <button
                   type="button"

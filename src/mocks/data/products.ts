@@ -1,6 +1,13 @@
 import type { LoanProduct } from '../../types/api';
 
+/**
+ * Static mock loan catalog returned by the products Mock Service Worker handler.
+ * Amount/term bounds and purpose lists drive validation rules and eligibility.
+ */
 export const MOCK_PRODUCTS: readonly LoanProduct[] = [
+  /**
+   * Personal loan: mid-range amounts, shorter maximum term, broad purpose list.
+   */
   {
     id: 'personal_loan',
     name: 'Personal Loan',
@@ -15,6 +22,9 @@ export const MOCK_PRODUCTS: readonly LoanProduct[] = [
     },
     purposes: ['debt_consolidation', 'home_improvement', 'education', 'medical', 'other'],
   },
+  /**
+   * Vehicle finance: higher amounts, longer terms, vehicle-only purposes.
+   */
   {
     id: 'vehicle_loan',
     name: 'Vehicle Finance',

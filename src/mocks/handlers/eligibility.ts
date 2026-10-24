@@ -3,10 +3,14 @@ import { http, HttpResponse } from 'msw';
 import { MOCK_ELIGIBILITY_FAIL_STORAGE_KEY } from '../constants';
 import { scoreEligibility } from '../logic/scoreEligibility';
 
+/** True when value is a non-null object (request body guard). */
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
-/** Narrow untrusted JSON to the shape `scoreEligibility` expects. */
+/**
+ * Narrow untrusted request body to the shape `scoreEligibility` expects.
+ * Rejects missing nested objects or wrong field types.
+ */
 const isEligibilityRequest = (value: unknown): value is Parameters<typeof scoreEligibility>[0] => {
   if (!isRecord(value)) {
     return false;
@@ -16,6 +20,7 @@ const isEligibilityRequest = (value: unknown): value is Parameters<typeof scoreE
   const financial = value.financialInfo;
   const loan = value.loanDetails;
 
+  /** All three top-level sections must be objects. */
   if (!isRecord(personal) || !isRecord(financial) || !isRecord(loan)) {
     return false;
   }
@@ -36,9 +41,16 @@ const isEligibilityRequest = (value: unknown): value is Parameters<typeof scoreE
   );
 };
 
+/**
+ * Mock POST `/api/loans/eligibility`.
+ * Paths: forced 500 (storage flag) → request-body or schema errors → scored success.
+ */
 export const eligibilityHandlers = [
   http.post('*/api/loans/eligibility', async ({ request }) => {
-    // Test/demo hook: force a 500 without changing scoring logic.
+    /**
+     * Test/demo hook: force a 500 without changing scoring logic
+     * when sessionStorage has the fail flag set to `'1'`.
+     */
     if (
       typeof sessionStorage !== 'undefined' &&
       sessionStorage.getItem(MOCK_ELIGIBILITY_FAIL_STORAGE_KEY) === '1'
@@ -50,16 +62,19 @@ export const eligibilityHandlers = [
     }
 
     let body: unknown;
+    /** Parse the request body; malformed payload → 400. */
     try {
       body = await request.json();
     } catch {
       return HttpResponse.json({ message: 'Invalid JSON body' }, { status: 400 });
     }
 
+    /** Structural validation failed → 400. */
     if (!isEligibilityRequest(body)) {
       return HttpResponse.json({ message: 'Invalid eligibility request' }, { status: 400 });
     }
 
+    /** Success: run the mock eligibility engine and return its response. */
     return HttpResponse.json(scoreEligibility(body));
   }),
 ];

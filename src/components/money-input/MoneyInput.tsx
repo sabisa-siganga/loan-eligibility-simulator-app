@@ -12,6 +12,7 @@ import {
 import { CURRENCY_SYMBOL, formatMoneyInputDisplay } from '../../utils/formatMoney';
 import styles from './MoneyInput.module.scss';
 
+/** Properties for a currency amount field with grouped display. */
 export type MoneyInputProps = {
   readonly id?: string;
   readonly label: string;
@@ -29,6 +30,9 @@ export type MoneyInputProps = {
 /** Digits-only storage; grouping/currency are display-only (see formatMoneyInputDisplay). */
 const sanitizeMoneyInput = (raw: string): string => raw.replace(/[^\d]/g, '');
 
+/**
+ * Money field: currency prefix, digit sanitisation, and grouped display when blurred.
+ */
 export const MoneyInput = ({
   id,
   label,
@@ -42,6 +46,7 @@ export const MoneyInput = ({
   placeholder = 'Enter amount',
   name,
 }: MoneyInputProps) => {
+  /** Field identifiers and described-by targets for helper / error text. */
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const helperId = `${inputId}-helper`;
@@ -53,6 +58,7 @@ export const MoneyInput = ({
     undefined;
   const [isFocused, setIsFocused] = useState(false);
 
+  /** Keep only digits in the controlled value. */
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(sanitizeMoneyInput(event.target.value));
   };
@@ -66,7 +72,7 @@ export const MoneyInput = ({
     onBlur?.(event);
   };
 
-  // While focused show raw digits for easy editing; blur applies grouping.
+  /** While focused show raw digits for easy editing; blur applies grouping. */
   const displayValue = isFocused || value === '' ? value : formatMoneyInputDisplay(value);
 
   return (
@@ -74,6 +80,7 @@ export const MoneyInput = ({
       <Label htmlFor={inputId} required={required && !disabled}>
         {label}
       </Label>
+      {/* Currency addon and numeric input */}
       <InputGroup>
         <InputGroupAddon align="inline-start">
           <InputGroupText>{CURRENCY_SYMBOL}</InputGroupText>
@@ -94,7 +101,9 @@ export const MoneyInput = ({
           aria-describedby={describedBy}
         />
       </InputGroup>
+      {/* Helper text when there is no error */}
       {showHelper ? <HelperText id={helperId}>{helperText}</HelperText> : null}
+      {/* Validation error */}
       {showError ? <ErrorText id={errorId}>{error}</ErrorText> : null}
     </div>
   );

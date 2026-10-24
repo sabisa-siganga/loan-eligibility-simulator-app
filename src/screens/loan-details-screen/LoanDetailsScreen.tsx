@@ -26,13 +26,19 @@ import { formatMoney, formatMoneyRange } from '../../utils/formatMoney';
 import { getPurposeLabel } from '../../utils/purposeLabels';
 import styles from './LoanDetailsScreen.module.scss';
 
+/** Shared name so purpose radios across product sections form one group. */
 const PURPOSE_GROUP_NAME = 'loan-purpose';
 
 /** Focus order used after failed submit — purpose radios share one group name. */
 const FIELD_ORDER: (keyof LoanDetailsFormValues)[] = ['purpose', 'amount', 'termMonths'];
 
+/** Convert a Redux draft number to an React Hook Form string field; null becomes empty. */
 const draftNumberToText = (value: number | null): string => (value === null ? '' : String(value));
 
+/**
+ * Parse an React Hook Form string field back to a draft number.
+ * Empty/whitespace → null; non-finite → null.
+ */
 const textToDraftNumber = (value: string): number | null => {
   if (value.trim() === '') {
     return null;
@@ -43,7 +49,7 @@ const textToDraftNumber = (value: string): number | null => {
 
 /**
  * Step 1: pick product/purpose and amount/term.
- * Form strings stay local to RHF; amount/term are mirrored into Redux so the
+ * Form strings stay local to React Hook Form; amount/term are mirrored into Redux so the
  * summary panel and later steps read from the journey draft.
  */
 export const LoanDetailsScreen = () => {
@@ -54,20 +60,26 @@ export const LoanDetailsScreen = () => {
   const purposeErrorId = useId();
   const titleId = useId();
   const titleRef = useRef<HTMLHeadingElement>(null);
+  /** Set when submit fails on purpose and the accordion must expand before focus. */
   const pendingPurposeFocusRef = useRef(false);
+  /** Ensures the page title receives focus only once on mount. */
   const hasFocusedTitleRef = useRef(false);
 
+  /** Accordion open state: journey selection, else first catalog product. */
   const [expandedProductId, setExpandedProductId] = useState<string | null>(
     () => journey.selectedProductId ?? products[0]?.id ?? null,
   );
 
+  /** Product currently selected in the journey, if any. */
   const selectedProduct = useMemo(
     () => products.find((product) => product.id === journey.selectedProductId) ?? null,
     [products, journey.selectedProductId],
   );
 
-  // Schema needs a product even before a purpose is chosen — use the expanded
-  // accordion (or first catalog entry) so amount/term bounds still validate.
+  /**
+   * Schema needs a product even before a purpose is chosen — use the expanded
+   * accordion (or first catalog entry) so amount/term bounds still validate.
+   */
   const schemaProduct = useMemo(() => {
     if (selectedProduct) {
       return selectedProduct;
@@ -75,6 +87,7 @@ export const LoanDetailsScreen = () => {
     return products.find((product) => product.id === expandedProductId) ?? products[0] ?? null;
   }, [expandedProductId, products, selectedProduct]);
 
+  /** Zod schema when catalog rules and a product are both available; else null. */
   const schema = useMemo(
     () =>
       validationRules && schemaProduct
@@ -83,6 +96,7 @@ export const LoanDetailsScreen = () => {
     [schemaProduct, validationRules],
   );
 
+  /** Seed React Hook Form from the persisted journey draft (null numbers → empty strings). */
   const defaultValues = useMemo<LoanDetailsFormValues>(
     () => ({
       purpose: journey.selectedPurpose ?? '',
@@ -114,6 +128,7 @@ export const LoanDetailsScreen = () => {
 
   const watchedValues = watch();
 
+  /** If nothing is expanded or selected yet, open the first catalog product. */
   useEffect(() => {
     if (expandedProductId !== null || journey.selectedProductId !== null) {
       return;
@@ -124,8 +139,10 @@ export const LoanDetailsScreen = () => {
     }
   }, [expandedProductId, journey.selectedProductId, products]);
 
-  // Keep Redux draft in sync on every keystroke so navigation away does not
-  // lose partial amount/term values (session persistence reads journey state).
+  /**
+   * Keep Redux draft in sync on every keystroke so navigation away does not
+   * lose partial amount/term values (session persistence reads journey state).
+   */
   useEffect(() => {
     const nextAmount = textToDraftNumber(watchedValues.amount);
     const nextTerm = textToDraftNumber(watchedValues.termMonths);
@@ -144,7 +161,7 @@ export const LoanDetailsScreen = () => {
     watchedValues.termMonths,
   ]);
 
-  // After expanding a product to fix a purpose error, move focus once the radios mount.
+  /** After expanding a product to fix a purpose error, move focus once the radios mount. */
   useEffect(() => {
     if (!pendingPurposeFocusRef.current || !expandedProductId) {
       return;
@@ -157,6 +174,7 @@ export const LoanDetailsScreen = () => {
     firstPurpose?.focus();
   }, [expandedProductId, errors.purpose, isSubmitted]);
 
+  /** Move keyboard focus to the screen title once on first mount. */
   useEffect(() => {
     if (hasFocusedTitleRef.current) {
       return;
@@ -165,10 +183,12 @@ export const LoanDetailsScreen = () => {
     titleRef.current?.focus();
   }, []);
 
+  /** Catalog rules are required before the form can render. */
   if (!validationRules) {
     return null;
   }
 
+  /** Show an error only after submit or when that field has been touched. */
   const showFieldError = (field: keyof LoanDetailsFormValues): string | undefined => {
     if (!(isSubmitted || touchedFields[field])) {
       return undefined;
@@ -176,6 +196,7 @@ export const LoanDetailsScreen = () => {
     return errors[field]?.message;
   };
 
+  /** Focus the first invalid field in FIELD_ORDER (purpose → amount → term). */
   const focusFirstInvalid = (
     fieldErrors: Partial<Record<keyof LoanDetailsFormValues, unknown>>,
   ) => {
@@ -196,7 +217,10 @@ export const LoanDetailsScreen = () => {
     }
   };
 
-  // Switching product clears selection — amount/term bounds belong to one product.
+  /**
+   * Switching product clears selection — amount/term bounds belong to one product.
+   * No-op when the same accordion header is clicked again.
+   */
   const handleProductExpand = (productId: string) => {
     if (expandedProductId === productId) {
       return;
@@ -214,6 +238,10 @@ export const LoanDetailsScreen = () => {
     setExpandedProductId(productId);
   };
 
+  /**
+   * Select a purpose for a product; clear amount/term when the product changes
+   * so bounds from the previous product do not linger.
+   */
   const handlePurposeSelect = (productId: string, purposeId: string) => {
     const productChanged = journey.selectedProductId !== productId;
     setValue('purpose', purposeId, { shouldTouch: true, shouldValidate: true });
@@ -225,12 +253,16 @@ export const LoanDetailsScreen = () => {
     }
   };
 
+  /** Valid form → advance to the budget/details step. */
   const onValidSubmit = () => {
     dispatch(setCurrentScreen('yourBudget'));
   };
 
+  /**
+   * Invalid form: if purpose failed and no section is expanded, expand first
+   * (or the first product) and defer focus; otherwise focus the first invalid field.
+   */
   const onInvalidSubmit = (fieldErrors: Partial<Record<keyof LoanDetailsFormValues, unknown>>) => {
-    // Purpose radios only exist inside an expanded section — expand first, then focus.
     if (fieldErrors.purpose) {
       const nextExpanded = expandedProductId ?? products[0]?.id ?? null;
       if (nextExpanded !== null && nextExpanded !== expandedProductId) {
@@ -244,6 +276,7 @@ export const LoanDetailsScreen = () => {
 
   const handlePrimaryAction = handleSubmit(onValidSubmit, onInvalidSubmit);
 
+  /** Summary panel labels: placeholders until the user has filled each field. */
   const productLabel = selectedProduct?.name ?? 'Choose a product';
   const purposeLabel = journey.selectedPurpose
     ? getPurposeLabel(journey.selectedPurpose)
@@ -263,7 +296,9 @@ export const LoanDetailsScreen = () => {
           void handlePrimaryAction();
         }}
       >
+        {/* Main column: intro, empty-catalog notice, product accordions */}
         <div className={[styles.main, styles.formColumn].join(' ')}>
+          {/* Screen intro and required-field note */}
           <div className={styles.intro}>
             <h1 ref={titleRef} id={titleId} className={styles.title} tabIndex={-1}>
               Choose your loan
@@ -277,12 +312,14 @@ export const LoanDetailsScreen = () => {
             </p>
           </div>
 
+          {/* Shown when the catalog loaded successfully but has no products */}
           {products.length === 0 ? (
             <p className={styles.errorBanner} role="status">
               No loan products are available right now.
             </p>
           ) : null}
 
+          {/* One accordion section per product with purpose/amount/term when expanded */}
           {products.map((product) => {
             const isSelected = journey.selectedProductId === product.id;
             const isExpanded = expandedProductId === product.id;
@@ -338,11 +375,13 @@ export const LoanDetailsScreen = () => {
             );
           })}
 
+          {/* Fallback purpose error when no accordion is open to host the inline message */}
           {purposeError && !journey.selectedPurpose && expandedProductId === null ? (
             <ErrorText id={purposeErrorId}>{purposeError}</ErrorText>
           ) : null}
         </div>
 
+        {/* Sticky summary + continue call to action; disabled when the catalog is empty */}
         <div className={styles.summary}>
           <LoanSummaryPanel
             productLabel={productLabel}

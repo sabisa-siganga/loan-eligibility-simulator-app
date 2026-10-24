@@ -41,8 +41,10 @@ import {
 import { formatMoney } from '../../utils/formatMoney';
 import styles from './YourDetailsScreen.module.scss';
 
+/** Convert a Redux draft number to an React Hook Form string field; null becomes empty. */
 const draftNumberToText = (value: number | null): string => (value === null ? '' : String(value));
 
+/** Demo-only credit-check scenarios for the segmented control. */
 const CREDIT_CHECK_SCENARIO_OPTIONS: ReadonlyArray<{
   value: CreditCheckState;
   label: string;
@@ -52,6 +54,10 @@ const CREDIT_CHECK_SCENARIO_OPTIONS: ReadonlyArray<{
   { value: 'over_limit', label: 'Score above supported range.' },
 ];
 
+/**
+ * Parse an React Hook Form string field back to a draft number.
+ * Empty/whitespace → null; non-finite → null.
+ */
 const textToDraftNumber = (value: string): number | null => {
   if (value.trim() === '') {
     return null;
@@ -60,6 +66,7 @@ const textToDraftNumber = (value: string): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+/** Focus order used after failed submit. */
 const FIELD_ORDER: (keyof BudgetFormValues)[] = [
   'age',
   'employmentStatus',
@@ -72,7 +79,7 @@ const FIELD_ORDER: (keyof BudgetFormValues)[] = [
 /**
  * Step 2: personal + financial details, optional simulated credit check, then
  * eligibility. Draft fields sync to Redux continuously; submit uses store
- * snapshots so concurrent credit-scenario changes cannot race the CTA mode.
+ * snapshots so concurrent credit-scenario changes cannot race the call to action mode.
  */
 export const YourDetailsScreen = () => {
   const dispatch = useAppDispatch();
@@ -83,21 +90,25 @@ export const YourDetailsScreen = () => {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Generation + AbortController discard stale responses when the user re-submits.
+  /** Generation counter: discard responses from superseded submit attempts. */
   const requestGenerationRef = useRef(0);
+  /** Guards against overlapping submits while an in-flight request is active. */
   const isSubmittingRef = useRef(false);
+  /** Aborts the previous credit-check / eligibility request on re-submit or unmount. */
   const abortRef = useRef<AbortController | null>(null);
+  /** Ensures the first field receives focus only once on mount. */
   const hasFocusedFirstFieldRef = useRef(false);
 
+  /** Land on the first interactive control so titles stay out of the tab/focus path. */
   useEffect(() => {
     if (hasFocusedFirstFieldRef.current) {
       return;
     }
     hasFocusedFirstFieldRef.current = true;
-    // Land on the first interactive control so titles stay out of the tab/focus path.
     document.getElementById('age')?.focus();
   }, []);
 
+  /** True when product, purpose, amount, and term are all set from step 1. */
   const hasLoanContext = [
     journey.selectedProductId,
     journey.selectedPurpose,
@@ -105,11 +116,13 @@ export const YourDetailsScreen = () => {
     journey.loanTerm,
   ].every((value) => value !== null);
 
+  /** Zod budget schema when catalog rules are loaded; else null. */
   const schema = useMemo(
     () => (validationRules ? buildBudgetSchema({ rules: validationRules }) : null),
     [validationRules],
   );
 
+  /** Seed React Hook Form from the persisted personal/financial draft. */
   const defaultValues = useMemo<BudgetFormValues>(
     () => ({
       age: draftNumberToText(journey.personalDetails.age),
@@ -142,8 +155,10 @@ export const YourDetailsScreen = () => {
   const employmentStatus = watchedValues.employmentStatus;
   const showEmploymentDuration = requiresEmploymentDuration(employmentStatus);
 
-  // Hide duration for unemployed/retired and clear leftover values so they
-  // cannot fail validation or persist into the eligibility fingerprint.
+  /**
+   * Hide duration for unemployed/retired and clear leftover values so they
+   * cannot fail validation or persist into the eligibility fingerprint.
+   */
   useEffect(() => {
     if (requiresEmploymentDuration(employmentStatus)) {
       return;
@@ -155,7 +170,10 @@ export const YourDetailsScreen = () => {
     clearErrors('employmentDuration');
   }, [clearErrors, employmentStatus, setValue, watchedValues.employmentDuration]);
 
-  // Mirror form → Redux draft (same persistence pattern as the loan step).
+  /**
+   * Mirror form → Redux draft (same persistence pattern as the loan step).
+   * Non-duration statuses store employmentDuration as 0 in the draft.
+   */
   useEffect(() => {
     const status =
       watchedValues.employmentStatus.trim() === '' ? null : watchedValues.employmentStatus;
@@ -200,6 +218,7 @@ export const YourDetailsScreen = () => {
     watchedValues.monthlyIncome,
   ]);
 
+  /** Abort any in-flight request when this screen unmounts. */
   useEffect(
     () => () => {
       abortRef.current?.abort();
@@ -207,10 +226,12 @@ export const YourDetailsScreen = () => {
     [],
   );
 
+  /** Catalog rules and schema are required before the form can render. */
   if (!validationRules || !schema) {
     return null;
   }
 
+  /** Employment select options from catalog rules, with a blank placeholder first. */
   const employmentOptions = [
     { value: '', label: 'Select status' },
     ...(validationRules.personalInfo.employmentStatus.options ?? []).map((value) => ({
@@ -219,6 +240,7 @@ export const YourDetailsScreen = () => {
     })),
   ];
 
+  /** Helper copy derived from validation-rule minimums (with sensible defaults). */
   const ageMin = validationRules.personalInfo.age.min ?? 18;
   const ageMax = validationRules.personalInfo.age.max ?? 60;
   const ageHelper = `Enter an age between ${ageMin} and ${ageMax}.`;
@@ -229,6 +251,7 @@ export const YourDetailsScreen = () => {
   const incomeHelper = `Take-home (net) income. Enter at least ${formatMoney(incomeMin)}.`;
   const expensesHelper = 'Enter your typical monthly expenses in rand.';
 
+  /** Show an error only after submit or when that field has been touched. */
   const showFieldError = (field: keyof BudgetFormValues): string | undefined => {
     if (!(isSubmitted || touchedFields[field])) {
       return undefined;
@@ -236,6 +259,7 @@ export const YourDetailsScreen = () => {
     return errors[field]?.message;
   };
 
+  /** Focus the first invalid field in FIELD_ORDER by matching element identifier. */
   const focusFirstInvalid = (fieldErrors: Partial<Record<keyof BudgetFormValues, unknown>>) => {
     const firstInvalid = FIELD_ORDER.find((field) => fieldErrors[field]);
     if (!firstInvalid) {
@@ -244,9 +268,16 @@ export const YourDetailsScreen = () => {
     document.getElementById(firstInvalid)?.focus();
   };
 
+  /**
+   * Valid submit path:
+   * - Read journey/call to action mode from the store at submit time (avoids stale "View result").
+   * - If loan context is missing, show an error and stop.
+   * - If mode is "view", navigate to the result without re-calling APIs.
+   * - Otherwise abort any prior request, optionally run credit check, then eligibility.
+   * - Stale responses (generation mismatch) and aborts are ignored; only the
+   *   latest generation clears the submitting flag in finally.
+   */
   const onValidSubmit = async (values: BudgetFormParsedValues) => {
-    // Read journey at submit time so a credit-check change cannot leave a stale
-    // "View result" shortcut navigating to a cleared result.
     const stateAtSubmit = store.getState();
     const journeyAtSubmit = stateAtSubmit.journey;
     const actionModeAtSubmit = selectDetailsPrimaryActionMode(stateAtSubmit);
@@ -286,6 +317,7 @@ export const YourDetailsScreen = () => {
       let creditScore = selectEffectiveCreditScoreValue(stateAtSubmit);
       let creditCheckFailed = false;
 
+      /** Optional simulated credit check when the user opted in. */
       if (journeyAtSubmit.creditCheckOptIn) {
         const checkResult = await runCreditCheck({
           signal: controller.signal,
@@ -295,7 +327,7 @@ export const YourDetailsScreen = () => {
           return;
         }
         if (!checkResult.ok) {
-          // Continue without a score; overall risk will be not fully assessed.
+          /** Continue without a score; overall risk will be not fully assessed. */
           creditCheckFailed = true;
           creditScore = undefined;
           dispatch(setCreditCheckScore(null));
@@ -305,6 +337,7 @@ export const YourDetailsScreen = () => {
         }
       }
 
+      /** Eligibility uses latest loan draft plus parsed form values and optional score. */
       const latestJourney = store.getState().journey;
       const result = await checkEligibility(
         {
@@ -338,6 +371,7 @@ export const YourDetailsScreen = () => {
         return;
       }
 
+      /** Persist result + fingerprint inputs, then navigate to the result step. */
       const inputs: EligibilityInputs = {
         age: values.age,
         employmentStatus: values.employmentStatus,
@@ -359,6 +393,7 @@ export const YourDetailsScreen = () => {
       );
       dispatch(setCurrentScreen('yourResult'));
     } catch (error) {
+      /** Aborts and superseded generations are silent; other failures show a generic message. */
       if (isAbortError(error)) {
         return;
       }
@@ -374,6 +409,7 @@ export const YourDetailsScreen = () => {
     }
   };
 
+  /** Invalid form → focus the first field with an error. */
   const onInvalidSubmit = (fieldErrors: Partial<Record<keyof BudgetFormValues, unknown>>) => {
     focusFirstInvalid(fieldErrors);
   };
@@ -381,6 +417,7 @@ export const YourDetailsScreen = () => {
   return (
     <JourneyLayout currentStepId="yourBudget" completedStepIds={['loanDetails']}>
       <div className={styles.page}>
+        {/* Screen intro and required-field note */}
         <header className={styles.intro}>
           <h1 id="your-details-heading" className={styles.title}>
             Your details
@@ -394,6 +431,7 @@ export const YourDetailsScreen = () => {
           </p>
         </header>
 
+        {/* Block form use when step-1 loan context is incomplete */}
         {!hasLoanContext ? (
           <div className={styles.missingLoan} role="alert">
             <p>Your loan selection is missing or incomplete.</p>
@@ -414,6 +452,7 @@ export const YourDetailsScreen = () => {
           noValidate
           onSubmit={handleSubmit(onValidSubmit, onInvalidSubmit)}
         >
+          {/* Personal details: age, employment status, optional duration */}
           <FormSectionCard icon={User} title="Personal details">
             <div className={styles.fieldRow}>
               <Controller
@@ -453,6 +492,7 @@ export const YourDetailsScreen = () => {
                 )}
               />
             </div>
+            {/* Duration only when the selected status requires it */}
             {showEmploymentDuration ? (
               <div className={styles.fieldHalf}>
                 <Controller
@@ -478,6 +518,7 @@ export const YourDetailsScreen = () => {
             ) : null}
           </FormSectionCard>
 
+          {/* Monthly finances: income, expenses, optional existing debt */}
           <FormSectionCard icon={Wallet} title="Monthly finances">
             <div className={styles.fieldRow}>
               <Controller
@@ -536,6 +577,7 @@ export const YourDetailsScreen = () => {
             />
           </FormSectionCard>
 
+          {/* Optional demo credit check: opt-in clears stored score; scenarios disabled when off */}
           <div className={styles.consent}>
             <Checkbox
               label="I consent to a credit bureau check"
@@ -563,8 +605,10 @@ export const YourDetailsScreen = () => {
             />
           </div>
 
+          {/* Submit / eligibility endpoint error */}
           {submitError ? <ErrorText id="eligibility-submit-error">{submitError}</ErrorText> : null}
 
+          {/* Back + primary call to action: Check eligibility, or View result when a current result exists */}
           <div className={styles.actions}>
             <Button
               type="button"
@@ -594,6 +638,7 @@ export const YourDetailsScreen = () => {
               )}
             </Button>
           </div>
+          {/* Screen-reader live region while the eligibility request is in flight */}
           {isSubmitting ? (
             <p className={styles.srOnly} role="status" aria-live="polite">
               Checking eligibility…

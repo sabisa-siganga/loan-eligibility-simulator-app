@@ -8,7 +8,7 @@ import { MOCK_PRODUCTS } from './products';
 
 /**
  * Derives per-product amount/term bounds from the catalog so the mock
- * validation-rules endpoint stays aligned with product min/max values.
+ * validation-rules endpoint stays aligned with product minimum/maximum values.
  */
 export const createValidationRules = (
   products: readonly LoanProduct[],
@@ -33,7 +33,12 @@ export const createValidationRules = (
     ]),
   );
 
+/**
+ * Full validation-rules payload for the mock endpoint.
+ * Personal/financial bounds are fixed; loanDetails are derived from MOCK_PRODUCTS.
+ */
 export const MOCK_VALIDATION_RULES: ValidationRulesResponse = {
+  /** Age, employment status, and minimum employment duration. */
   personalInfo: {
     age: {
       min: 18,
@@ -52,6 +57,7 @@ export const MOCK_VALIDATION_RULES: ValidationRulesResponse = {
       errorMessage: 'Minimum 3 months employment required',
     },
   },
+  /** Income, expenses, and optional credit-score bounds. */
   financialInfo: {
     monthlyIncome: {
       min: 5000,
@@ -70,5 +76,6 @@ export const MOCK_VALIDATION_RULES: ValidationRulesResponse = {
       errorMessage: 'Credit score must be between 300 and 850',
     },
   },
+  /** Per-product amount/term rules keyed by product identifier. */
   loanDetails: createValidationRules(MOCK_PRODUCTS),
 };

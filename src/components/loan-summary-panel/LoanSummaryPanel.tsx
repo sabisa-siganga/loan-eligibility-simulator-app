@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Button, ErrorText } from '../ui';
 import styles from './LoanSummaryPanel.module.scss';
 
+/** Properties for the loan details summary and continue action. */
 export type LoanSummaryPanelProps = {
   readonly productLabel: string;
   readonly purposeLabel: string;
@@ -16,6 +17,9 @@ export type LoanSummaryPanelProps = {
   readonly actionType?: 'button' | 'submit';
 };
 
+/**
+ * Sticky-style summary of product, purpose, amount, and term with a continue call to action.
+ */
 export const LoanSummaryPanel = ({
   productLabel,
   purposeLabel,
@@ -33,6 +37,7 @@ export const LoanSummaryPanel = ({
       <h2 id="loan-summary-heading" className={styles.title}>
         Your loan summary
       </h2>
+      {/* Selected loan facts */}
       <dl className={styles.list}>
         <div className={styles.row}>
           <dt>Product</dt>
@@ -52,7 +57,9 @@ export const LoanSummaryPanel = ({
         </div>
       </dl>
       {notice}
+      {/* Submit / navigation error */}
       {error ? <ErrorText id="loan-summary-error">{error}</ErrorText> : null}
+      {/* Continue to next journey step */}
       <Button
         className={styles.action}
         type={actionType}

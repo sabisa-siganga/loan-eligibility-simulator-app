@@ -3,10 +3,12 @@ import { Info } from 'lucide-react';
 
 import styles from './InfoNotice.module.scss';
 
+/** Properties for a short informational notice. */
 export type InfoNoticeProps = {
   readonly children: ReactNode;
 };
 
+/** Inline note with an info icon for helper or disclaimer copy. */
 export const InfoNotice = ({ children }: InfoNoticeProps) => {
   return (
     <aside className={styles.notice} role="note">

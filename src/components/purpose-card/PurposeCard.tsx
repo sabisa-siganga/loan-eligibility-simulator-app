@@ -3,6 +3,7 @@ import { type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { getPurposeIcon, getPurposeLabel } from '../../utils/purposeLabels';
 import styles from './PurposeCard.module.scss';
 
+/** Properties for a selectable loan-purpose radio card. */
 export type PurposeCardProps = {
   readonly purposeId: string;
   readonly name: string;
@@ -12,6 +13,7 @@ export type PurposeCardProps = {
   readonly required?: boolean;
 };
 
+/** Move focus and selection to the next/previous radio in the same group. */
 const focusSiblingCard = ({
   currentInput,
   direction,
@@ -39,6 +41,9 @@ const focusSiblingCard = ({
   nextLabel?.focus();
 };
 
+/**
+ * Purpose option as a focusable card wrapping a visually hidden radio input.
+ */
 export const PurposeCard = ({
   purposeId,
   name,
@@ -51,6 +56,7 @@ export const PurposeCard = ({
   const label = getPurposeLabel(purposeId);
   const inputId = `${name}-${purposeId}`;
 
+  /** Space/Enter select; arrow keys move within the radio group. */
   const handleCardKeyDown = (event: ReactKeyboardEvent<HTMLLabelElement>) => {
     if (disabled) {
       return;
@@ -88,6 +94,7 @@ export const PurposeCard = ({
       tabIndex={disabled ? -1 : 0}
       onKeyDown={handleCardKeyDown}
     >
+      {/* Native radio for form semantics; card handles keyboard UX */}
       <input
         id={inputId}
         className={styles.input}

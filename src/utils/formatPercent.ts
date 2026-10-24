@@ -1,7 +1,10 @@
 /**
- * Formats a numeric percentage for display without unnecessary trailing zeros.
- * Examples: 20 → "20%", 12.5 → "12.5%", 85 → "85%"
- * Uses a period decimal marker for consistent presentation across locales.
+ * Format a numeric percentage for display without unnecessary trailing zeros.
+ *
+ * Examples: 20 → "20%", 12.5 → "12.5%", 85 → "85%".
+ * Rounds to at most two decimal places and uses a period decimal marker
+ * so presentation stays consistent across locales. Negative values keep
+ * a leading minus.
  */
 export const formatPercent = (value: number): string => {
   const rounded = Number(value.toFixed(2));

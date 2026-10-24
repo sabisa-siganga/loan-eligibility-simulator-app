@@ -1,5 +1,6 @@
 import styles from './ResultDetailList.module.scss';
 
+/** One label/value row in a result detail list. */
 export type ResultDetailItem = {
   readonly label: string;
   readonly value: string | null;
@@ -8,6 +9,7 @@ export type ResultDetailItem = {
   readonly swatchKey?: string;
 };
 
+/** Properties for a definition-list of result detail rows. */
 export type ResultDetailListProps = {
   readonly items: readonly ResultDetailItem[];
   readonly align?: 'start' | 'end';
@@ -15,10 +17,14 @@ export type ResultDetailListProps = {
 
 const NOT_AVAILABLE = 'Not available';
 
+/**
+ * Definition list of labelled result values, with optional colour swatches.
+ */
 export const ResultDetailList = ({ items, align = 'start' }: ResultDetailListProps) => {
   return (
     <dl className={styles.list}>
       {items.map((item) => {
+        /** Missing values use muted styling and a fallback label. */
         const isMissing = item.value === null;
         const valueClassName = [
           styles.value,
@@ -32,6 +38,7 @@ export const ResultDetailList = ({ items, align = 'start' }: ResultDetailListPro
         return (
           <div key={item.label} className={styles.row}>
             <dt className={styles.label}>
+              {/* Optional legend swatch matching a budget bar segment */}
               {item.swatchClassName ? (
                 <span
                   className={`${styles.swatch} ${item.swatchClassName}`}

@@ -8,6 +8,7 @@ import { PurposeCard } from '../purpose-card';
 import { WholeNumberInput } from '../whole-number-input';
 import styles from './LoanProductSection.module.scss';
 
+/** Properties for one expandable loan product accordion section. */
 export type LoanProductSectionProps = {
   readonly product: LoanProduct;
   readonly purposeGroupName: string;
@@ -29,6 +30,7 @@ export type LoanProductSectionProps = {
   readonly onTermBlur: () => void;
 };
 
+/** Purpose legend copy; vehicle loans use a vehicle-specific prompt. */
 const getPurposePrompt = (product: LoanProduct): string => {
   if (product.id === 'vehicle_loan') {
     return 'What type of vehicle?';
@@ -36,6 +38,9 @@ const getPurposePrompt = (product: LoanProduct): string => {
   return "What's the loan for?";
 };
 
+/**
+ * Expandable product block: header, purpose radios, and amount/term when selected.
+ */
 export const LoanProductSection = ({
   product,
   purposeGroupName,
@@ -56,6 +61,7 @@ export const LoanProductSection = ({
   onAmountBlur,
   onTermBlur,
 }: LoanProductSectionProps) => {
+  /** Stable identifiers for heading, panel, and purpose accessibility wiring. */
   const headingId = `product-${product.id}-heading`;
   const descriptionId = `product-${product.id}-description`;
   const panelId = `product-${product.id}-panel`;
@@ -66,6 +72,7 @@ export const LoanProductSection = ({
 
   return (
     <section className={styles.section} aria-labelledby={headingId}>
+      {/* Expand/collapse header and product description */}
       <div className={styles.headerBlock}>
         <button
           type="button"
@@ -102,9 +109,11 @@ export const LoanProductSection = ({
         </p>
       </div>
 
+      {/* Expanded panel: purpose and loan fields */}
       <div id={panelId} className={styles.panel} hidden={!isExpanded}>
         {isExpanded ? (
           <>
+            {/* Purpose radio group */}
             <div className={styles.purposeFieldset}>
               <p id={purposeLegendId} className={styles.purposeLegend}>
                 {getPurposePrompt(product)} <span aria-hidden="true">*</span>
@@ -130,8 +139,10 @@ export const LoanProductSection = ({
               </div>
             </div>
 
+            {/* Purpose validation message */}
             {purposeError ? <ErrorText id={purposeErrorId}>{purposeError}</ErrorText> : null}
 
+            {/* Amount and term once this product is selected */}
             {showFields ? (
               <div className={styles.fields}>
                 <MoneyInput

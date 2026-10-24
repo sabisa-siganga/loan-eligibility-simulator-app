@@ -4,11 +4,14 @@ import { useState } from 'react';
 import { Button, Dialog } from '../ui';
 import styles from './AppHeader.module.scss';
 
+/** App brand bar with a “How it works” help dialog. */
 export const AppHeader = () => {
+  /** Controls whether the help dialog is open. */
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   return (
     <header className={styles.header}>
+      {/* Brand and help trigger */}
       <div className={styles.inner}>
         <p className={styles.brand}>
           <Calculator className={styles.icon} aria-hidden="true" size={22} strokeWidth={2} />
@@ -28,6 +31,7 @@ export const AppHeader = () => {
         </Button>
       </div>
 
+      {/* Help dialog: journey overview and tips */}
       <Dialog
         open={isHelpOpen}
         title="How it works"

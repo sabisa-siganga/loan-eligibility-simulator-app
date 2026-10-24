@@ -11,6 +11,7 @@ import { formatPercent } from '../../utils/formatPercent';
 import { getRiskCategoryLabel, getRiskCategoryTone } from '../../utils/riskCategoryLabels';
 import styles from './AffordabilityGlancePanel.module.scss';
 
+/** Properties for the affordability summary shown on the result screen. */
 export type AffordabilityGlancePanelProps = {
   readonly monthlyIncome: number;
   readonly monthlyExpenses: number;
@@ -25,9 +26,11 @@ export type AffordabilityGlancePanelProps = {
   readonly className?: string;
 };
 
+/** Disclaimer copy for the simulated approval estimate. */
 const APPROVAL_ESTIMATE_HELPER =
   "This estimate uses mock rules for this simulator. It is not a lender's approval probability or a guarantee of approval. It is based on the credit score only and does not include affordability.";
 
+/** Maps risk tone keys to panel badge style classes. */
 const riskToneClassName: Record<ReturnType<typeof getRiskCategoryTone>, string> = {
   low: styles.riskToneLow,
   medium: styles.riskToneMedium,
@@ -35,6 +38,7 @@ const riskToneClassName: Record<ReturnType<typeof getRiskCategoryTone>, string> 
   unknown: styles.riskToneUnknown,
 };
 
+/** Formats a finite amount for display, or null when missing/invalid. */
 const toDisplayMoney = (amount: number | null): string | null => {
   if (amount === null || !Number.isFinite(amount)) {
     return null;
@@ -42,6 +46,9 @@ const toDisplayMoney = (amount: number | null): string | null => {
   return formatMoneyExact(amount);
 };
 
+/**
+ * Result-screen panel: income, budget bar, breakdown, affordability rings, and risk badge.
+ */
 export const AffordabilityGlancePanel = ({
   monthlyIncome,
   monthlyExpenses,
@@ -55,6 +62,7 @@ export const AffordabilityGlancePanel = ({
   riskCategory,
   className = '',
 }: AffordabilityGlancePanelProps) => {
+  /** Derived labels, tones, and formatted metric values for the panel. */
   const affordabilityLabel = getAffordabilityRatingLabel(affordabilityScore);
   const affordabilityTone = getAffordabilityRatingTone(affordabilityScore);
   const riskLabel = getRiskCategoryLabel(riskCategory);
@@ -74,10 +82,12 @@ export const AffordabilityGlancePanel = ({
       className={`${styles.panel} ${className}`.trim()}
       aria-labelledby="affordability-heading"
     >
+      {/* Section heading */}
       <h2 id="affordability-heading" className={styles.sectionTitle}>
         Affordability at a glance
       </h2>
 
+      {/* Monthly take-home income row */}
       <dl className={styles.incomeRow}>
         <dt className={styles.incomeLabel}>Monthly take-home income</dt>
         <dd className={incomeDisplay ? styles.incomeValue : styles.incomeMissing}>
@@ -85,6 +95,7 @@ export const AffordabilityGlancePanel = ({
         </dd>
       </dl>
 
+      {/* Visual budget composition bar */}
       <BudgetCompositionBar
         monthlyExpenses={monthlyExpenses}
         existingDebt={existingDebt}
@@ -92,6 +103,7 @@ export const AffordabilityGlancePanel = ({
         disposableIncome={disposableIncome}
       />
 
+      {/* Budget line-item breakdown with colour swatches */}
       <div className={styles.breakdown}>
         <ResultDetailList
           align="end"
@@ -125,6 +137,7 @@ export const AffordabilityGlancePanel = ({
         />
       </div>
 
+      {/* Affordability indicator rings and status circles */}
       <div className={styles.indicators}>
         <h3 className={styles.indicatorsHeading}>Affordability indicators</h3>
         <div className={styles.indicatorGrid}>
@@ -134,6 +147,7 @@ export const AffordabilityGlancePanel = ({
             displayValue={formatPercent(debtToIncomeRatio)}
             animationDelayMs={0}
           />
+          {/* Loan-to-income: ring when available, otherwise neutral status */}
           {ltiDisplay === null ? (
             <StatusCircle
               status="Not available"
@@ -153,6 +167,7 @@ export const AffordabilityGlancePanel = ({
             label="Affordability rating"
             tone={affordabilityTone}
           />
+          {/* Approval estimate: ring when available, otherwise neutral status */}
           {approvalDisplay === null ? (
             <StatusCircle
               status="Not available"
@@ -171,6 +186,7 @@ export const AffordabilityGlancePanel = ({
         <p className={styles.approvalHelper}>{APPROVAL_ESTIMATE_HELPER}</p>
       </div>
 
+      {/* Overall risk badge */}
       <div className={styles.riskBlock}>
         <p className={styles.riskLabel} id="overall-risk-label">
           Overall risk

@@ -1,4 +1,5 @@
 export { useAppDispatch, useAppSelector } from './hooks';
+
 export {
   catalogLoadFailed,
   catalogLoadStarted,
@@ -11,6 +12,7 @@ export {
   type CatalogState,
   type CatalogStatus,
 } from './catalogSlice';
+
 export {
   clearLoanSelection,
   clearRateQuote,
@@ -48,10 +50,12 @@ export {
   type PrimaryActionMode,
   type RateQuoteInputs,
 } from './journeySlice';
+
 export {
   clearJourneyStorage,
   JOURNEY_STORAGE_KEY,
   loadJourneyState,
   saveJourneyState,
 } from './journeyPersistence';
+
 export { createAppStore, store, type AppDispatch, type AppStore, type RootState } from './store';

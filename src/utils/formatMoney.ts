@@ -1,9 +1,13 @@
+/**
+ * Currency symbol used for all ZAR money formatting in the user interface.
+ */
 export const CURRENCY_SYMBOL = 'R';
 
 /**
- * Formats a rand amount with space thousands separators and a period decimal
- * marker so presentation stays consistent across environments (en-ZA ICU
- * variants may otherwise emit a decimal comma).
+ * Format a rand amount with space thousands separators and a period decimal.
+ *
+ * Presentation stays consistent across environments (en-ZA ICU variants may
+ * otherwise emit a decimal comma). Negative amounts keep a leading minus.
  */
 const formatRandAmount = (amount: number, fractionDigits: number): string => {
   const absolute = Math.abs(amount);
@@ -15,29 +19,48 @@ const formatRandAmount = (amount: number, fractionDigits: number): string => {
   return `${sign}${CURRENCY_SYMBOL}${groupedInteger}${decimals}`;
 };
 
+/**
+ * Format a whole-rand amount for display (no decimal places).
+ */
 export const formatMoney = (amount: number): string => formatRandAmount(amount, 0);
 
-/** ZAR with two decimal places for repayment and exact money figures. */
+/**
+ * Format ZAR with two decimal places for repayment and exact money figures.
+ */
 export const formatMoneyExact = (amount: number): string => formatRandAmount(amount, 2);
 
+/**
+ * Format a minimum–maximum money range as "R… to R…".
+ */
 export const formatMoneyRange = (min: number, max: number): string =>
   `${formatMoney(min)} to ${formatMoney(max)}`;
 
 /**
  * Display-only money input value: space-grouped integer with two decimals,
  * without the currency symbol (the input addon already shows it).
- * Empty or non-digit strings return ''.
+ *
+ * Empty or non-digit strings return ''. Non-finite numbers also return ''.
  */
 export const formatMoneyInputDisplay = (digits: string): string => {
+  /**
+   * Empty input stays empty so the field can clear cleanly.
+   */
   if (digits.trim() === '') {
     return '';
   }
 
+  /**
+   * Reject anything that is not a pure digit string (no signs, decimals, or letters).
+   */
   if (!/^\d+$/.test(digits)) {
     return '';
   }
 
   const amount = Number(digits);
+
+  /**
+   * Guard against non-finite conversion before formatting.
+   */
   if (!Number.isFinite(amount)) {
     return '';
   }

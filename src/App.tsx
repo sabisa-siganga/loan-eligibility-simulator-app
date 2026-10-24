@@ -18,11 +18,19 @@ import {
 } from './store';
 import styles from './App.module.scss';
 
+/**
+ * Root shell: load products + validation rules once, then route by journey screen.
+ * Loading and error states keep the journey layout chrome; success defaults to loan details.
+ */
 const App = () => {
   const dispatch = useAppDispatch();
   const catalog = useAppSelector(selectCatalog);
   const currentScreen = useAppSelector(selectCurrentScreen);
 
+  /**
+   * Fetch products and validation rules in parallel.
+   * Fail on either endpoint error, or when the product list is empty.
+   */
   const loadCatalog = useCallback(async () => {
     dispatch(catalogLoadStarted());
 
@@ -51,12 +59,14 @@ const App = () => {
     );
   }, [dispatch]);
 
+  /** Kick off catalog load when the store is still idle. */
   useEffect(() => {
     if (catalog.status === 'idle') {
       void loadCatalog();
     }
   }, [catalog.status, loadCatalog]);
 
+  /** Idle or in-flight: show a polite loading status inside the journey shell. */
   if (catalog.status === 'idle' || catalog.status === 'loading') {
     return (
       <JourneyLayout currentStepId="loanDetails">
@@ -67,6 +77,7 @@ const App = () => {
     );
   }
 
+  /** Load failed: show the error and a retry that re-runs loadCatalog. */
   if (catalog.status === 'error') {
     return (
       <JourneyLayout currentStepId="loanDetails">
@@ -88,6 +99,7 @@ const App = () => {
     );
   }
 
+  /** Journey routing by currentScreen; default is loan details. */
   if (currentScreen === 'yourBudget') {
     return <YourDetailsScreen />;
   }

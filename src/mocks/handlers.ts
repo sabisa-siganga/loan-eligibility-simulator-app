@@ -6,7 +6,10 @@ import { eligibilityHandlers } from './handlers/eligibility';
 import { productsHandlers } from './handlers/products';
 import { validationRulesHandlers } from './handlers/validationRules';
 
-/** Browser + node MSW handler list for the loan simulator API surface. */
+/**
+ * Browser + node Mock Service Worker handler list for the loan simulator endpoint surface.
+ * Order is products → validation → credit check → rate → eligibility.
+ */
 export const handlers: RequestHandler[] = [
   ...productsHandlers,
   ...validationRulesHandlers,

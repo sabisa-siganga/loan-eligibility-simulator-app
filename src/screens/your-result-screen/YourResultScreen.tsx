@@ -19,6 +19,7 @@ import {
 import { getPurposeLabel } from '../../utils/purposeLabels';
 import styles from './YourResultScreen.module.scss';
 
+/** True when monthlyPayment is a finite number safe to show as a repayment. */
 const hasUsableRepayment = (monthlyPayment: number): boolean => Number.isFinite(monthlyPayment);
 
 /**
@@ -31,8 +32,10 @@ export const YourResultScreen = () => {
   const products = useAppSelector(selectProducts);
   const isCurrentResult = useAppSelector(selectEligibilityMatchesCurrentInputs);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  /** Ensures the page title receives focus only once on mount. */
   const hasFocusedTitleRef = useRef(false);
 
+  /** Move keyboard focus to the screen title once on first mount. */
   useEffect(() => {
     if (hasFocusedTitleRef.current) {
       return;
@@ -41,25 +44,33 @@ export const YourResultScreen = () => {
     titleRef.current?.focus();
   }, []);
 
+  /** Navigate back to the details/budget step. */
   const goToDetails = () => {
     dispatch(setCurrentScreen('yourBudget'));
   };
 
+  /** Clear the journey and return the user to the start of the flow. */
   const startAgain = () => {
     dispatch(resetJourney());
   };
 
   const hasStoredResult = journey.eligibilityResult !== null && journey.eligibilityInputs !== null;
-  // Prefer "outdated" over "none" when a previous result exists but inputs moved.
+  /** Prefer "outdated" over "none" when a previous result exists but inputs moved. */
   const unavailableKind = hasStoredResult && !isCurrentResult ? 'outdated' : 'none';
   const showResult = hasStoredResult && isCurrentResult;
 
   const result = showResult ? journey.eligibilityResult : null;
   const inputs = showResult ? journey.eligibilityInputs : null;
 
+  /** Invalid credit response is treated as an assessment error, not a normal decision. */
   const isAssessmentError =
     result?.eligibilityResult.riskAssessmentStatus === 'invalid_credit_response';
 
+  /**
+   * Banner tone from eligibility + affordability:
+   * unsuccessful for missing result, invalid credit, or ineligible;
+   * success only for eligible + low risk + good affordability; else neutral.
+   */
   const resolveBannerTone = (): 'success' | 'neutral' | 'unsuccessful' => {
     if (!result) {
       return 'unsuccessful';
@@ -82,6 +93,7 @@ export const YourResultScreen = () => {
   return (
     <JourneyLayout currentStepId="yourResult" completedStepIds={['loanDetails', 'yourBudget']}>
       <div className={styles.page}>
+        {/* Screen intro */}
         <header className={styles.intro}>
           <h1 ref={titleRef} className={styles.title} tabIndex={-1}>
             Your eligibility result
@@ -89,6 +101,7 @@ export const YourResultScreen = () => {
           <p className={styles.description}>Review your outcome and recommended loan.</p>
         </header>
 
+        {/* Current matching result, or unavailable (none / outdated) */}
         {result && inputs ? (
           <>
             <EligibilityOutcomeBanner
@@ -98,6 +111,7 @@ export const YourResultScreen = () => {
               outcomeKind={isAssessmentError ? 'assessment_error' : 'eligibility'}
             />
 
+            {/* Loan + affordability panels hidden when credit assessment failed */}
             {!isAssessmentError ? (
               <div className={styles.resultsCard}>
                 <RecommendedLoanPanel
@@ -143,6 +157,7 @@ export const YourResultScreen = () => {
           <ResultUnavailable kind={unavailableKind} onReturn={goToDetails} />
         )}
 
+        {/* Always available: back to details, or reset the whole journey */}
         <div className={styles.actions}>
           <Button
             type="button"

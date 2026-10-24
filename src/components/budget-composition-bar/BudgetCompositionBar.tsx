@@ -2,6 +2,7 @@ import { formatMoneyExact } from '../../utils/formatMoney';
 import styles from './BudgetCompositionBar.module.scss';
 import tones from './budgetCompositionTones.module.scss';
 
+/** Properties for the stacked budget composition bar. */
 export type BudgetCompositionBarProps = {
   readonly monthlyExpenses: number;
   readonly existingDebt: number;
@@ -10,6 +11,7 @@ export type BudgetCompositionBarProps = {
   readonly className?: string;
 };
 
+/** One coloured segment in the composition bar. */
 type SegmentDefinition = {
   readonly key: string;
   readonly label: string;
@@ -17,6 +19,7 @@ type SegmentDefinition = {
   readonly toneClassName: string;
 };
 
+/** Clamps non-finite or negative amounts to zero for bar widths. */
 const toNonNegative = (amount: number): number => {
   if (!Number.isFinite(amount) || amount < 0) {
     return 0;
@@ -25,8 +28,8 @@ const toNonNegative = (amount: number): number => {
 };
 
 /**
- * Segment widths use flexGrow proportional to amount so the bar always fills
- * the track without manual percentage math (zero amounts are omitted).
+ * Builds bar segments from budget fields. Segment widths use flexGrow proportional
+ * to amount so the bar fills the track; zero amounts are omitted later.
  */
 const buildSegments = ({
   monthlyExpenses,
@@ -49,6 +52,7 @@ const buildSegments = ({
     },
   ];
 
+  /** Include new repayment only when the caller provided a value. */
   if (newRepayment !== null) {
     segments.push({
       key: 'newRepayment',
@@ -68,6 +72,10 @@ const buildSegments = ({
   return segments;
 };
 
+/**
+ * Horizontal bar of budget shares (expenses, debt, repayment, remaining income).
+ * Renders nothing when every segment amount is zero.
+ */
 export const BudgetCompositionBar = ({
   monthlyExpenses,
   existingDebt,
@@ -83,10 +91,12 @@ export const BudgetCompositionBar = ({
   });
   const total = segments.reduce((sum, segment) => sum + segment.amount, 0);
 
+  /** Hide the bar when there is nothing to show. */
   if (total === 0) {
     return null;
   }
 
+  /** Visible segments and accessible summary for the track. */
   const visibleSegments = segments.filter((segment) => segment.amount > 0);
   const ariaLabel = `Budget composition: ${visibleSegments
     .map((segment) => `${segment.label} ${formatMoneyExact(segment.amount)}`)
@@ -94,6 +104,7 @@ export const BudgetCompositionBar = ({
 
   return (
     <div className={`${styles.track} ${className}`.trim()} role="img" aria-label={ariaLabel}>
+      {/* One flex segment per positive budget share */}
       {visibleSegments.map((segment) => (
         <div
           key={segment.key}

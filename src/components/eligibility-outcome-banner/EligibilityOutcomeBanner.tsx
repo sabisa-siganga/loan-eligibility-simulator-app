@@ -2,10 +2,13 @@ import { CircleCheck, CircleX, Info } from 'lucide-react';
 
 import styles from './EligibilityOutcomeBanner.module.scss';
 
+/** Visual tone for the outcome banner. */
 export type EligibilityOutcomeBannerTone = 'success' | 'neutral' | 'unsuccessful';
 
+/** Whether the banner is a normal eligibility result or an assessment error. */
 export type EligibilityOutcomeKind = 'eligibility' | 'assessment_error';
 
+/** Properties for the eligibility / assessment outcome banner. */
 export type EligibilityOutcomeBannerProps = {
   readonly isEligible: boolean;
   readonly decisionReason: string;
@@ -18,6 +21,7 @@ export type EligibilityOutcomeBannerProps = {
   readonly outcomeKind?: EligibilityOutcomeKind;
 };
 
+/** Prefer explicit tone; otherwise success when eligible, unsuccessful when not. */
 const resolveTone = (
   isEligible: boolean,
   tone: EligibilityOutcomeBannerTone | undefined,
@@ -28,10 +32,8 @@ const resolveTone = (
   return isEligible ? 'success' : 'unsuccessful';
 };
 
-const resolveHeading = (
-  outcomeKind: EligibilityOutcomeKind,
-  isEligible: boolean,
-): string => {
+/** Heading copy for assessment errors versus eligible / not-eligible outcomes. */
+const resolveHeading = (outcomeKind: EligibilityOutcomeKind, isEligible: boolean): string => {
   if (outcomeKind === 'assessment_error') {
     return 'We could not complete your assessment';
   }
@@ -40,6 +42,9 @@ const resolveHeading = (
     : 'You do not meet the eligibility criteria';
 };
 
+/**
+ * Prominent outcome banner: icon, heading, and decision reason by tone.
+ */
 export const EligibilityOutcomeBanner = ({
   isEligible,
   decisionReason,
@@ -47,14 +52,11 @@ export const EligibilityOutcomeBanner = ({
   outcomeKind = 'eligibility',
 }: EligibilityOutcomeBannerProps) => {
   const tone = resolveTone(isEligible, toneProp);
+  /** Icon and style classes driven by resolved tone. */
   const Icon = tone === 'unsuccessful' ? CircleX : tone === 'neutral' ? Info : CircleCheck;
 
   const sectionClassName =
-    tone === 'success'
-      ? styles.success
-      : tone === 'neutral'
-        ? styles.neutral
-        : styles.unsuccessful;
+    tone === 'success' ? styles.success : tone === 'neutral' ? styles.neutral : styles.unsuccessful;
   const iconClassName =
     tone === 'success'
       ? styles.iconSuccess
@@ -75,12 +77,11 @@ export const EligibilityOutcomeBanner = ({
         : styles.headingUnsuccessful;
 
   return (
-    <section
-      className={sectionClassName}
-      aria-labelledby="eligibility-outcome-heading"
-    >
+    <section className={sectionClassName} aria-labelledby="eligibility-outcome-heading">
+      {/* Tone icon and divider */}
       <Icon className={iconClassName} size={40} strokeWidth={2.25} aria-hidden="true" />
       <span className={dividerClassName} aria-hidden="true" />
+      {/* Heading and decision reason */}
       <div className={styles.copy}>
         <h2 id="eligibility-outcome-heading" className={`${styles.heading} ${headingClassName}`}>
           {resolveHeading(outcomeKind, isEligible)}

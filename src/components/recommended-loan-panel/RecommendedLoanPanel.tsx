@@ -3,6 +3,7 @@ import { formatMoneyExact } from '../../utils/formatMoney';
 import { formatPercent } from '../../utils/formatPercent';
 import styles from './RecommendedLoanPanel.module.scss';
 
+/** Calculated loan figures used by the recommended loan panel. */
 export type RecommendedLoanValues = {
   readonly monthlyPayment: number;
   readonly recommendedAmount: number;
@@ -11,6 +12,7 @@ export type RecommendedLoanValues = {
   readonly totalRepayment: number;
 };
 
+/** Properties for the recommended loan summary on the result screen. */
 export type RecommendedLoanPanelProps = {
   readonly isEligible: boolean;
   readonly productLabel: string;
@@ -24,9 +26,11 @@ export type RecommendedLoanPanelProps = {
 
 const NOT_AVAILABLE = 'Not available';
 
+/** Formats term length for display (singular versus plural months). */
 const formatTermMonths = (months: number): string =>
   months === 1 ? '1 month' : `${months} months`;
 
+/** Formats a finite amount for display, or null when missing/invalid. */
 const toDisplayMoney = (amount: number | null | undefined): string | null => {
   if (amount === null || amount === undefined || !Number.isFinite(amount)) {
     return null;
@@ -34,6 +38,7 @@ const toDisplayMoney = (amount: number | null | undefined): string | null => {
   return formatMoneyExact(amount);
 };
 
+/** Formats a finite percent for display, or null when missing/invalid. */
 const toDisplayPercent = (value: number | null | undefined): string | null => {
   if (value === null || value === undefined || !Number.isFinite(value)) {
     return null;
@@ -41,15 +46,20 @@ const toDisplayPercent = (value: number | null | undefined): string | null => {
   return formatPercent(value);
 };
 
+/** True when figures include a usable monthly repayment. */
 const hasUsableRepayment = (figures: RecommendedLoanValues | null): boolean =>
   figures !== null && Number.isFinite(figures.monthlyPayment);
 
-const hasRecommendedOffer = (
-  isEligible: boolean,
-  figures: RecommendedLoanValues | null,
-): boolean =>
-  isEligible && figures !== null && Number.isFinite(figures.recommendedAmount) && figures.recommendedAmount > 0;
+/** True when eligible and a positive recommended amount is available. */
+const hasRecommendedOffer = (isEligible: boolean, figures: RecommendedLoanValues | null): boolean =>
+  isEligible &&
+  figures !== null &&
+  Number.isFinite(figures.recommendedAmount) &&
+  figures.recommendedAmount > 0;
 
+/**
+ * Result-screen panel: estimated repayment, offer messaging, and loan detail lists.
+ */
 export const RecommendedLoanPanel = ({
   isEligible,
   productLabel,
@@ -63,11 +73,13 @@ export const RecommendedLoanPanel = ({
   const showOffer = hasRecommendedOffer(isEligible, loanFigures);
   const monthlyDisplay = toDisplayMoney(loanFigures?.monthlyPayment);
 
+  /** Product and purpose identity rows. */
   const identityItems: ResultDetailItem[] = [
     { label: 'Product', value: productLabel || null },
     { label: 'Purpose', value: purposeLabel || null },
   ];
 
+  /** Amount, term, and optional offer / repayment rows. */
   const loanItems: ResultDetailItem[] = [
     { label: 'Requested amount', value: toDisplayMoney(requestedAmount) },
     ...(showOffer && loanFigures
@@ -97,6 +109,7 @@ export const RecommendedLoanPanel = ({
         Recommended loan
       </h2>
 
+      {/* Estimated monthly repayment for the requested loan */}
       {showRepayment ? (
         <div className={styles.repaymentBlock}>
           <p className={styles.repaymentLabel}>Estimated repayment for your requested loan.</p>
@@ -113,6 +126,7 @@ export const RecommendedLoanPanel = ({
         </div>
       ) : null}
 
+      {/* Message when no recommended offer can be shown */}
       {!showOffer ? (
         <p className={styles.noOffer}>
           {isEligible
@@ -121,9 +135,11 @@ export const RecommendedLoanPanel = ({
         </p>
       ) : null}
 
+      {/* Product / purpose */}
       <div className={styles.group}>
         <ResultDetailList items={identityItems} />
       </div>
+      {/* Loan figures and optional budget-maximum note */}
       <div className={styles.group}>
         <ResultDetailList items={loanItems} />
         {showOffer ? (

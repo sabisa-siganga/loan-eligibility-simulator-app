@@ -209,8 +209,8 @@ export const scoreEligibility = (request: EligibilityRequest): EligibilityRespon
   });
 
   const hasScore = creditScore !== undefined;
-  const scoreInBounds =
-    hasScore && creditScore >= CREDIT_SCORE_MIN && creditScore <= CREDIT_SCORE_MAX;
+  const scoreMax = CREDIT_SCORE_MAX === undefined ? Infinity : CREDIT_SCORE_MAX;
+  const scoreInBounds = hasScore && creditScore >= CREDIT_SCORE_MIN && creditScore <= scoreMax;
 
   /**
    * Out-of-bounds credit score: assessment error path (not a normal decline).

@@ -32,7 +32,13 @@ export type ProductsResponse = {
  * Optional bounds and messaging for a single form field from validation-rules.
  */
 export type FieldRule = {
+  /** Minimum value for numeric fields. */
   min?: number;
+  /** Minimum length for string fields. */
+  minLength?: number;
+  /** Maximum length for string fields. */
+  maxLength?: number;
+  /** Maximum value for numeric fields. */
   max?: number;
   required?: boolean;
   options?: string[];

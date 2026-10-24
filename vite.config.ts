@@ -28,7 +28,6 @@ export default defineConfig({
       thresholds: {
         lines: 97,
         functions: 97,
-        // Branch coverage is diluted by Zod preprocess/refine and form UI ternaries.
         branches: 93,
         statements: 97,
       },

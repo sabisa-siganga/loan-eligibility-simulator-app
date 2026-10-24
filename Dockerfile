@@ -13,7 +13,6 @@ COPY src ./src
 COPY tsconfig.json tsconfig.app.json tsconfig.node.json ./
 COPY vite.config.ts ./
 
-# Vite inlines these at build time (same names as .env.e2e / local tooling).
 ARG VITE_API_BASE_URL=/api
 ARG VITE_ENABLE_MOCK_API=true
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL

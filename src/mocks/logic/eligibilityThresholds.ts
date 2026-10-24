@@ -20,7 +20,7 @@ export const CREDIT_RISK_MEDIUM_MIN = 650;
 /** Credit-score bounds pulled from mock validation rules (fallback 300–850). */
 const creditScoreRules = MOCK_VALIDATION_RULES.financialInfo.creditScore;
 export const CREDIT_SCORE_MIN = creditScoreRules.min ?? 300;
-export const CREDIT_SCORE_MAX = creditScoreRules.max ?? 850;
+export const CREDIT_SCORE_MAX = creditScoreRules.max ?? undefined;
 
 /** Affordability comfort labels derived from debt-to-income ratio bands. */
 export type AffordabilityRating = 'good' | 'fair' | 'poor';

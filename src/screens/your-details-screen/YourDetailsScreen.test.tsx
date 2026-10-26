@@ -341,7 +341,7 @@ describe('YourDetailsScreen', () => {
         creditCheckCalls += 1;
         const body = (await request.json()) as { state?: string };
         requestedState = body.state ?? null;
-        return HttpResponse.json({ creditScore: 780 });
+        return HttpResponse.json({ creditScore: 520 });
       }),
     );
 
@@ -356,7 +356,7 @@ describe('YourDetailsScreen', () => {
     });
     expect(creditCheckCalls).toBe(1);
     expect(requestedState).toBe('good');
-    expect(store.getState().journey.creditCheckScore).toBe(780);
+    expect(store.getState().journey.creditCheckScore).toBe(520);
   });
 
   it('continues to eligibility with creditCheckFailed when the credit check fails', async () => {
@@ -420,7 +420,7 @@ describe('YourDetailsScreen', () => {
       http.post('*/api/loans/credit-check', async ({ request }) => {
         const body = (await request.json()) as { state?: string };
         requestedState = body.state ?? null;
-        return HttpResponse.json({ creditScore: 520 });
+        return HttpResponse.json({ creditScore: 300 });
       }),
     );
 
@@ -436,7 +436,7 @@ describe('YourDetailsScreen', () => {
     });
     expect(requestedState).toBe('bad');
     expect(store.getState().journey.creditCheckState).toBe('bad');
-    expect(store.getState().journey.creditCheckScore).toBe(520);
+    expect(store.getState().journey.creditCheckScore).toBe(300);
   });
 
   it('stays on the screen and shows an error when eligibility fails', async () => {
@@ -528,7 +528,7 @@ describe('YourDetailsScreen', () => {
         creditCheckCalls += 1;
         const body = (await request.json()) as { state?: string };
         requestedStates = [...requestedStates, body.state ?? 'missing'];
-        const score = body.state === 'bad' ? 520 : 780;
+        const score = body.state === 'bad' ? 300 : 520;
         return HttpResponse.json({ creditScore: score });
       }),
     );
@@ -537,7 +537,7 @@ describe('YourDetailsScreen', () => {
       ...loanReadyJourney,
       creditCheckOptIn: true,
       creditCheckState: 'good',
-      creditCheckScore: 780,
+      creditCheckScore: 520,
       personalDetails: {
         age: 35,
         employmentStatus: 'employed',
@@ -552,7 +552,7 @@ describe('YourDetailsScreen', () => {
         eligibilityResult: {
           isEligible: true,
           approvalLikelihood: null,
-          riskCategory: 'low',
+          riskCategory: 'medium',
           riskAssessmentStatus: 'assessed',
           decisionReason: 'ok',
         },
@@ -577,7 +577,7 @@ describe('YourDetailsScreen', () => {
         monthlyIncome: 25000,
         monthlyExpenses: 8000,
         existingDebt: 0,
-        creditScore: 780,
+        creditScore: 520,
         requestedAmount: 150000,
         loanTerm: 24,
         loanPurpose: 'home_improvement',
@@ -610,8 +610,8 @@ describe('YourDetailsScreen', () => {
     expect(screen.queryByText(/unable to check eligibility/i)).not.toBeInTheDocument();
     expect(creditCheckCalls).toBe(1);
     expect(requestedStates).toEqual(['bad']);
-    expect(store.getState().journey.creditCheckScore).toBe(520);
-    expect(store.getState().journey.eligibilityInputs?.creditScore).toBe(520);
+    expect(store.getState().journey.creditCheckScore).toBe(300);
+    expect(store.getState().journey.eligibilityInputs?.creditScore).toBe(300);
   });
 
   it('preserves drafts when navigating back without validating', async () => {

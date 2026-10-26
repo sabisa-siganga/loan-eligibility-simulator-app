@@ -10,17 +10,16 @@ import { MOCK_VALIDATION_RULES } from '../data/validationRules';
 export const AFFORDABILITY_DTI_GOOD_MAX = 30;
 export const AFFORDABILITY_DTI_FAIR_MAX = 45;
 
-/**
- * Credit-risk score bands on the mock 300–850 scale.
- * Cutoffs reuse the prior likelihood heuristic bands already in this codebase.
- */
-export const CREDIT_RISK_LOW_MIN = 750;
-export const CREDIT_RISK_MEDIUM_MIN = 650;
-
 /** Credit-score bounds pulled from mock validation rules (fallback 300–850). */
 const creditScoreRules = MOCK_VALIDATION_RULES.financialInfo.creditScore;
 export const CREDIT_SCORE_MIN = creditScoreRules.min ?? 300;
 export const CREDIT_SCORE_MAX = creditScoreRules.max ?? undefined;
+
+/**
+ * Credit-risk bands follow validation min/max:
+ * ≤ min → high; above min and ≤ max → medium; above max is out of range (not assessed here).
+ * There is no score-derived low credit-risk band.
+ */
 
 /** Affordability comfort labels derived from debt-to-income ratio bands. */
 export type AffordabilityRating = 'good' | 'fair' | 'poor';
@@ -51,16 +50,13 @@ export const affordabilityRatingFromDti = (debtToIncomeRatio: number): Affordabi
 
 /**
  * Classify an in-bounds credit score. Callers must validate bounds first.
- * ≥750 low; ≥650 medium; else high.
+ * ≤ CREDIT_SCORE_MIN → high; otherwise medium.
  */
 export const creditRiskFromScore = (creditScore: number): RiskCategory => {
-  if (creditScore >= CREDIT_RISK_LOW_MIN) {
-    return 'low';
+  if (creditScore <= CREDIT_SCORE_MIN) {
+    return 'high';
   }
-  if (creditScore >= CREDIT_RISK_MEDIUM_MIN) {
-    return 'medium';
-  }
-  return 'high';
+  return 'medium';
 };
 
 /**
@@ -73,17 +69,14 @@ export const overallRiskFromCreditAndAffordability = (
 
 /**
  * Credit-score-only mock approval estimate for in-bounds scores.
- * Callers must validate 300–850 first. Not a lender approval probability.
- * ≥750 → 95; ≥650 → 70; else 55.
+ * Callers must validate bounds first. Not a lender approval probability.
+ * ≤ CREDIT_SCORE_MIN → 55; otherwise 70.
  */
 export const simulatedApprovalEstimate = (creditScore: number): number => {
-  if (creditScore >= CREDIT_RISK_LOW_MIN) {
-    return 95;
+  if (creditScore <= CREDIT_SCORE_MIN) {
+    return 55;
   }
-  if (creditScore >= CREDIT_RISK_MEDIUM_MIN) {
-    return 70;
-  }
-  return 55;
+  return 70;
 };
 
 /**

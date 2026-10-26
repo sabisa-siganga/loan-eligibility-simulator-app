@@ -6,10 +6,10 @@ import type { CreditCheckState } from '../../types/api';
 const CREDIT_CHECK_STATES: readonly CreditCheckState[] = ['bad', 'good', 'over_limit'];
 
 /**
- * Deterministic demo scores aligned with credit-risk bands (300–850 scale):
- * - bad (Poor credit): High risk (< 650)
- * - good (Good credit): Low risk (≥ 750)
- * - over_limit: above supported range → invalid credit response
+ * Deterministic demo scores aligned with validation creditScore min/max:
+ * - bad (Poor credit): score at min → high credit risk
+ * - good (Good credit): score between min and max → medium credit risk
+ * - over_limit: above max → invalid credit response
  */
 const FIXED_SCORES: Record<CreditCheckState, number> = {
   bad: 300,

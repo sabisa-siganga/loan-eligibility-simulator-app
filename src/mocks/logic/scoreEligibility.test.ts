@@ -5,9 +5,9 @@ import { pickRatePercent, principalFromPayment } from './amortise';
 import {
   AFFORDABILITY_DTI_FAIR_MAX,
   AFFORDABILITY_DTI_GOOD_MAX,
-  CREDIT_RISK_LOW_MIN,
-  CREDIT_RISK_MEDIUM_MIN,
+  CREDIT_SCORE_MIN,
   creditRiskFromScore,
+  overallRiskFromCreditAndAffordability,
   simulatedApprovalEstimate,
 } from './eligibilityThresholds';
 import { scoreEligibility } from './scoreEligibility';
@@ -131,17 +131,17 @@ describe('scoreEligibility', () => {
     expect(result.eligibilityResult.riskAssessmentStatus).toBe('missing_credit_data');
   });
 
-  it('maps demo credit fixtures to the configured credit-risk bands', () => {
-    expect(creditRiskFromScore(520)).toBe('high');
-    expect(creditRiskFromScore(700)).toBe('medium');
-    expect(creditRiskFromScore(780)).toBe('low');
+  it('maps demo credit fixtures to bands derived from validation min/max', () => {
+    expect(creditRiskFromScore(CREDIT_SCORE_MIN)).toBe('high');
+    expect(creditRiskFromScore(520)).toBe('medium');
+    expect(creditRiskFromScore(780)).toBe('medium');
 
-    const poor = scoreEligibility(requestForRiskCell(520, 'good'));
-    const good = scoreEligibility(requestForRiskCell(780, 'good'));
+    const poor = scoreEligibility(requestForRiskCell(300, 'good'));
+    const good = scoreEligibility(requestForRiskCell(520, 'good'));
 
     expect(poor.eligibilityResult.riskAssessmentStatus).toBe('assessed');
     expect(poor.eligibilityResult.riskCategory).toBe('high');
-    expect(good.eligibilityResult.riskCategory).toBe('low');
+    expect(good.eligibilityResult.riskCategory).toBe('medium');
   });
 
   it('marks eligible when creditScore is within validation bounds', () => {
@@ -302,7 +302,7 @@ describe('scoreEligibility', () => {
         monthlyIncome: 50000,
         monthlyExpenses: 5000,
         existingDebt: 20000,
-        creditScore: 400,
+        creditScore: CREDIT_SCORE_MIN,
       },
       loanDetails: {
         requestedAmount: 50000,
@@ -417,14 +417,14 @@ describe('scoreEligibility', () => {
     expect(result.affordabilityAnalysis.debtToIncomeRatio).toBe(100);
   });
 
-  it('uses a supportive decision reason when eligible with low risk and good affordability', () => {
+  it('uses a supportive decision reason when eligible with medium risk and good affordability', () => {
     const result = scoreEligibility({
       ...baseRequest(),
       financialInfo: {
         monthlyIncome: 50000,
         monthlyExpenses: 5000,
         existingDebt: 500,
-        creditScore: 800,
+        creditScore: 520,
       },
       loanDetails: {
         requestedAmount: 20000,
@@ -435,26 +435,22 @@ describe('scoreEligibility', () => {
 
     expect(result.eligibilityResult.isEligible).toBe(true);
     expect(result.affordabilityAnalysis.affordabilityScore).toBe('good');
-    expect(result.eligibilityResult.riskCategory).toBe('low');
+    expect(result.eligibilityResult.riskCategory).toBe('medium');
     expect(result.eligibilityResult.decisionReason).toBe(
-      'Your credit profile and available monthly income support the proposed repayment.',
+      'You meet the initial eligibility criteria. Your available monthly income supports the proposed repayment.',
     );
   });
 
-  it('classifies credit risk at the documented score boundaries', () => {
-    const low = scoreEligibility({
-      ...requestForRiskCell(CREDIT_RISK_LOW_MIN, 'good'),
+  it('classifies credit risk at the validation min boundary', () => {
+    const high = scoreEligibility({
+      ...requestForRiskCell(CREDIT_SCORE_MIN, 'good'),
     });
     const medium = scoreEligibility({
-      ...requestForRiskCell(CREDIT_RISK_MEDIUM_MIN, 'good'),
-    });
-    const high = scoreEligibility({
-      ...requestForRiskCell(CREDIT_RISK_MEDIUM_MIN - 1, 'good'),
+      ...requestForRiskCell(CREDIT_SCORE_MIN + 1, 'good'),
     });
 
-    expect(low.eligibilityResult.riskCategory).toBe('low');
-    expect(medium.eligibilityResult.riskCategory).toBe('medium');
     expect(high.eligibilityResult.riskCategory).toBe('high');
+    expect(medium.eligibilityResult.riskCategory).toBe('medium');
   });
 
   it('rates affordability at the documented DTI boundaries', () => {
@@ -502,38 +498,27 @@ describe('scoreEligibility', () => {
   });
 
   describe('simulated approval estimate', () => {
-    it('applies the documented credit-score-only stepped rule', () => {
-      expect(simulatedApprovalEstimate(520)).toBe(55);
-      expect(simulatedApprovalEstimate(649)).toBe(55);
-      expect(simulatedApprovalEstimate(650)).toBe(70);
-      expect(simulatedApprovalEstimate(700)).toBe(70);
-      expect(simulatedApprovalEstimate(749)).toBe(70);
-      expect(simulatedApprovalEstimate(750)).toBe(95);
-      expect(simulatedApprovalEstimate(780)).toBe(95);
+    it('applies the documented credit-score-only rule from validation min', () => {
+      expect(simulatedApprovalEstimate(CREDIT_SCORE_MIN)).toBe(55);
+      expect(simulatedApprovalEstimate(CREDIT_SCORE_MIN + 1)).toBe(70);
+      expect(simulatedApprovalEstimate(520)).toBe(70);
+      expect(simulatedApprovalEstimate(780)).toBe(70);
     });
 
     it('returns the stepped estimate for valid eligible scores and never decreases as score improves', () => {
       const poor = scoreEligibility({
         ...baseRequest(),
-        financialInfo: { ...baseRequest().financialInfo, creditScore: 520 },
-      });
-      const medium = scoreEligibility({
-        ...baseRequest(),
-        financialInfo: { ...baseRequest().financialInfo, creditScore: 700 },
+        financialInfo: { ...baseRequest().financialInfo, creditScore: CREDIT_SCORE_MIN },
       });
       const good = scoreEligibility({
         ...baseRequest(),
-        financialInfo: { ...baseRequest().financialInfo, creditScore: 780 },
+        financialInfo: { ...baseRequest().financialInfo, creditScore: 520 },
       });
 
       expect(poor.eligibilityResult.approvalLikelihood).toBe(55);
-      expect(medium.eligibilityResult.approvalLikelihood).toBe(70);
-      expect(good.eligibilityResult.approvalLikelihood).toBe(95);
-      expect(medium.eligibilityResult.approvalLikelihood as number).toBeGreaterThan(
-        poor.eligibilityResult.approvalLikelihood as number,
-      );
+      expect(good.eligibilityResult.approvalLikelihood).toBe(70);
       expect(good.eligibilityResult.approvalLikelihood as number).toBeGreaterThan(
-        medium.eligibilityResult.approvalLikelihood as number,
+        poor.eligibilityResult.approvalLikelihood as number,
       );
     });
 
@@ -558,7 +543,7 @@ describe('scoreEligibility', () => {
         personalInfo: { ...baseRequest().personalInfo, age: 17 },
         financialInfo: {
           ...baseRequest().financialInfo,
-          creditScore: 780,
+          creditScore: 520,
         },
       });
 
@@ -576,15 +561,23 @@ describe('scoreEligibility', () => {
       high: { good: 'high', fair: 'high', poor: 'high' },
     };
 
-    const creditScores: Record<RiskCategory, number> = {
-      low: 780,
-      medium: 700,
-      high: 520,
+    /** Score-derived credit risk only yields medium or high; low row is matrix-only. */
+    const creditScores: Record<'medium' | 'high', number> = {
+      medium: 520,
+      high: CREDIT_SCORE_MIN,
     };
 
     (['low', 'medium', 'high'] as const).forEach((creditRisk) => {
       (['good', 'fair', 'poor'] as const).forEach((affordability) => {
         it(`maps credit ${creditRisk} × affordability ${affordability} to ${expected[creditRisk][affordability]}`, () => {
+          expect(overallRiskFromCreditAndAffordability(creditRisk, affordability)).toBe(
+            expected[creditRisk][affordability],
+          );
+
+          if (creditRisk === 'low') {
+            return;
+          }
+
           const request = requestForRiskCell(creditScores[creditRisk], affordability);
           const result = scoreEligibility(request);
 

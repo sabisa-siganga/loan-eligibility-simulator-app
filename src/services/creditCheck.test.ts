@@ -11,7 +11,7 @@ describe('runCreditCheck', () => {
     const result = await runCreditCheck();
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.creditScore).toBe(780);
+      expect(result.creditScore).toBe(520);
     }
   });
 

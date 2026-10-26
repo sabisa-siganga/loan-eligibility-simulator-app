@@ -169,8 +169,8 @@ export type EligibilityResponse = {
     readonly isEligible: boolean;
     /**
      * Simulated approval estimate (credit-score-only mock rule) when assessed
-     * and eligible: below 650 → 55, 650–749 → 70, 750+ → 95. Null when missing,
-     * failed, invalid, or mandatory eligibility checks fail.
+     * and eligible: ≤ validation min → 55, otherwise in-bounds → 70. Null when
+     * missing, failed, invalid, or mandatory eligibility checks fail.
      */
     readonly approvalLikelihood: number | null;
     /** Null when overall risk cannot be assessed (missing/failed/invalid credit). */

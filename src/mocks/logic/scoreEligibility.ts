@@ -28,14 +28,18 @@ import {
  * - Affordability: debt-to-income ratio / remaining income comfort (Good / Fair / Poor).
  * - Overall risk: credit risk × affordability when a usable score exists.
  *
+ * Credit risk follows validation creditScore min/max: ≤ min → high; above min
+ * and ≤ max → medium; above max → invalid (not assessed). There is no
+ * score-derived low credit-risk band; fixtures yield medium or high only.
+ *
  * Hard gates (any failure → ineligible): age 18–65, monthly income ≥ R5,000,
  * employment duration ≥ 3 months when employed/self-employed, and remaining
  * income ≥ 0 after the estimated repayment. Out-of-range credit scores are an
  * assessment error (`invalid_credit_response`), not a normal eligibility
  * decline. Poor affordability or High overall risk alone does not decline.
  *
- * Simulated approval estimate (credit-score-only): below 650 → 55%, 650–749 → 70%,
- * 750+ → 95%. Null when missing, failed, invalid, or mandatory checks fail.
+ * Simulated approval estimate (credit-score-only): ≤ validation min → 55%,
+ * otherwise in-bounds → 70%. Null when missing, failed, invalid, or mandatory checks fail.
  *
  * Debt-to-income is debt repayments only (existing monthly debt + new payment)
  * over monthly income — living expenses are excluded from debt-to-income ratio but remain in
@@ -150,7 +154,10 @@ export const buildDecisionReason = ({
     return parts.join(' ');
   }
 
-  /** Best case: low overall risk and good affordability. */
+  /**
+   * Matrix best case (low × good). Not produced by current score-derived credit
+   * risk (fixtures / validation bands yield medium or high only).
+   */
   if (overallRisk === 'low' && affordabilityScore === 'good') {
     return 'Your credit profile and available monthly income support the proposed repayment.';
   }
@@ -179,7 +186,7 @@ export const buildDecisionReason = ({
         : 'The proposed repayment may also put pressure on your budget.',
     );
   } else if (parts.length === 0) {
-    /** Eligible with good affordability but not the low+good shortcut above. */
+    /** Typical Good-credit path: medium credit risk × good affordability. */
     parts.push(
       'You meet the initial eligibility criteria. Your available monthly income supports the proposed repayment.',
     );
